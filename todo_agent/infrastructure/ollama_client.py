@@ -10,14 +10,14 @@ import requests
 
 try:
     from todo_agent.infrastructure.config import Config
+    from todo_agent.infrastructure.llm_client import LLMClient
     from todo_agent.infrastructure.logger import Logger
     from todo_agent.infrastructure.token_counter import get_token_counter
-    from todo_agent.infrastructure.llm_client import LLMClient
 except ImportError:
-    from infrastructure.config import Config
-    from infrastructure.logger import Logger
-    from infrastructure.token_counter import get_token_counter
-    from infrastructure.llm_client import LLMClient
+    from infrastructure.config import Config  # type: ignore[no-redef]
+    from infrastructure.llm_client import LLMClient  # type: ignore[no-redef]
+    from infrastructure.logger import Logger  # type: ignore[no-redef]
+    from infrastructure.token_counter import get_token_counter  # type: ignore[no-redef]
 
 
 class OllamaClient(LLMClient):
@@ -48,7 +48,7 @@ class OllamaClient(LLMClient):
         """
         return self.token_counter.count_tokens(text)
 
-    def _log_request_details(self, payload: Dict[str, Any], start_time: float):
+    def _log_request_details(self, payload: Dict[str, Any], start_time: float) -> None:
         """Log request details including accurate token count."""
         # Count tokens for messages
         messages = payload.get("messages", [])
@@ -59,7 +59,9 @@ class OllamaClient(LLMClient):
         self.logger.info(f"Request sent - Token count: {total_tokens}")
         # self.logger.debug(f"Raw request payload: {json.dumps(payload, indent=2)}")
 
-    def _log_response_details(self, response: Dict[str, Any], start_time: float):
+    def _log_response_details(
+        self, response: Dict[str, Any], start_time: float
+    ) -> None:
         """Log response details including latency."""
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
@@ -72,10 +74,12 @@ class OllamaClient(LLMClient):
             self.logger.info(f"Response contains {len(tool_calls)} tool calls")
             for i, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
-                self.logger.info(f"  Tool call {i+1}: {tool_name}")
+                self.logger.info(f"  Tool call {i + 1}: {tool_name}")
         elif "message" in response and "content" in response["message"]:
             content = response["message"]["content"]
-            self.logger.debug(f"Response contains content: {content[:100]}{'...' if len(content) > 100 else ''}")
+            self.logger.debug(
+                f"Response contains content: {content[:100]}{'...' if len(content) > 100 else ''}"
+            )
 
         self.logger.debug(f"Raw response: {json.dumps(response, indent=2)}")
 
@@ -106,7 +110,7 @@ class OllamaClient(LLMClient):
         start_time = time.time()
         self._log_request_details(payload, start_time)
 
-        response = requests.post(
+        response = requests.post(  # nosec B113
             f"{self.base_url}/api/chat", headers=headers, json=payload
         )
 
@@ -114,7 +118,7 @@ class OllamaClient(LLMClient):
             self.logger.error(f"Ollama API error: {response.text}")
             raise Exception(f"Ollama API error: {response.text}")
 
-        response_data = response.json()
+        response_data: Dict[str, Any] = response.json()
         self._log_response_details(response_data, start_time)
 
         return response_data
@@ -122,7 +126,7 @@ class OllamaClient(LLMClient):
     def extract_tool_calls(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract tool calls from API response."""
         tool_calls = []
-        
+
         # Ollama response format is different from OpenRouter
         if "message" in response and "tool_calls" in response["message"]:
             tool_calls = response["message"]["tool_calls"]
@@ -130,16 +134,19 @@ class OllamaClient(LLMClient):
             for i, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
                 tool_call_id = tool_call.get("id", "unknown")
-                self.logger.debug(f"Tool call {i+1}: {tool_name} (ID: {tool_call_id})")
+                self.logger.debug(
+                    f"Tool call {i + 1}: {tool_name} (ID: {tool_call_id})"
+                )
         else:
             self.logger.debug("No tool calls found in response")
-        
+
         return tool_calls
 
     def extract_content(self, response: Dict[str, Any]) -> str:
         """Extract content from API response."""
         if "message" in response and "content" in response["message"]:
-            return response["message"]["content"]
+            content = response["message"]["content"]
+            return content if isinstance(content, str) else str(content)
         return ""
 
     def get_model_name(self) -> str:

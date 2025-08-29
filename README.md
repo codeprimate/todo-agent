@@ -91,10 +91,15 @@ You can add this to your shell profile (`.bashrc`, `.zshrc`, etc.) to make it pe
 # Clone and install from source
 git clone https://github.com/codeprimate/todo-agent.git
 cd todo_agent
-pip install -e .
 
-# Or with development dependencies
-pip install -e ".[dev]"
+# Option 1: Install built package locally
+make install
+
+# Option 2: Install in development mode with dev dependencies
+make install-dev
+
+# Option 3: Install in development mode (basic)
+pip install -e .
 ```
 
 ### 2. Set up your LLM provider
@@ -174,14 +179,52 @@ The `TODO_FILE`, `DONE_FILE`, and `REPORT_FILE` are automatically inferred from 
 # Clone and install
 git clone https://github.com/codeprimate/todo-agent.git
 cd todo_agent
-pip install -e ".[dev]"
 
-# Run tests
-pytest
+# Install options:
+# - Built package (like production install)
+make install
+# - Development mode with dev dependencies (recommended for development)
+make install-dev
+# - Basic development mode
+pip install -e .
 
-# Format code
-black .
-isort .
+# Available Makefile tasks:
+make test      # Run tests with coverage
+make format    # Format and lint code
+make lint      # Run linting only
+make build     # Build package distribution
+make clean     # Clean build artifacts
+make install   # Build and install package locally
+make install-dev # Install in development mode with dev dependencies
+```
+
+## Code Quality and Linting
+
+This project uses comprehensive linting to maintain code quality:
+
+### Linting Tools
+- **Ruff**: Fast Python linter and formatter (replaces Black, isort, and Flake8)
+- **MyPy**: Static type checking
+- **Bandit**: Security vulnerability scanning
+
+**Note**: Ruff is configured to be compatible with Black's formatting style and provides 10-100x faster performance than traditional tools.
+
+### Pre-commit Hooks
+Install pre-commit hooks for automatic linting on commits:
+```bash
+pre-commit install
+```
+
+### Linting in Test Suite
+Linting checks are integrated into the test suite via `tests/test_linting.py`. The `make test` command runs all tests including linting checks. You can also run linting tests separately:
+```bash
+# Run linting tests only
+pytest -m lint
+```
+
+### Configuration Files
+- `pyproject.toml`: Ruff, MyPy, and pytest configuration
+- `.pre-commit-config.yaml`: Pre-commit hooks configuration
 ```
 
 ## Architecture

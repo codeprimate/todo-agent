@@ -3,19 +3,19 @@ Subprocess wrapper for todo.sh operations.
 """
 
 import os
-import subprocess
-from typing import List, Optional
+import subprocess  # nosec B404
+from typing import Any, List, Optional
 
 try:
     from todo_agent.core.exceptions import TodoShellError
 except ImportError:
-    from core.exceptions import TodoShellError
+    from core.exceptions import TodoShellError  # type: ignore[no-redef]
 
 
 class TodoShell:
     """Subprocess execution wrapper with error management."""
 
-    def __init__(self, todo_file_path: str, logger=None):
+    def __init__(self, todo_file_path: str, logger: Optional[Any] = None) -> None:
         self.todo_file_path = todo_file_path
         self.todo_dir = os.path.dirname(todo_file_path) or os.getcwd()
         self.logger = logger
@@ -40,13 +40,13 @@ class TodoShell:
             self.logger.debug(f"=== RAW COMMAND EXECUTION ===")
             self.logger.debug(f"Raw command: {raw_command}")
             self.logger.debug(f"Working directory: {cwd or self.todo_dir}")
-        
+
         try:
             working_dir = cwd or self.todo_dir
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 command, cwd=working_dir, capture_output=True, text=True, check=True
             )
-            
+
             # Log the raw output
             if self.logger:
                 self.logger.debug(f"=== RAW COMMAND OUTPUT ===")
@@ -54,7 +54,7 @@ class TodoShell:
                 self.logger.debug(f"Raw stdout: {result.stdout}")
                 self.logger.debug(f"Raw stderr: {result.stderr}")
                 self.logger.debug(f"Return code: {result.returncode}")
-            
+
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
             # Log error details
@@ -69,7 +69,7 @@ class TodoShell:
             if self.logger:
                 self.logger.error(f"=== COMMAND EXECUTION EXCEPTION ===")
                 self.logger.error(f"Raw command: {' '.join(command)}")
-                self.logger.error(f"Exception: {str(e)}")
+                self.logger.error(f"Exception: {e!s}")
             raise TodoShellError(f"Todo.sh command failed: {e}")
 
     def add(self, description: str) -> str:
@@ -106,7 +106,9 @@ class TodoShell:
             command.append(term)
         return self.execute(command)
 
-    def move(self, task_number: int, destination: str, source: Optional[str] = None) -> str:
+    def move(
+        self, task_number: int, destination: str, source: Optional[str] = None
+    ) -> str:
         """Move task from source to destination file."""
         command = ["todo.sh", "-f", "move", str(task_number), destination]
         if source:

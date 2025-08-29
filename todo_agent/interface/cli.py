@@ -2,42 +2,39 @@
 Command-line interface for todo.sh LLM agent.
 """
 
-import threading
-import time
-from typing import Optional
-
 try:
     from rich.console import Console
     from rich.live import Live
     from rich.spinner import Spinner
     from rich.text import Text
+
     from todo_agent.core.todo_manager import TodoManager
     from todo_agent.infrastructure.config import Config
-    from todo_agent.infrastructure.todo_shell import TodoShell
-    from todo_agent.infrastructure.logger import Logger
     from todo_agent.infrastructure.inference import Inference
+    from todo_agent.infrastructure.logger import Logger
+    from todo_agent.infrastructure.todo_shell import TodoShell
     from todo_agent.interface.tools import ToolCallHandler
 except ImportError:
+    from core.todo_manager import TodoManager  # type: ignore[no-redef]
+    from infrastructure.config import Config  # type: ignore[no-redef]
+    from infrastructure.inference import Inference  # type: ignore[no-redef]
+    from infrastructure.logger import Logger  # type: ignore[no-redef]
+    from infrastructure.todo_shell import TodoShell  # type: ignore[no-redef]
+    from interface.tools import ToolCallHandler  # type: ignore[no-redef]
     from rich.console import Console
     from rich.live import Live
     from rich.spinner import Spinner
     from rich.text import Text
-    from core.todo_manager import TodoManager
-    from infrastructure.config import Config
-    from infrastructure.todo_shell import TodoShell
-    from infrastructure.logger import Logger
-    from infrastructure.inference import Inference
-    from interface.tools import ToolCallHandler
 
 
 class CLI:
     """User interaction loop and input/output handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize logger first
         self.logger = Logger("cli")
         self.logger.info("Initializing CLI")
-        
+
         self.config = Config()
         self.config.validate()
         self.logger.debug("Configuration validated")
@@ -85,9 +82,7 @@ class CLI:
         initial_spinner = self._create_thinking_spinner("Thinking...")
         return Live(initial_spinner, console=self.console, refresh_per_second=10)
 
-
-
-    def run(self):
+    def run(self) -> None:
         """Main CLI interaction loop."""
         self.logger.info("Starting CLI interaction loop")
         print("Todo.sh LLM Agent - Type 'quit' to exit")
@@ -122,15 +117,28 @@ class CLI:
                     print(f"  Assistant messages: {summary['assistant_messages']}")
                     print(f"  Tool messages: {summary['tool_messages']}")
                     print(f"  Estimated tokens: {summary['estimated_tokens']}")
-                    
+
                     # Display thinking time statistics if available
-                    if 'thinking_time_count' in summary and summary['thinking_time_count'] > 0:
+                    if (
+                        "thinking_time_count" in summary
+                        and summary["thinking_time_count"] > 0
+                    ):
                         print(f"  Thinking time stats:")
-                        print(f"    Total thinking time: {summary['total_thinking_time']:.2f}s")
-                        print(f"    Average thinking time: {summary['average_thinking_time']:.2f}s")
-                        print(f"    Min thinking time: {summary['min_thinking_time']:.2f}s")
-                        print(f"    Max thinking time: {summary['max_thinking_time']:.2f}s")
-                        print(f"    Requests with timing: {summary['thinking_time_count']}")
+                        print(
+                            f"    Total thinking time: {summary['total_thinking_time']:.2f}s"
+                        )
+                        print(
+                            f"    Average thinking time: {summary['average_thinking_time']:.2f}s"
+                        )
+                        print(
+                            f"    Min thinking time: {summary['min_thinking_time']:.2f}s"
+                        )
+                        print(
+                            f"    Max thinking time: {summary['max_thinking_time']:.2f}s"
+                        )
+                        print(
+                            f"    Requests with timing: {summary['thinking_time_count']}"
+                        )
                     continue
 
                 if user_input.lower() == "help":
@@ -150,11 +158,13 @@ class CLI:
                         output = self.todo_shell.list_tasks()
                         print(output)
                     except Exception as e:
-                        self.logger.error(f"Error listing tasks: {str(e)}")
-                        print(f"Error: Failed to list tasks: {str(e)}")
+                        self.logger.error(f"Error listing tasks: {e!s}")
+                        print(f"Error: Failed to list tasks: {e!s}")
                     continue
 
-                self.logger.info(f"Processing user request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}")
+                self.logger.info(
+                    f"Processing user request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
+                )
                 response = self.handle_request(user_input)
                 print(response)
 
@@ -163,8 +173,8 @@ class CLI:
                 print("\nGoodbye!")
                 break
             except Exception as e:
-                self.logger.error(f"Error in CLI loop: {str(e)}")
-                print(f"Error: {str(e)}")
+                self.logger.error(f"Error in CLI loop: {e!s}")
+                print(f"Error: {e!s}")
 
     def handle_request(self, user_input: str) -> str:
         """
@@ -181,20 +191,22 @@ class CLI:
             try:
                 # Process request through inference engine
                 response, thinking_time = self.inference.process_request(user_input)
-                
+
                 # Update spinner with completion message and thinking time
-                live.update(self._create_thinking_spinner(f"(thought for {thinking_time:.1f}s)"))
-                
+                live.update(
+                    self._create_thinking_spinner(f"(thought for {thinking_time:.1f}s)")
+                )
+
                 return response
             except Exception as e:
                 # Update spinner with error message
                 live.update(self._create_thinking_spinner("Request failed"))
-                
+
                 # Log the error
-                self.logger.error(f"Error in handle_request: {str(e)}")
-                
+                self.logger.error(f"Error in handle_request: {e!s}")
+
                 # Return error message
-                return f"Error: {str(e)}"
+                return f"Error: {e!s}"
 
     def run_single_request(self, user_input: str) -> str:
         """
@@ -206,5 +218,7 @@ class CLI:
         Returns:
             Formatted response
         """
-        self.logger.info(f"Running single request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}")
+        self.logger.info(
+            f"Running single request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
+        )
         return self.handle_request(user_input)

@@ -9,7 +9,7 @@ import sys
 from .interface.cli import CLI
 
 
-def main():
+def main() -> None:
     """Main application entry point."""
     parser = argparse.ArgumentParser(
         description="Todo.sh LLM Agent - Natural language task management",

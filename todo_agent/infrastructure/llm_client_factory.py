@@ -7,15 +7,17 @@ from typing import Optional
 try:
     from todo_agent.infrastructure.config import Config
     from todo_agent.infrastructure.llm_client import LLMClient
-    from todo_agent.infrastructure.openrouter_client import OpenRouterClient
-    from todo_agent.infrastructure.ollama_client import OllamaClient
     from todo_agent.infrastructure.logger import Logger
+    from todo_agent.infrastructure.ollama_client import OllamaClient
+    from todo_agent.infrastructure.openrouter_client import OpenRouterClient
 except ImportError:
-    from infrastructure.config import Config
-    from infrastructure.llm_client import LLMClient
-    from infrastructure.openrouter_client import OpenRouterClient
-    from infrastructure.ollama_client import OllamaClient
-    from infrastructure.logger import Logger
+    from infrastructure.config import Config  # type: ignore[no-redef]
+    from infrastructure.llm_client import LLMClient  # type: ignore[no-redef]
+    from infrastructure.logger import Logger  # type: ignore[no-redef]
+    from infrastructure.ollama_client import OllamaClient  # type: ignore[no-redef]
+    from infrastructure.openrouter_client import (  # type: ignore[no-redef]
+        OpenRouterClient,
+    )
 
 
 class LLMClientFactory:
@@ -37,9 +39,11 @@ class LLMClientFactory:
             ValueError: If provider is not supported
         """
         logger = logger or Logger("llm_client_factory")
-        
+
         if config.provider == "openrouter":
-            logger.info(f"Creating OpenRouter client with model: {config.openrouter_model}")
+            logger.info(
+                f"Creating OpenRouter client with model: {config.openrouter_model}"
+            )
             return OpenRouterClient(config)
         elif config.provider == "ollama":
             logger.info(f"Creating Ollama client with model: {config.ollama_model}")

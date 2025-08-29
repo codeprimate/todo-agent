@@ -236,6 +236,7 @@ $RECYCLE.BIN/
 # Project-specific patterns
 # Log files
 logs/*.log
+logs/
 *.log
 
 # Configuration files with sensitive data
@@ -273,3 +274,16 @@ settings_local.py
 ehthumbs.db
 Icon?
 Thumbs.db
+
+# Test and coverage files
+.coverage
+htmlcov/
+bandit-test-report.json
+
+# Build and distribution files
+dist/
+todo_agent.egg-info/
+
+# Cache directories
+.mypy_cache/
+.pytest_cache/

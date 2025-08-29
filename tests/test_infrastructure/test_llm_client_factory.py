@@ -2,11 +2,12 @@
 Tests for LLMClientFactory.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from todo_agent.infrastructure.llm_client_factory import LLMClientFactory
+import pytest
+
 from todo_agent.infrastructure.config import Config
+from todo_agent.infrastructure.llm_client_factory import LLMClientFactory
 
 
 class TestLLMClientFactory:
@@ -17,13 +18,15 @@ class TestLLMClientFactory:
         config = Config()
         config.provider = "openrouter"
         config.openrouter_model = "openai/gpt-4o-mini"
-        
-        with patch('todo_agent.infrastructure.llm_client_factory.OpenRouterClient') as mock_openrouter:
+
+        with patch(
+            "todo_agent.infrastructure.llm_client_factory.OpenRouterClient"
+        ) as mock_openrouter:
             mock_client = Mock()
             mock_openrouter.return_value = mock_client
-            
+
             client = LLMClientFactory.create_client(config)
-            
+
             assert client == mock_client
             mock_openrouter.assert_called_once_with(config)
 
@@ -32,13 +35,15 @@ class TestLLMClientFactory:
         config = Config()
         config.provider = "ollama"
         config.ollama_model = "llama3.2"
-        
-        with patch('todo_agent.infrastructure.llm_client_factory.OllamaClient') as mock_ollama:
+
+        with patch(
+            "todo_agent.infrastructure.llm_client_factory.OllamaClient"
+        ) as mock_ollama:
             mock_client = Mock()
             mock_ollama.return_value = mock_client
-            
+
             client = LLMClientFactory.create_client(config)
-            
+
             assert client == mock_client
             mock_ollama.assert_called_once_with(config)
 
@@ -46,7 +51,7 @@ class TestLLMClientFactory:
         """Test creating client with unsupported provider."""
         config = Config()
         config.provider = "unsupported"
-        
+
         with pytest.raises(ValueError, match="Unsupported LLM provider: unsupported"):
             LLMClientFactory.create_client(config)
 
@@ -55,14 +60,16 @@ class TestLLMClientFactory:
         config = Config()
         config.provider = "openrouter"
         config.openrouter_model = "openai/gpt-4o-mini"
-        
+
         mock_logger = Mock()
-        
-        with patch('todo_agent.infrastructure.llm_client_factory.OpenRouterClient') as mock_openrouter:
+
+        with patch(
+            "todo_agent.infrastructure.llm_client_factory.OpenRouterClient"
+        ) as mock_openrouter:
             mock_client = Mock()
             mock_openrouter.return_value = mock_client
-            
+
             client = LLMClientFactory.create_client(config, mock_logger)
-            
+
             assert client == mock_client
             mock_openrouter.assert_called_once_with(config)

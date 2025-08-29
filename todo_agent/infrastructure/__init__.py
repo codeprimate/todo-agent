@@ -8,4 +8,4 @@ from .config import Config
 from .openrouter_client import OpenRouterClient
 from .todo_shell import TodoShell
 
-__all__ = ["OpenRouterClient", "TodoShell", "Config"]
+__all__ = ["Config", "OpenRouterClient", "TodoShell"]

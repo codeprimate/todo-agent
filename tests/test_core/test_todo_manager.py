@@ -3,14 +3,16 @@ Tests for TodoManager.
 """
 
 import unittest
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 try:
     from todo_agent.core.todo_manager import TodoManager
 except ImportError:
-    import sys
     import os
+    import sys
+
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
     from core.todo_manager import TodoManager
 
@@ -46,7 +48,9 @@ class TestTodoManager(unittest.TestCase):
 
     def test_list_completed_tasks_no_filter(self):
         """Test listing completed tasks without filter."""
-        self.todo_shell.list_completed.return_value = "1. Completed task 1\n2. Completed task 2"
+        self.todo_shell.list_completed.return_value = (
+            "1. Completed task 1\n2. Completed task 2"
+        )
         result = self.todo_manager.list_completed_tasks()
         self.assertEqual(result, "1. Completed task 1\n2. Completed task 2")
         self.todo_shell.list_completed.assert_called_once_with(None)
@@ -75,7 +79,9 @@ class TestTodoManager(unittest.TestCase):
     def test_list_completed_tasks_with_date_filters(self):
         """Test listing completed tasks with date filters."""
         self.todo_shell.list_completed.return_value = "1. Task completed in date range"
-        result = self.todo_manager.list_completed_tasks(date_from="2025-08-01", date_to="2025-08-31")
+        result = self.todo_manager.list_completed_tasks(
+            date_from="2025-08-01", date_to="2025-08-31"
+        )
         self.assertEqual(result, "1. Task completed in date range")
         # With both date_from and date_to, we use the year-month pattern from date_from
         self.todo_shell.list_completed.assert_called_once_with("2025-08")
@@ -97,8 +103,12 @@ class TestTodoManager(unittest.TestCase):
 
     def test_list_completed_tasks_with_multiple_filters(self):
         """Test listing completed tasks with multiple filters."""
-        self.todo_shell.list_completed.return_value = "1. Work task from office completed"
-        result = self.todo_manager.list_completed_tasks(project="work", context="office", text_search="review")
+        self.todo_shell.list_completed.return_value = (
+            "1. Work task from office completed"
+        )
+        result = self.todo_manager.list_completed_tasks(
+            project="work", context="office", text_search="review"
+        )
         self.assertEqual(result, "1. Work task from office completed")
         self.todo_shell.list_completed.assert_called_once_with("+work @office review")
 
@@ -115,6 +125,7 @@ class TestTodoManager(unittest.TestCase):
         result = self.todo_manager.list_completed_tasks(project="nonexistent")
         self.assertEqual(result, "No completed tasks found matching the criteria.")
         self.todo_shell.list_completed.assert_called_once_with("+nonexistent")
+
 
 if __name__ == "__main__":
     unittest.main()

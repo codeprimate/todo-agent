@@ -2,14 +2,14 @@
 Todo.sh operations orchestration and business logic.
 """
 
-from typing import Optional
 from datetime import datetime
+from typing import Any, Optional
 
 
 class TodoManager:
     """Orchestrates todo.sh operations with business logic."""
 
-    def __init__(self, todo_shell):
+    def __init__(self, todo_shell: Any) -> None:
         self.todo_shell = todo_shell
 
     def add_task(
@@ -23,20 +23,20 @@ class TodoManager:
         """Add new task with explicit project/context parameters."""
         # Build the full task description with priority, project, and context
         full_description = description
-        
+
         if priority:
             full_description = f"({priority}) {full_description}"
-        
+
         if project:
             full_description = f"{full_description} +{project}"
-        
+
         if context:
             full_description = f"{full_description} @{context}"
-        
+
         if due:
             full_description = f"{full_description} due:{due}"
-        
-        result = self.todo_shell.add(full_description)
+
+        self.todo_shell.add(full_description)
         return f"Added task: {full_description}"
 
     def list_tasks(self, filter: Optional[str] = None) -> str:
@@ -44,7 +44,7 @@ class TodoManager:
         result = self.todo_shell.list_tasks(filter)
         if not result.strip():
             return "No tasks found."
-        
+
         # Return the raw todo.txt format for the LLM to format conversationally
         # The LLM will convert this into natural language in its response
         return result
@@ -54,14 +54,22 @@ class TodoManager:
         result = self.todo_shell.complete(task_number)
         return f"Completed task {task_number}: {result}"
 
-    def get_overview(self, **kwargs) -> str:
+    def get_overview(self, **kwargs: Any) -> str:
         """Show current task statistics."""
         tasks = self.todo_shell.list_tasks()
         completed = self.todo_shell.list_completed()
-        
-        task_count = len([line for line in tasks.split('\n') if line.strip()]) if tasks.strip() else 0
-        completed_count = len([line for line in completed.split('\n') if line.strip()]) if completed.strip() else 0
-        
+
+        task_count = (
+            len([line for line in tasks.split("\n") if line.strip()])
+            if tasks.strip()
+            else 0
+        )
+        completed_count = (
+            len([line for line in completed.split("\n") if line.strip()])
+            if completed.strip()
+            else 0
+        )
+
         return f"Task Overview:\n- Active tasks: {task_count}\n- Completed tasks: {completed_count}"
 
     def replace_task(self, task_number: int, new_description: str) -> str:
@@ -97,14 +105,14 @@ class TodoManager:
         result = self.todo_shell.remove_priority(task_number)
         return f"Removed priority from task {task_number}: {result}"
 
-    def list_projects(self, **kwargs) -> str:
+    def list_projects(self, **kwargs: Any) -> str:
         """List all available projects in todo.txt."""
         result = self.todo_shell.list_projects()
         if not result.strip():
             return "No projects found."
         return result
 
-    def list_contexts(self, **kwargs) -> str:
+    def list_contexts(self, **kwargs: Any) -> str:
         """List all available contexts in todo.txt."""
         result = self.todo_shell.list_contexts()
         if not result.strip():
@@ -112,17 +120,17 @@ class TodoManager:
         return result
 
     def list_completed_tasks(
-        self, 
+        self,
         filter: Optional[str] = None,
         project: Optional[str] = None,
         context: Optional[str] = None,
         text_search: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
-        **kwargs
+        **kwargs: Any,
     ) -> str:
         """List completed tasks with optional filtering.
-        
+
         Args:
             filter: Raw filter string (e.g., '+work', '@office')
             project: Filter by project (without + symbol)
@@ -133,19 +141,19 @@ class TodoManager:
         """
         # Build filter string from individual parameters
         filter_parts = []
-        
+
         if filter:
             filter_parts.append(filter)
-        
+
         if project:
             filter_parts.append(f"+{project}")
-            
+
         if context:
             filter_parts.append(f"@{context}")
-            
+
         if text_search:
             filter_parts.append(text_search)
-            
+
         # Handle date filtering - todo.sh supports direct date pattern matching
         # LIMITATIONS: Due to todo.sh constraints, complex date ranges are not supported.
         # The filtering behavior is:
@@ -164,31 +172,33 @@ class TodoManager:
             # For end date only, we'll use the year-month pattern
             # This will match all tasks in that month
             filter_parts.append(date_to[:7])  # YYYY-MM format
-        
+
         # Combine all filters
         combined_filter = " ".join(filter_parts) if filter_parts else None
-        
+
         result = self.todo_shell.list_completed(combined_filter)
         if not result.strip():
             return "No completed tasks found matching the criteria."
         return result
 
-    def move_task(self, task_number: int, destination: str, source: Optional[str] = None) -> str:
+    def move_task(
+        self, task_number: int, destination: str, source: Optional[str] = None
+    ) -> str:
         """Move task from source to destination file."""
         result = self.todo_shell.move(task_number, destination, source)
         return f"Moved task {task_number} to {destination}: {result}"
 
-    def archive_tasks(self, **kwargs) -> str:
+    def archive_tasks(self, **kwargs: Any) -> str:
         """Archive completed tasks."""
         result = self.todo_shell.archive()
         return f"Archived tasks: {result}"
 
-    def deduplicate_tasks(self, **kwargs) -> str:
+    def deduplicate_tasks(self, **kwargs: Any) -> str:
         """Remove duplicate tasks."""
         result = self.todo_shell.deduplicate()
         return f"Deduplicated tasks: {result}"
 
-    def get_current_datetime(self, **kwargs) -> str:
+    def get_current_datetime(self, **kwargs: Any) -> str:
         """Get the current date and time."""
         now = datetime.now()
         return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} ({now.strftime('%A, %B %d, %Y at %I:%M %p')})"

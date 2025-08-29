@@ -3,14 +3,14 @@ Conversation management for todo.sh LLM agent.
 """
 
 import time
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 try:
     from todo_agent.infrastructure.token_counter import get_token_counter
 except ImportError:
-    from infrastructure.token_counter import get_token_counter
+    from infrastructure.token_counter import get_token_counter  # type: ignore[no-redef]
 
 
 class MessageRole(Enum):
@@ -76,7 +76,7 @@ class ConversationManager:
         self._total_tokens += token_count
         self._trim_if_needed()
 
-    def get_messages(self, include_tool_calls: bool = True) -> List[Dict[str, str]]:
+    def get_messages(self, include_tool_calls: bool = True) -> List[Dict[str, Any]]:
         """
         Get conversation messages in OpenRouter API format.
 
@@ -86,14 +86,17 @@ class ConversationManager:
         Returns:
             List of message dictionaries for API consumption
         """
-        messages = []
+        messages: List[Dict[str, Any]] = []
 
         # Add conversation messages (system prompt is already in history)
         for msg in self.history:
             if msg.role == MessageRole.TOOL and not include_tool_calls:
                 continue
 
-            message_dict = {"role": msg.role.value, "content": msg.content}
+            message_dict: Dict[str, Any] = {
+                "role": msg.role.value,
+                "content": msg.content,
+            }
 
             # Handle tool calls in assistant messages
             if msg.role == MessageRole.ASSISTANT and msg.tool_calls:
@@ -148,8 +151,11 @@ class ConversationManager:
             system_messages = [
                 msg for msg in self.history if msg.role == MessageRole.SYSTEM
             ]
-            recent_messages = self.history[-self.max_messages:]
-            self.history = system_messages + recent_messages[-self.max_messages + len(system_messages):]
+            recent_messages = self.history[-self.max_messages :]
+            self.history = (
+                system_messages
+                + recent_messages[-self.max_messages + len(system_messages) :]
+            )
 
             # Recalculate total tokens after message count trimming
             self._recalculate_total_tokens()
@@ -213,7 +219,7 @@ class ConversationManager:
         self.history.insert(0, system_message)
         self._total_tokens += token_count
 
-    def get_conversation_summary(self) -> Dict[str, any]:
+    def get_conversation_summary(self) -> Dict[str, Any]:
         """
         Get conversation statistics and summary.
 
@@ -235,13 +241,17 @@ class ConversationManager:
 
         thinking_stats = {}
         if thinking_times:
-            thinking_stats = {
-                "total_thinking_time": sum(thinking_times),
-                "average_thinking_time": sum(thinking_times) / len(thinking_times),
-                "min_thinking_time": min(thinking_times),
-                "max_thinking_time": max(thinking_times),
-                "thinking_time_count": len(thinking_times),
-            }
+            # Filter out None values for calculations
+            valid_thinking_times = [t for t in thinking_times if t is not None]
+            if valid_thinking_times:
+                thinking_stats = {
+                    "total_thinking_time": sum(valid_thinking_times),
+                    "average_thinking_time": sum(valid_thinking_times)
+                    / len(valid_thinking_times),
+                    "min_thinking_time": min(valid_thinking_times),
+                    "max_thinking_time": max(valid_thinking_times),
+                    "thinking_time_count": len(valid_thinking_times),
+                }
 
         return {
             "total_messages": len(self.history),
@@ -256,12 +266,24 @@ class ConversationManager:
                 [msg for msg in self.history if msg.role == MessageRole.TOOL]
             ),
             "oldest_message": (
-                min([msg.timestamp for msg in messages_with_timestamps])
+                min(
+                    [
+                        msg.timestamp
+                        for msg in messages_with_timestamps
+                        if msg.timestamp is not None
+                    ]
+                )
                 if messages_with_timestamps
                 else None
             ),
             "newest_message": (
-                max([msg.timestamp for msg in messages_with_timestamps])
+                max(
+                    [
+                        msg.timestamp
+                        for msg in messages_with_timestamps
+                        if msg.timestamp is not None
+                    ]
+                )
                 if messages_with_timestamps
                 else None
             ),
