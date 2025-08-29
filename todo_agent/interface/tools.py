@@ -2,14 +2,14 @@
 Tool definitions and schemas for LLM function calling.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     from todo_agent.core.todo_manager import TodoManager
     from todo_agent.infrastructure.logger import Logger
 except ImportError:
-    from core.todo_manager import TodoManager
-    from infrastructure.logger import Logger
+    from core.todo_manager import TodoManager  # type: ignore[no-redef]
+    from infrastructure.logger import Logger  # type: ignore[no-redef]
 
 
 class ToolCallHandler:
@@ -36,7 +36,7 @@ class ToolCallHandler:
                         "to avoid asking the user for clarification when you can find the answer yourself."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
-                }
+                },
             },
             {
                 "type": "function",
@@ -51,7 +51,7 @@ class ToolCallHandler:
                         "to avoid asking the user for clarification when you can find the answer yourself."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
-                }
+                },
             },
             {
                 "type": "function",
@@ -82,7 +82,7 @@ class ToolCallHandler:
                         },
                         "required": [],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -155,7 +155,7 @@ class ToolCallHandler:
                         },
                         "required": [],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -198,7 +198,7 @@ class ToolCallHandler:
                         },
                         "required": ["description"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -222,7 +222,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -247,7 +247,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number", "new_description"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -271,7 +271,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number", "text"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -295,7 +295,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number", "text"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -323,7 +323,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -348,7 +348,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number", "priority"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -368,7 +368,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -379,7 +379,7 @@ class ToolCallHandler:
                         "an overview, summary, or statistics about their tasks."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
-                }
+                },
             },
             {
                 "type": "function",
@@ -408,7 +408,7 @@ class ToolCallHandler:
                         },
                         "required": ["task_number", "destination"],
                     },
-                }
+                },
             },
             {
                 "type": "function",
@@ -420,7 +420,7 @@ class ToolCallHandler:
                         "their todo list or archive completed tasks."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
-                }
+                },
             },
             {
                 "type": "function",
@@ -432,16 +432,15 @@ class ToolCallHandler:
                         "in the list."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
-                }
+                },
             },
-
         ]
 
     def _format_tool_signature(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Format tool signature with parameters for logging."""
         if not arguments:
             return f"{tool_name}()"
-        
+
         # Format parameters as key=value pairs
         param_parts = []
         for key, value in arguments.items():
@@ -450,7 +449,7 @@ class ToolCallHandler:
                 param_parts.append(f"{key}='{value}'")
             else:
                 param_parts.append(f"{key}={value}")
-        
+
         return f"{tool_name}({', '.join(param_parts)})"
 
     def execute_tool(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
@@ -458,10 +457,11 @@ class ToolCallHandler:
         tool_name = tool_call["function"]["name"]
         arguments = tool_call["function"]["arguments"]
         tool_call_id = tool_call.get("id", "unknown")
-        
+
         # Handle arguments that might be a string (JSON) or already a dict
         if isinstance(arguments, str):
             import json
+
             try:
                 arguments = json.loads(arguments)
                 if self.logger:
@@ -470,10 +470,10 @@ class ToolCallHandler:
                 if self.logger:
                     self.logger.warning(f"Failed to parse JSON arguments: {e}")
                 arguments = {}
-        
+
         # Format tool signature with parameters
         tool_signature = self._format_tool_signature(tool_name, arguments)
-        
+
         # Log function name with signature at INFO level
         if self.logger:
             self.logger.info(f"Executing tool: {tool_signature} (ID: {tool_call_id})")
@@ -486,7 +486,7 @@ class ToolCallHandler:
             self.logger.debug(f"Arguments: {tool_call['function']['arguments']}")
 
         # Map tool names to todo_manager methods
-        method_map = {
+        method_map: Dict[str, Callable[..., Any]] = {
             "list_projects": self.todo_manager.list_projects,
             "list_contexts": self.todo_manager.list_contexts,
             "list_tasks": self.todo_manager.list_tasks,
@@ -515,50 +515,57 @@ class ToolCallHandler:
                 "output": f"ERROR: {error_msg}",
                 "error": True,
                 "error_type": "unknown_tool",
-                "error_details": error_msg
+                "error_details": error_msg,
             }
 
         method = method_map[tool_name]
-        
+
         # Log method call details
         if self.logger:
             self.logger.debug(f"Calling method: {tool_name}")
-        
+
         try:
             result = method(**arguments)
-            
+
             # Log successful output at DEBUG level
             if self.logger:
                 self.logger.debug(f"=== TOOL EXECUTION SUCCESS ===")
                 self.logger.debug(f"Tool: {tool_name}")
                 self.logger.debug(f"Raw result: ====\n{result}\n====")
-                
+
                 # For list results, log the count
                 if isinstance(result, list):
                     self.logger.debug(f"Result count: {len(result)}")
                 # For string results, log the length
                 elif isinstance(result, str):
                     self.logger.debug(f"Result length: {len(result)}")
-                    
-            return {"tool_call_id": tool_call_id, "name": tool_name, "output": result, "error": False}
-                    
+
+            return {
+                "tool_call_id": tool_call_id,
+                "name": tool_name,
+                "output": result,
+                "error": False,
+            }
+
         except Exception as e:
             # Log error details
             if self.logger:
                 self.logger.error(f"=== TOOL EXECUTION FAILED ===")
                 self.logger.error(f"Tool: {tool_name}")
                 self.logger.error(f"Error type: {type(e).__name__}")
-                self.logger.error(f"Error message: {str(e)}")
+                self.logger.error(f"Error message: {e!s}")
                 self.logger.exception(f"Exception details for {tool_name}")
-            
+
             # Return structured error information instead of raising
             error_type = type(e).__name__
             error_message = str(e)
-            
+
             # Provide user-friendly error messages based on error type
             if "FileNotFoundError" in error_type or "todo.sh" in error_message.lower():
                 user_message = f"Todo.sh command failed: {error_message}. Please ensure todo.sh is properly installed and configured."
-            elif "IndexError" in error_type or "task" in error_message.lower() and "not found" in error_message.lower():
+            elif "IndexError" in error_type or (
+                "task" in error_message.lower() and "not found" in error_message.lower()
+            ):
                 user_message = f"Task not found: {error_message}. The task may have been completed or deleted."
             elif "ValueError" in error_type:
                 user_message = f"Invalid input: {error_message}. Please check the task format or parameters."
@@ -566,7 +573,7 @@ class ToolCallHandler:
                 user_message = f"Permission denied: {error_message}. Please check file permissions for todo.txt files."
             else:
                 user_message = f"Operation failed: {error_message}"
-            
+
             return {
                 "tool_call_id": tool_call_id,
                 "name": tool_name,
@@ -574,5 +581,5 @@ class ToolCallHandler:
                 "error": True,
                 "error_type": error_type,
                 "error_details": error_message,
-                "user_message": user_message
+                "user_message": user_message,
             }

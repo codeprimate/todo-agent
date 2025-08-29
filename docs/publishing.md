@@ -13,9 +13,9 @@ After initial setup, each release follows the same simple workflow using the pro
 
 ## Release Checklist
 
-- [ ] All code changes merged and tests passing
+- [ ] Run code quality checks: `ruff check .`, `ruff format .`, `mypy .`
 - [ ] Run tests: `pytest`
-- [ ] Run code quality checks: `black .`, `isort .`, `mypy .`, `flake8`
+- [ ] All code changes merged and tests passing
 - [ ] Create and push git tag: `git tag vX.X.X && git push origin main && git push origin vX.X.X`
 - [ ] Build and publish: `make publish`
 - [ ] Verify package published at [https://pypi.org/project/todo-agent/](https://pypi.org/project/todo-agent/)
@@ -58,10 +58,9 @@ Ensure all code is ready for release:
 pytest
 
 # Run code quality checks
-black .
-isort .
+ruff check .
+ruff format .
 mypy .
-flake8
 
 # Check for security issues
 bandit -r todo_agent/
@@ -163,4 +162,4 @@ For subsequent releases after initial setup:
 
 - Check the [PyPI documentation](https://packaging.python.org/guides/distributing-packages-using-setuptools/)
 - Review the [setuptools_scm documentation](https://github.com/pypa/setuptools_scm)
-- Check the project's [GitHub repository](https://github.com/codeprimate/todo_agent) for issues
+- Check the project's [GitHub repository](https://github.com/codeprimate/todo-agent) for issues

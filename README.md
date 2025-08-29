@@ -176,12 +176,46 @@ git clone https://github.com/codeprimate/todo-agent.git
 cd todo_agent
 pip install -e ".[dev]"
 
+# Run tests via Makefile
+make test
+
 # Run tests
 pytest
 
 # Format code
-black .
-isort .
+make format
+
+# Run linting only
+make lint
+```
+
+## Code Quality and Linting
+
+This project uses comprehensive linting to maintain code quality:
+
+### Linting Tools
+- **Ruff**: Fast Python linter and formatter (replaces Black, isort, and Flake8)
+- **MyPy**: Static type checking
+- **Bandit**: Security vulnerability scanning
+
+**Note**: Ruff is configured to be compatible with Black's formatting style and provides 10-100x faster performance than traditional tools.
+
+### Pre-commit Hooks
+Install pre-commit hooks for automatic linting on commits:
+```bash
+pre-commit install
+```
+
+### Linting in Test Suite
+Linting checks are integrated into the test suite via `tests/test_linting.py`. The `make test` command runs all tests including linting checks. You can also run linting tests separately:
+```bash
+# Run linting tests only
+pytest -m lint
+```
+
+### Configuration Files
+- `pyproject.toml`: Ruff, MyPy, and pytest configuration
+- `.pre-commit-config.yaml`: Pre-commit hooks configuration
 ```
 
 ## Architecture
