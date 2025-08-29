@@ -16,7 +16,7 @@ maintainers = [
 ]
 keywords = ["todo", "task-management", "llm", "natural-language", "cli"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
