@@ -21,8 +21,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -63,10 +61,10 @@ dev = [
 todo-agent = "todo_agent.main:main"
 
 [project.urls]
-Homepage = "https://github.com/codeprimate/todo_agent"
-Documentation = "https://github.com/codeprimate/todo_agent#readme"
-Repository = "https://github.com/codeprimate/todo_agent"
-"Bug Tracker" = "https://github.com/codeprimate/todo_agent/issues"
+Homepage = "https://github.com/codeprimate/todo-agent"
+Documentation = "https://github.com/codeprimate/todo-agent#readme"
+Repository = "https://github.com/codeprimate/todo-agent"
+"Bug Tracker" = "https://github.com/codeprimate/todo-agent/issues"
 
 [tool.setuptools_scm]
 write_to = "todo_agent/_version.py"
