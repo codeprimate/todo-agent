@@ -295,6 +295,49 @@ class TestCLI:
                 f"Error: Failed to list tasks: {error_message}"
             )
 
+    def test_done_command_success(self):
+        """Test successful done command execution."""
+        expected_output = (
+            "x 2025-08-29 2025-08-28 Buy groceries\nx 2025-08-28 2025-08-27 Call mom"
+        )
+
+        # Mock the todo_shell.list_completed method
+        self.cli.todo_shell.list_completed.return_value = expected_output
+
+        with patch("builtins.print") as mock_print:
+            # Simulate the done command logic
+            try:
+                output = self.cli.todo_shell.list_completed()
+                print(output)
+            except Exception as e:
+                print(f"Error: Failed to list completed tasks: {e!s}")
+
+            # Verify todo_shell.list_completed was called
+            self.cli.todo_shell.list_completed.assert_called_once()
+
+            # Verify print was called with the expected output
+            mock_print.assert_called_once_with(expected_output)
+
+    def test_done_command_exception_handling(self):
+        """Test done command handles exceptions properly."""
+        error_message = "Database connection failed"
+
+        # Mock exception in todo_shell.list_completed
+        self.cli.todo_shell.list_completed.side_effect = Exception(error_message)
+
+        with patch("builtins.print") as mock_print:
+            # Simulate the done command logic with error
+            try:
+                output = self.cli.todo_shell.list_completed()
+                print(output)
+            except Exception as e:
+                print(f"Error: Failed to list completed tasks: {e!s}")
+
+            # Verify error was handled and formatted correctly
+            mock_print.assert_called_once_with(
+                f"Error: Failed to list completed tasks: {error_message}"
+            )
+
     def test_help_command_displays_available_commands(self):
         """Test that help command displays all available commands."""
         with patch("builtins.print") as mock_print:
@@ -304,6 +347,7 @@ class TestCLI:
             print("  history  - Show conversation statistics")
             print("  help     - Show this help message")
             print("  list     - List all tasks (no LLM interaction)")
+            print("  done     - List completed tasks (no LLM interaction)")
             print("  quit     - Exit the application")
             print("  Or just type your request naturally!")
 
@@ -314,6 +358,7 @@ class TestCLI:
                 "  history  - Show conversation statistics",
                 "  help     - Show this help message",
                 "  list     - List all tasks (no LLM interaction)",
+                "  done     - List completed tasks (no LLM interaction)",
                 "  quit     - Exit the application",
                 "  Or just type your request naturally!",
             ]

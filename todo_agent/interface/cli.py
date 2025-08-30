@@ -220,6 +220,23 @@ class CLI:
                         self.console.print(error_msg)
                     continue
 
+                if user_input.lower() == "done":
+                    self.logger.debug("User requested completed task list")
+                    try:
+                        output = self.todo_shell.list_completed()
+                        formatted_output = TaskFormatter.format_completed_tasks(output)
+                        task_panel = PanelFormatter.create_task_panel(
+                            str(formatted_output), title="✅ Completed Tasks"
+                        )
+                        self.console.print(task_panel)
+                    except Exception as e:
+                        self.logger.error(f"Error listing completed tasks: {e!s}")
+                        error_msg = ResponseFormatter.format_error(
+                            f"Failed to list completed tasks: {e!s}"
+                        )
+                        self.console.print(error_msg)
+                    continue
+
                 self.logger.info(
                     f"Processing user request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
                 )

@@ -63,6 +63,53 @@ class TaskFormatter:
         return formatted_text
 
     @staticmethod
+    def format_completed_tasks(raw_tasks: str) -> Text:
+        """
+        Format a raw completed task list with unicode characters and numbering.
+
+        Args:
+            raw_tasks: Raw completed task output from todo.sh
+
+        Returns:
+            Formatted completed task list as Rich Text object
+        """
+        if not raw_tasks.strip():
+            return Text("No completed tasks found.")
+
+        lines = raw_tasks.strip().split("\n")
+        formatted_text = Text()
+        task_count = 0
+
+        # Add header
+        formatted_text.append("Completed Tasks", style="bold green")
+        formatted_text.append("\n\n")
+
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines, separators, and todo.sh's own summary line
+            if line and line != "--" and not line.startswith("TODO:"):
+                task_count += 1
+                # Parse todo.txt format and make it more readable
+                formatted_task = TaskFormatter._format_single_completed_task(
+                    line, task_count
+                )
+                # Create a Text object that respects ANSI codes
+                task_text = Text.from_ansi(formatted_task)
+                formatted_text.append(task_text)
+                formatted_text.append("\n")
+
+        # Add task count at the end
+        if task_count > 0:
+            formatted_text.append("\n")
+            formatted_text.append(
+                f"DONE: {task_count} of {task_count} completed tasks shown"
+            )
+        else:
+            formatted_text = Text("No completed tasks found.")
+
+        return formatted_text
+
+    @staticmethod
     def _format_single_task(task_line: str, task_number: int) -> str:
         """
         Format a single task line with unicode characters.
@@ -97,6 +144,34 @@ class TaskFormatter:
             formatted_line = f"  {task_number:2d} │ {priority} │ {description}"
         else:
             formatted_line = f"  {task_number:2d} │   │ {description}"
+
+        return formatted_line
+
+    @staticmethod
+    def _format_single_completed_task(task_line: str, task_number: int) -> str:
+        """
+        Format a single completed task line with unicode characters.
+
+        Args:
+            task_line: Raw completed task line from todo.sh
+            task_number: Task number for display
+
+        Returns:
+            Formatted completed task string
+        """
+        # Parse completed task format: "x 2025-08-29 2025-08-28 Clean cat box @home +chores"
+        # The format is: "x completion_date creation_date description"
+        parts = task_line.split(
+            " ", 2
+        )  # Split on first two spaces to separate x, dates, and description
+        if len(parts) < 3:
+            return f"  {task_number:2d} │   │ {task_line}"
+
+        completion_date = parts[1]
+        description = parts[2]
+
+        # Format with unicode characters
+        formatted_line = f"  {task_number:2d} │ {description}"
 
         return formatted_line
 
@@ -278,6 +353,7 @@ class TableFormatter:
             ("help", "Show this help message"),
             ("about", "Show application information"),
             ("list", "List all tasks (no LLM interaction)"),
+            ("done", "List completed tasks (no LLM interaction)"),
             ("quit", "Exit the application"),
         ]
 
