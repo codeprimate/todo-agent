@@ -10,6 +10,8 @@ try:
     from rich.spinner import Spinner
     from rich.text import Text
     from rich.align import Align
+    from rich.panel import Panel
+    from rich.box import ROUNDED
 
     from todo_agent.core.todo_manager import TodoManager
     from todo_agent.infrastructure.config import Config
@@ -45,6 +47,8 @@ except ImportError:
     from rich.spinner import Spinner
     from rich.text import Text
     from rich.align import Align
+    from rich.panel import Panel
+    from rich.box import ROUNDED
 
 
 class CLI:
@@ -174,9 +178,13 @@ class CLI:
                         output = self.todo_shell.list_tasks()
                         formatted_output = TaskFormatter.format_task_list(output)
                         
-                        # Create a panel for the task list
-                        task_panel = PanelFormatter.create_task_panel(formatted_output)
-                        self.console.print(task_panel)
+                        # Create a wide console for list output with border
+                        wide_console = Console(width=120)
+                        
+                        # Use a simple approach - just print the content with top and bottom borders
+                        wide_console.print("─" * 120, style="green")
+                        wide_console.print(formatted_output)
+                        wide_console.print("─" * 120, style="green")
                     except Exception as e:
                         self.logger.error(f"Error listing tasks: {e!s}")
                         error_msg = ResponseFormatter.format_error(f"Failed to list tasks: {e!s}")

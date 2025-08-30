@@ -8,6 +8,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.box import ROUNDED
 from rich.align import Align
+from rich.console import Console
 
 # CLI width configuration
 CLI_WIDTH = 100
@@ -18,7 +19,7 @@ class TaskFormatter:
     """Formats task-related output with unicode characters and consistent styling."""
     
     @staticmethod
-    def format_task_list(raw_tasks: str, title: str = "📋 Tasks") -> str:
+    def format_task_list(raw_tasks: str, title: str = "📋 Tasks") -> Text:
         """
         Format a raw task list with unicode characters and numbering.
         
@@ -27,24 +28,35 @@ class TaskFormatter:
             title: Title for the task list
             
         Returns:
-            Formatted task list string
+            Formatted task list as Rich Text object
         """
         if not raw_tasks.strip():
-            return "No tasks found."
+            return Text("No tasks found.")
         
         lines = raw_tasks.strip().split('\n')
-        formatted_lines = []
+        formatted_text = Text()
+        task_count = 0
         
-        for i, line in enumerate(lines, 1):
-            if line.strip():
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines, separators, and todo.sh's own summary line
+            if line and line != "--" and not line.startswith("TODO:"):
+                task_count += 1
                 # Parse todo.txt format and make it more readable
-                formatted_task = TaskFormatter._format_single_task(line.strip(), i)
-                formatted_lines.append(formatted_task)
+                formatted_task = TaskFormatter._format_single_task(line, task_count)
+                # Create a Text object that respects ANSI codes
+                task_text = Text.from_ansi(formatted_task)
+                formatted_text.append(task_text)
+                formatted_text.append("\n")
         
-        if formatted_lines:
-            return "\n".join(formatted_lines)
+        # Add task count at the end
+        if task_count > 0:
+            formatted_text.append("\n")
+            formatted_text.append(f"TODO: {task_count} of {task_count} tasks shown")
         else:
-            return "No tasks found."
+            formatted_text = Text("No tasks found.")
+        
+        return formatted_text
     
     @staticmethod
     def _format_single_task(task_line: str, task_number: int) -> str:
@@ -58,20 +70,30 @@ class TaskFormatter:
         Returns:
             Formatted task string
         """
-        # Extract priority if present
-        priority = ""
-        description = task_line
+        # Parse todo.txt format: "1 (A) 2025-08-29 Clean cat box @home +chores due:2025-08-29"
+        parts = task_line.split(' ', 1)  # Split on first space to separate number from rest
+        if len(parts) < 2:
+            return f"  {task_number:2d} │   │ {task_line}"
         
-        if task_line.startswith("(") and ")" in task_line:
-            priority_end = task_line.find(")")
-            priority = task_line[1:priority_end]
-            description = task_line[priority_end + 1:].strip()
+        number_part = parts[0]
+        rest = parts[1]
+        
+        # Extract priority if present (format: "(A)")
+        priority = ""
+        description = rest
+        
+        if rest.startswith("(") and ")" in rest:
+            priority_end = rest.find(")")
+            priority = rest[1:priority_end]
+            description = rest[priority_end + 1:].strip()
         
         # Format with unicode characters
         if priority:
-            return f"  {task_number:2d} │ {priority} │ {description}"
+            formatted_line = f"  {task_number:2d} │ {priority} │ {description}"
         else:
-            return f"  {task_number:2d} │   │ {description}"
+            formatted_line = f"  {task_number:2d} │   │ {description}"
+        
+        return formatted_line
     
     @staticmethod
     def format_projects(raw_projects: str) -> str:
