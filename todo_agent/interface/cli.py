@@ -185,14 +185,8 @@ class CLI:
                     try:
                         output = self.todo_shell.list_tasks()
                         formatted_output = TaskFormatter.format_task_list(output)
-
-                        # Create a wide console for list output with border
-                        wide_console = Console(width=120)
-
-                        # Use a simple approach - just print the content with top and bottom borders
-                        wide_console.print("─" * 120, style="dim")
-                        wide_console.print(formatted_output)
-                        wide_console.print("─" * 120, style="dim")
+                        task_panel = PanelFormatter.create_task_panel(formatted_output)
+                        self.console.print(task_panel)
                     except Exception as e:
                         self.logger.error(f"Error listing tasks: {e!s}")
                         error_msg = ResponseFormatter.format_error(

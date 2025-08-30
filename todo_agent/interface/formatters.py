@@ -37,6 +37,10 @@ class TaskFormatter:
         formatted_text = Text()
         task_count = 0
 
+        # Add header
+        formatted_text.append("Tasks", style="bold blue")
+        formatted_text.append("\n\n")
+
         for line in lines:
             line = line.strip()
             # Skip empty lines, separators, and todo.sh's own summary line
