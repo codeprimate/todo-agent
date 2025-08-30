@@ -329,7 +329,7 @@ class PanelFormatter:
         return Panel(
             Align.center(header_text),
             title="🤖",
-            border_style="blue",
+            border_style="dim",
             box=ROUNDED,
             width=PANEL_WIDTH + 2,
         )
@@ -338,14 +338,14 @@ class PanelFormatter:
     def create_task_panel(content: str, title: str = "📋 Current Tasks") -> Panel:
         """Create a panel for displaying task lists."""
         return Panel(
-            content, title=title, border_style="green", box=ROUNDED, width=PANEL_WIDTH
+            content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
         )
 
     @staticmethod
     def create_response_panel(content: str, title: str = "🤖 Assistant") -> Panel:
         """Create a panel for displaying LLM responses."""
         return Panel(
-            content, title=title, border_style="blue", box=ROUNDED, width=PANEL_WIDTH
+            content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
         )
 
     @staticmethod
@@ -389,7 +389,7 @@ class PanelFormatter:
         return Panel(
             Align.center(about_content),
             title="i  About",
-            border_style="cyan",
+            border_style="dim",
             box=ROUNDED,
             width=PANEL_WIDTH + 2,
         )

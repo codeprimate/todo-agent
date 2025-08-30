@@ -190,9 +190,9 @@ class CLI:
                         wide_console = Console(width=120)
 
                         # Use a simple approach - just print the content with top and bottom borders
-                        wide_console.print("─" * 120, style="green")
+                        wide_console.print("─" * 120, style="dim")
                         wide_console.print(formatted_output)
-                        wide_console.print("─" * 120, style="green")
+                        wide_console.print("─" * 120, style="dim")
                     except Exception as e:
                         self.logger.error(f"Error listing tasks: {e!s}")
                         error_msg = ResponseFormatter.format_error(
