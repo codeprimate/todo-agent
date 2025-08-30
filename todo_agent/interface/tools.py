@@ -171,7 +171,8 @@ class ToolCallHandler:
                         "use list_tasks() and list_completed_tasks() to check for potential duplicates. Look for tasks with "
                         "similar descriptions, keywords, or intent. If you find similar tasks, "
                         "ask the user if they want to add a new task or modify an existing one. "
-                        "If project or context is ambiguous, use discovery tools first. "
+                        "AUTOMATIC INFERENCE: When project or context is not specified, automatically infer appropriate tags "
+                        "based on the task content. Only ask for clarification when genuinely ambiguous. "
                         "Always provide a complete, natural response to the user. "
                         "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
                         "discovery tools (list_tasks, list_projects, list_contexts list_completed_tasks) "
@@ -481,11 +482,11 @@ class ToolCallHandler:
     def _get_calendar(self, month: int, year: int) -> str:
         """
         Get a calendar for the specified month and year using the system 'cal' command.
-        
+
         Args:
             month: Month number (1-12)
             year: Year (4-digit format)
-            
+
         Returns:
             Calendar output as a string
         """
@@ -495,12 +496,13 @@ class ToolCallHandler:
                 ["cal", str(month), str(year)],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except (subprocess.SubprocessError, FileNotFoundError):
             # Fallback to Python calendar module
             import calendar
+
             return calendar.month(year, month).strip()
 
     def _format_tool_signature(self, tool_name: str, arguments: Dict[str, Any]) -> str:

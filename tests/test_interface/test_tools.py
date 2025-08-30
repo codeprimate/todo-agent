@@ -189,7 +189,7 @@ class TestCalendarTool:
         self.mock_logger = Mock()
         self.tool_handler = ToolCallHandler(self.mock_todo_manager, self.mock_logger)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_calendar_success(self, mock_run):
         """Test successful calendar retrieval using system cal command."""
         # Mock the subprocess.run to return a calendar
@@ -197,7 +197,10 @@ class TestCalendarTool:
         mock_run.return_value.returncode = 0
 
         tool_call = {
-            "function": {"name": "get_calendar", "arguments": '{"month": 1, "year": 2025}'},
+            "function": {
+                "name": "get_calendar",
+                "arguments": '{"month": 1, "year": 2025}',
+            },
             "id": "test_id",
         }
 
@@ -207,23 +210,23 @@ class TestCalendarTool:
         assert "January 2025" in result["output"]
         assert result["tool_call_id"] == "test_id"
         assert result["name"] == "get_calendar"
-        
+
         # Verify subprocess.run was called with correct arguments
         mock_run.assert_called_once_with(
-            ["cal", "1", "2025"],
-            capture_output=True,
-            text=True,
-            check=True
+            ["cal", "1", "2025"], capture_output=True, text=True, check=True
         )
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_calendar_fallback_to_python(self, mock_run):
         """Test calendar fallback to Python calendar module when cal command fails."""
         # Mock subprocess.run to raise FileNotFoundError
         mock_run.side_effect = FileNotFoundError("cal command not found")
 
         tool_call = {
-            "function": {"name": "get_calendar", "arguments": '{"month": 1, "year": 2025}'},
+            "function": {
+                "name": "get_calendar",
+                "arguments": '{"month": 1, "year": 2025}',
+            },
             "id": "test_id",
         }
 

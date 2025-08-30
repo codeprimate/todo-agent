@@ -136,21 +136,21 @@ class CLI:
         """Get session memory usage as a progress bar."""
         # Get conversation manager to access memory limits and current usage
         conversation_manager = self.inference.get_conversation_manager()
-        
+
         # Get current usage from conversation summary
         summary = conversation_manager.get_conversation_summary()
         current_tokens = summary.get("estimated_tokens", 0)
         current_messages = summary.get("total_messages", 0)
-        
+
         # Get limits from conversation manager
         max_tokens = conversation_manager.max_tokens
         max_messages = conversation_manager.max_messages
-        
+
         # Create memory usage bar
         memory_bar = PanelFormatter.create_memory_usage_bar(
             current_tokens, max_tokens, current_messages, max_messages
         )
-        
+
         return memory_bar
 
     def run(self) -> None:
@@ -208,7 +208,9 @@ class CLI:
                     try:
                         output = self.todo_shell.list_tasks()
                         formatted_output = TaskFormatter.format_task_list(output)
-                        task_panel = PanelFormatter.create_task_panel(formatted_output)
+                        task_panel = PanelFormatter.create_task_panel(
+                            str(formatted_output)
+                        )
                         self.console.print(task_panel)
                     except Exception as e:
                         self.logger.error(f"Error listing tasks: {e!s}")
@@ -225,10 +227,10 @@ class CLI:
 
                 # Format the response and create a panel
                 formatted_response = ResponseFormatter.format_response(response)
-                
+
                 # Get memory usage
                 memory_usage = self._get_memory_usage()
-                
+
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
                     formatted_response, memory_usage=memory_usage

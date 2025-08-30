@@ -358,7 +358,7 @@ class PanelFormatter:
             combined_content.append("─" * (PANEL_WIDTH - 4))  # Separator line
             combined_content.append("\n")
             combined_content.append(memory_usage)
-            
+
             return Panel(
                 Align.center(combined_content),
                 title=title,

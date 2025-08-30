@@ -77,7 +77,7 @@ class Inference:
 
         # Get calendar output
         from .calendar_utils import get_calendar_output
-        
+
         try:
             calendar_output = get_calendar_output()
         except Exception as e:
@@ -95,9 +95,9 @@ class Inference:
 
             # Format the template with the tools section, current datetime, and calendar
             return system_prompt_template.format(
-                tools_section=tools_section, 
+                tools_section=tools_section,
                 current_datetime=current_datetime,
-                calendar_output=calendar_output
+                calendar_output=calendar_output,
             )
 
         except FileNotFoundError:

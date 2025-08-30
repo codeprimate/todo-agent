@@ -32,6 +32,63 @@ class TestTodoManager(unittest.TestCase):
         self.assertEqual(result, "Added task: Test task")
         self.todo_shell.add.assert_called_once_with("Test task")
 
+    def test_add_task_with_invalid_priority(self):
+        """Test adding a task with invalid priority raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", priority="invalid")
+        self.assertIn("Invalid priority", str(context.exception))
+
+    def test_add_task_with_invalid_priority_lowercase(self):
+        """Test adding a task with lowercase priority raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", priority="a")
+        self.assertIn("Invalid priority", str(context.exception))
+
+    def test_add_task_with_invalid_priority_multiple_chars(self):
+        """Test adding a task with multiple character priority raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", priority="AB")
+        self.assertIn("Invalid priority", str(context.exception))
+
+    def test_add_task_sanitizes_project_with_plus(self):
+        """Test that project with existing + symbol is properly sanitized."""
+        self.todo_shell.add.return_value = "Test task"
+        result = self.todo_manager.add_task("Test task", project="+work")
+        self.assertEqual(result, "Added task: Test task +work")
+        self.todo_shell.add.assert_called_once_with("Test task +work")
+
+    def test_add_task_sanitizes_context_with_at(self):
+        """Test that context with existing @ symbol is properly sanitized."""
+        self.todo_shell.add.return_value = "Test task"
+        result = self.todo_manager.add_task("Test task", context="@office")
+        self.assertEqual(result, "Added task: Test task @office")
+        self.todo_shell.add.assert_called_once_with("Test task @office")
+
+    def test_add_task_with_empty_project_after_sanitization(self):
+        """Test adding a task with empty project after removing + raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", project="+")
+        self.assertIn("Project name cannot be empty", str(context.exception))
+
+    def test_add_task_with_empty_context_after_sanitization(self):
+        """Test adding a task with empty context after removing @ raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", context="@")
+        self.assertIn("Context name cannot be empty", str(context.exception))
+
+    def test_add_task_with_invalid_due_date(self):
+        """Test adding a task with invalid due date format raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", due="invalid-date")
+        self.assertIn("Invalid due date format", str(context.exception))
+
+    def test_add_task_with_valid_due_date(self):
+        """Test adding a task with valid due date format."""
+        self.todo_shell.add.return_value = "Test task"
+        result = self.todo_manager.add_task("Test task", due="2024-01-15")
+        self.assertEqual(result, "Added task: Test task due:2024-01-15")
+        self.todo_shell.add.assert_called_once_with("Test task due:2024-01-15")
+
     def test_list_tasks(self):
         """Test listing tasks."""
         self.todo_shell.list_tasks.return_value = "1. Task 1\n2. Task 2"

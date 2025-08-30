@@ -21,6 +21,39 @@ class TodoManager:
         due: Optional[str] = None,
     ) -> str:
         """Add new task with explicit project/context parameters."""
+        # Validate and sanitize inputs
+        if priority and not (
+            len(priority) == 1 and priority.isalpha() and priority.isupper()
+        ):
+            raise ValueError(
+                f"Invalid priority '{priority}'. Must be a single uppercase letter (A-Z)."
+            )
+
+        if project:
+            # Remove any existing + symbols to prevent duplication
+            project = project.strip().lstrip("+")
+            if not project:
+                raise ValueError(
+                    "Project name cannot be empty after removing + symbol."
+                )
+
+        if context:
+            # Remove any existing @ symbols to prevent duplication
+            context = context.strip().lstrip("@")
+            if not context:
+                raise ValueError(
+                    "Context name cannot be empty after removing @ symbol."
+                )
+
+        if due:
+            # Basic date format validation
+            try:
+                datetime.strptime(due, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError(
+                    f"Invalid due date format '{due}'. Must be YYYY-MM-DD."
+                )
+
         # Build the full task description with priority, project, and context
         full_description = description
 
