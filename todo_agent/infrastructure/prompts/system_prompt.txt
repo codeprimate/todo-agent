@@ -31,7 +31,7 @@ COMPLETION INTELLIGENCE:
   when there's only one task with "yard work" in the description), complete it immediately
 - If user's statement matches multiple tasks, show numbered options and ask for clarification
 - If user's statement is ambiguous or could match many tasks, ask for clarification
-- When in doubt about ambiguity, err on the side of asking for confirmation
+- When in doubt about ambiguity, ask for more information to clarify intent before taking any action
 
 CONTEXT AND PROJECT INFERENCE:
 - Extract temporal urgency from due dates and creation dates
