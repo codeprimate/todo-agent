@@ -91,7 +91,7 @@ class CLI:
         """Main CLI interaction loop."""
         self.logger.info("Starting CLI interaction loop")
         print("Todo.sh LLM Agent - Type 'quit' to exit")
-        print("Commands: 'clear' (clear conversation), 'history' (show stats), 'help'")
+        print("Commands: 'clear' 'list' 'help'")
         print("=" * 50)
 
         while True:
@@ -113,8 +113,8 @@ class CLI:
                     print("Conversation history cleared.")
                     continue
 
-                if user_input.lower() == "history":
-                    self.logger.debug("User requested conversation history")
+                if user_input.lower() == "stats":
+                    self.logger.debug("User requested conversation stats")
                     summary = self.inference.get_conversation_summary()
                     print(f"Conversation Stats:")
                     print(f"  Total messages: {summary['total_messages']}")
@@ -150,7 +150,7 @@ class CLI:
                     self.logger.debug("User requested help")
                     print("Available commands:")
                     print("  clear    - Clear conversation history")
-                    print("  history  - Show conversation statistics")
+                    print("  stats    - Show conversation statistics")
                     print("  help     - Show this help message")
                     print("  list     - List all tasks (no LLM interaction)")
                     print("  quit     - Exit the application")
