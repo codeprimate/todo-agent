@@ -78,8 +78,8 @@ class CLI:
         self.inference = Inference(self.config, self.tool_handler, self.logger)
         self.logger.debug("Inference engine initialized")
 
-        # Initialize rich console for animations with consistent width
-        self.console = Console(width=CLI_WIDTH)
+        # Initialize rich console for animations with consistent width and color support
+        self.console = Console(width=CLI_WIDTH, color_system="auto")
 
         self.logger.info("CLI initialization completed")
 
@@ -209,7 +209,7 @@ class CLI:
                         output = self.todo_shell.list_tasks()
                         formatted_output = TaskFormatter.format_task_list(output)
                         task_panel = PanelFormatter.create_task_panel(
-                            str(formatted_output)
+                            formatted_output
                         )
                         self.console.print(task_panel)
                     except Exception as e:
@@ -226,7 +226,7 @@ class CLI:
                         output = self.todo_shell.list_completed()
                         formatted_output = TaskFormatter.format_completed_tasks(output)
                         task_panel = PanelFormatter.create_task_panel(
-                            str(formatted_output), title="✅ Completed Tasks"
+                            formatted_output, title="✅ Completed Tasks"
                         )
                         self.console.print(task_panel)
                     except Exception as e:

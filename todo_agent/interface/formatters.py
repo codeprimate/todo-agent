@@ -21,14 +21,13 @@ class TaskFormatter:
     @staticmethod
     def format_task_list(raw_tasks: str) -> Text:
         """
-        Format a raw task list with unicode characters and numbering.
+        Format a raw task list while preserving ANSI color codes from todo.sh.
 
         Args:
-            raw_tasks: Raw task output from todo.sh
-            title: Title for the task list
+            raw_tasks: Raw task output from todo.sh with ANSI codes
 
         Returns:
-            Formatted task list as Rich Text object
+            Formatted task list as Rich Text object with preserved ANSI codes
         """
         if not raw_tasks.strip():
             return Text("No tasks found.")
@@ -37,19 +36,15 @@ class TaskFormatter:
         formatted_text = Text()
         task_count = 0
 
-        # Add header
-        formatted_text.append("Tasks", style="bold blue")
-        formatted_text.append("\n\n")
+
 
         for line in lines:
             line = line.strip()
             # Skip empty lines, separators, and todo.sh's own summary line
             if line and line != "--" and not line.startswith("TODO:"):
                 task_count += 1
-                # Parse todo.txt format and make it more readable
-                formatted_task = TaskFormatter._format_single_task(line, task_count)
-                # Create a Text object that respects ANSI codes
-                task_text = Text.from_ansi(formatted_task)
+                # Preserve the original ANSI codes by using Text.from_ansi directly
+                task_text = Text.from_ansi(line)
                 formatted_text.append(task_text)
                 formatted_text.append("\n")
 
@@ -62,16 +57,18 @@ class TaskFormatter:
 
         return formatted_text
 
+
+
     @staticmethod
     def format_completed_tasks(raw_tasks: str) -> Text:
         """
-        Format a raw completed task list with unicode characters and numbering.
+        Format a raw completed task list while preserving ANSI color codes from todo.sh.
 
         Args:
-            raw_tasks: Raw completed task output from todo.sh
+            raw_tasks: Raw completed task output from todo.sh with ANSI codes
 
         Returns:
-            Formatted completed task list as Rich Text object
+            Formatted completed task list as Rich Text object with preserved ANSI codes
         """
         if not raw_tasks.strip():
             return Text("No completed tasks found.")
@@ -80,34 +77,27 @@ class TaskFormatter:
         formatted_text = Text()
         task_count = 0
 
-        # Add header
-        formatted_text.append("Completed Tasks", style="bold green")
-        formatted_text.append("\n\n")
+
 
         for line in lines:
             line = line.strip()
             # Skip empty lines, separators, and todo.sh's own summary line
             if line and line != "--" and not line.startswith("TODO:"):
                 task_count += 1
-                # Parse todo.txt format and make it more readable
-                formatted_task = TaskFormatter._format_single_completed_task(
-                    line, task_count
-                )
-                # Create a Text object that respects ANSI codes
-                task_text = Text.from_ansi(formatted_task)
+                # Preserve the original ANSI codes by using Text.from_ansi directly
+                task_text = Text.from_ansi(line)
                 formatted_text.append(task_text)
                 formatted_text.append("\n")
 
         # Add task count at the end
         if task_count > 0:
             formatted_text.append("\n")
-            formatted_text.append(
-                f"DONE: {task_count} of {task_count} completed tasks shown"
-            )
         else:
             formatted_text = Text("No completed tasks found.")
 
         return formatted_text
+
+
 
     @staticmethod
     def _format_single_task(task_line: str, task_number: int) -> str:
@@ -414,7 +404,7 @@ class PanelFormatter:
         )
 
     @staticmethod
-    def create_task_panel(content: str, title: str = "📋 Current Tasks") -> Panel:
+    def create_task_panel(content: str | Text, title: str = "📋 Current Tasks") -> Panel:
         """Create a panel for displaying task lists."""
         return Panel(
             content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
