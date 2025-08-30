@@ -67,6 +67,8 @@ class ToolCallHandler:
                         "5) User says they finished/completed a task and you need to find the matching task. "
                         "CRITICAL: ALWAYS use this before add_task() to check for similar existing tasks. "
                         "CRITICAL: ALWAYS use this when user mentions task completion to find the correct task number. "
+                        "COMPLETION INTELLIGENCE: When searching for completion matches, if exactly one task clearly "
+                        "matches the user's description, proceed to complete it immediately without asking for confirmation. "
                         "IMPORTANT: When presenting the results to the user, convert the raw todo.txt format "
                         "into conversational language. Do not show the raw format like '(A) task +project @context'. "
                         "STRATEGIC CONTEXT: This is the primary discovery tool - call this FIRST when you need to "
@@ -211,7 +213,9 @@ class ToolCallHandler:
                         "Mark a specific task as complete by its line number. IMPORTANT: "
                         "When user says they finished/completed a task, FIRST use list_tasks() to find matching tasks, "
                         "then list_completed_tasks() to verify it's not already done. "
+                        "COMPLETION LOGIC: If user's statement clearly matches exactly one task, complete it immediately. "
                         "If multiple tasks match, show numbered options and ask for clarification. "
+                        "If the match is ambiguous, ask for confirmation. "
                         "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
                         "discovery tools (list_tasks, list_completed_tasks) to verify the task exists and status."
                     ),
