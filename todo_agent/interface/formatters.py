@@ -167,7 +167,6 @@ class TaskFormatter:
         if len(parts) < 3:
             return f"  {task_number:2d} │   │ {task_line}"
 
-        completion_date = parts[1]
         description = parts[2]
 
         # Format with unicode characters
