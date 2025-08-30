@@ -165,8 +165,9 @@ class CLI:
 
         while True:
             try:
-                # Print prompt with unicode character
-                user_input = self.console.input("\n[bold cyan]▶[/bold cyan] ").strip()
+                # Print prompt character on separate line to prevent deletion
+                self.console.print("\n[bold cyan]▶[/bold cyan]", end="\n")
+                user_input = self.console.input().strip()
 
                 if user_input.lower() in ["quit", "exit", "q"]:
                     self.logger.info("User requested exit")
