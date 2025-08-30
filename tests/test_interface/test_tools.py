@@ -178,3 +178,59 @@ class TestToolErrorHandling:
 
         assert result["error"] is False
         assert result["output"] == "1. Test task"
+
+
+class TestCalendarTool:
+    """Test calendar tool functionality."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_todo_manager = Mock(spec=TodoManager)
+        self.mock_logger = Mock()
+        self.tool_handler = ToolCallHandler(self.mock_todo_manager, self.mock_logger)
+
+    @patch('subprocess.run')
+    def test_get_calendar_success(self, mock_run):
+        """Test successful calendar retrieval using system cal command."""
+        # Mock the subprocess.run to return a calendar
+        mock_run.return_value.stdout = "   January 2025\nSu Mo Tu We Th Fr Sa\n          1  2  3  4\n 5  6  7  8  9 10 11\n12 13 14 15 16 17 18\n19 20 21 22 23 24 25\n26 27 28 29 30 31\n"
+        mock_run.return_value.returncode = 0
+
+        tool_call = {
+            "function": {"name": "get_calendar", "arguments": '{"month": 1, "year": 2025}'},
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert "January 2025" in result["output"]
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "get_calendar"
+        
+        # Verify subprocess.run was called with correct arguments
+        mock_run.assert_called_once_with(
+            ["cal", "1", "2025"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+    @patch('subprocess.run')
+    def test_get_calendar_fallback_to_python(self, mock_run):
+        """Test calendar fallback to Python calendar module when cal command fails."""
+        # Mock subprocess.run to raise FileNotFoundError
+        mock_run.side_effect = FileNotFoundError("cal command not found")
+
+        tool_call = {
+            "function": {"name": "get_calendar", "arguments": '{"month": 1, "year": 2025}'},
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert "January" in result["output"]
+        assert "2025" in result["output"]
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "get_calendar"

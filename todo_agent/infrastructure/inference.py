@@ -75,6 +75,15 @@ class Inference:
 
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Get calendar output
+        from .calendar_utils import get_calendar_output
+        
+        try:
+            calendar_output = get_calendar_output()
+        except Exception as e:
+            self.logger.warning(f"Failed to get calendar output: {e!s}")
+            calendar_output = "Calendar unavailable"
+
         # Load system prompt from file
         prompt_file_path = os.path.join(
             os.path.dirname(__file__), "prompts", "system_prompt.txt"
@@ -84,9 +93,11 @@ class Inference:
             with open(prompt_file_path, encoding="utf-8") as f:
                 system_prompt_template = f.read()
 
-            # Format the template with the tools section and current datetime
+            # Format the template with the tools section, current datetime, and calendar
             return system_prompt_template.format(
-                tools_section=tools_section, current_datetime=current_datetime
+                tools_section=tools_section, 
+                current_datetime=current_datetime,
+                calendar_output=calendar_output
             )
 
         except FileNotFoundError:

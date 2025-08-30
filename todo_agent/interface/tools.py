@@ -2,6 +2,7 @@
 Tool definitions and schemas for LLM function calling.
 """
 
+import subprocess
 from typing import Any, Callable, Dict, List, Optional
 
 try:
@@ -434,7 +435,67 @@ class ToolCallHandler:
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_calendar",
+                    "description": (
+                        "Get a calendar for a specific month and year using the system 'cal' command. "
+                        "Use this when: "
+                        "1) User asks to see a calendar for a specific month/year, "
+                        "2) User wants to plan tasks around specific dates, "
+                        "3) User needs to see what day of the week a date falls on, "
+                        "4) User wants to visualize the current month or upcoming months. "
+                        "The calendar will show the month in a traditional calendar format with days of the week. "
+                        "IMPORTANT: When displaying the calendar output, present it directly without wrapping in backticks or code blocks. "
+                        "The calendar should be displayed as plain text in the conversation."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "month": {
+                                "type": "integer",
+                                "description": "Month number (1-12, where 1=January, 12=December)",
+                                "minimum": 1,
+                                "maximum": 12,
+                            },
+                            "year": {
+                                "type": "integer",
+                                "description": "Year (4-digit format, e.g., 2025)",
+                                "minimum": 1900,
+                                "maximum": 2100,
+                            },
+                        },
+                        "required": ["month", "year"],
+                    },
+                },
+            },
         ]
+
+    def _get_calendar(self, month: int, year: int) -> str:
+        """
+        Get a calendar for the specified month and year using the system 'cal' command.
+        
+        Args:
+            month: Month number (1-12)
+            year: Year (4-digit format)
+            
+        Returns:
+            Calendar output as a string
+        """
+        try:
+            # Use the cal command with specific month and year
+            result = subprocess.run(
+                ["cal", str(month), str(year)],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return result.stdout.strip()
+        except (subprocess.SubprocessError, FileNotFoundError):
+            # Fallback to Python calendar module
+            import calendar
+            return calendar.month(year, month).strip()
 
     def _format_tool_signature(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Format tool signature with parameters for logging."""
@@ -503,6 +564,7 @@ class ToolCallHandler:
             "move_task": self.todo_manager.move_task,
             "archive_tasks": self.todo_manager.archive_tasks,
             "deduplicate_tasks": self.todo_manager.deduplicate_tasks,
+            "get_calendar": self._get_calendar,
         }
 
         if tool_name not in method_map:

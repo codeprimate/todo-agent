@@ -15,10 +15,7 @@ except ImportError:
     from infrastructure.llm_client import LLMClient  # type: ignore[no-redef]
     from infrastructure.logger import Logger  # type: ignore[no-redef]
     from infrastructure.ollama_client import OllamaClient  # type: ignore[no-redef]
-    from infrastructure.openrouter_client import (  # type: ignore[no-redef]
-        OpenRouterClient,
-    )
-
+    from infrastructure.openrouter_client import OpenRouterClient  # type: ignore[no-redef]
 
 class LLMClientFactory:
     """Factory for creating LLM clients based on configuration."""
