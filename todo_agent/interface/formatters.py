@@ -2,11 +2,12 @@
 Formatters for CLI output with unicode characters and consistent styling.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from rich.align import Align
 from rich.box import ROUNDED
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 from rich.text import Text
 
@@ -346,11 +347,26 @@ class PanelFormatter:
         )
 
     @staticmethod
-    def create_response_panel(content: str, title: str = "🤖 Assistant") -> Panel:
+    def create_response_panel(content: str, title: str = "🤖 Assistant", memory_usage: Optional[Text] = None) -> Panel:
         """Create a panel for displaying LLM responses."""
-        return Panel(
-            content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
-        )
+        if memory_usage:
+            # Create the combined content with centered memory usage
+            return Panel(
+                Align.center(
+                    Text.assemble(
+                        content,
+                        "\n\n",
+                        "─" * (PANEL_WIDTH - 4),  # Separator line
+                        "\n",
+                        memory_usage
+                    )
+                ),
+                title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
+            )
+        else:
+            return Panel(
+                content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
+            )
 
     @staticmethod
     def create_error_panel(content: str, title: str = "❌ Error") -> Panel:
@@ -397,3 +413,45 @@ class PanelFormatter:
             box=ROUNDED,
             width=PANEL_WIDTH + 2,
         )
+
+    @staticmethod
+    def create_memory_usage_bar(current_tokens: int, max_tokens: int, current_messages: int, max_messages: int) -> Text:
+        """
+        Create a rich progress bar showing session memory usage.
+        
+        Args:
+            current_tokens: Current number of tokens in conversation
+            max_tokens: Maximum allowed tokens
+            current_messages: Current number of messages in conversation
+            max_messages: Maximum allowed messages
+            
+        Returns:
+            Rich Text object with memory usage progress bar
+        """
+        # Calculate percentage
+        token_percentage = min(100, (current_tokens / max_tokens) * 100)
+        
+        # Determine color based on usage
+        if token_percentage >= 90:
+            color = "red"
+        elif token_percentage >= 75:
+            color = "yellow"
+        else:
+            color = "green"
+        
+        # Create the progress bar text
+        memory_text = Text()
+        memory_text.append(f"{current_tokens:,}/{max_tokens:,} ", style="dim")
+        
+        # Create a simple text-based progress bar
+        bar_length = 25
+        token_filled = int((token_percentage / 100) * bar_length)
+        token_bar = "█" * token_filled + "░" * (bar_length - token_filled)
+        memory_text.append(f"[{token_bar}] ", style="dim")
+        memory_text.append(f"{token_percentage:.1f}%", style="dim")
+        
+        # Add message count without progress bar
+        memory_text.append(" | ", style="dim")
+        memory_text.append(f"{current_messages}/{max_messages}", style="dim")
+        
+        return memory_text
