@@ -36,8 +36,16 @@ Examples:
 
         if args.command:
             # Single command mode
-            response = cli.run_single_request(args.command)
-            print(response)
+            # Handle special commands that don't need LLM processing
+            if args.command.lower() in ["help", "about"]:
+                if args.command.lower() == "help":
+                    cli._print_help()
+                elif args.command.lower() == "about":
+                    cli._print_about()
+            else:
+                # Process through LLM
+                response = cli.run_single_request(args.command)
+                print(response)
         else:
             # Interactive mode
             cli.run()
