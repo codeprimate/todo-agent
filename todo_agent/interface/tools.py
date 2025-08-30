@@ -171,8 +171,10 @@ class ToolCallHandler:
                         "use list_tasks() and list_completed_tasks() to check for potential duplicates. Look for tasks with "
                         "similar descriptions, keywords, or intent. If you find similar tasks, "
                         "ask the user if they want to add a new task or modify an existing one. "
-                        "AUTOMATIC INFERENCE: When project or context is not specified, automatically infer appropriate tags "
-                        "based on the task content. Only ask for clarification when genuinely ambiguous. "
+                        "AUTOMATIC INFERENCE: When project, context, or due date is not specified, automatically infer appropriate tags "
+                        "and due dates based on the task content, natural language expressions, task nature, calendar context, and existing patterns. "
+                        "DUE DATE INFERENCE: Extract temporal expressions and use common sense to infer appropriate due dates based on task type, "
+                        "work patterns, personal schedules, and existing task due date patterns. Only ask for clarification when genuinely ambiguous. "
                         "Always provide a complete, natural response to the user. "
                         "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
                         "discovery tools (list_tasks, list_projects, list_contexts list_completed_tasks) "
@@ -199,7 +201,7 @@ class ToolCallHandler:
                             },
                             "due": {
                                 "type": "string",
-                                "description": "Optional due date in YYYY-MM-DD format",
+                                "description": "Optional due date in YYYY-MM-DD format. Automatically inferred from natural language expressions like 'tomorrow', 'next week', 'by Friday', 'urgent', 'asap'",
                             },
                         },
                         "required": ["description"],
