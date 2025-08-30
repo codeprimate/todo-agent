@@ -151,8 +151,8 @@ class TestCLI:
 
         result = self.cli.handle_request(user_input)
 
-        # Verify error is properly formatted
-        assert result == f"Error: {error_message}"
+        # Verify error is properly formatted with unicode
+        assert result == f"❌ {error_message}"
 
         # Verify inference engine was called
         self.cli.inference.process_request.assert_called_once_with(user_input)
