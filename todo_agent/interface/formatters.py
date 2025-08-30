@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 from rich.align import Align
 from rich.box import ROUNDED
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 from rich.text import Text
 
@@ -347,21 +346,25 @@ class PanelFormatter:
         )
 
     @staticmethod
-    def create_response_panel(content: str, title: str = "🤖 Assistant", memory_usage: Optional[Text] = None) -> Panel:
+    def create_response_panel(
+        content: str, title: str = "🤖 Assistant", memory_usage: Optional[Text] = None
+    ) -> Panel:
         """Create a panel for displaying LLM responses."""
         if memory_usage:
             # Create the combined content with centered memory usage
+            combined_content = Text()
+            combined_content.append(content)
+            combined_content.append("\n\n")
+            combined_content.append("─" * (PANEL_WIDTH - 4))  # Separator line
+            combined_content.append("\n")
+            combined_content.append(memory_usage)
+            
             return Panel(
-                Align.center(
-                    Text.assemble(
-                        content,
-                        "\n\n",
-                        "─" * (PANEL_WIDTH - 4),  # Separator line
-                        "\n",
-                        memory_usage
-                    )
-                ),
-                title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH
+                Align.center(combined_content),
+                title=title,
+                border_style="dim",
+                box=ROUNDED,
+                width=PANEL_WIDTH,
             )
         else:
             return Panel(
@@ -415,43 +418,71 @@ class PanelFormatter:
         )
 
     @staticmethod
-    def create_memory_usage_bar(current_tokens: int, max_tokens: int, current_messages: int, max_messages: int) -> Text:
+    def create_memory_usage_bar(
+        current_tokens: int, max_tokens: int, current_messages: int, max_messages: int
+    ) -> Text:
         """
         Create a rich progress bar showing session memory usage.
-        
+
         Args:
             current_tokens: Current number of tokens in conversation
             max_tokens: Maximum allowed tokens
             current_messages: Current number of messages in conversation
             max_messages: Maximum allowed messages
-            
+
         Returns:
             Rich Text object with memory usage progress bar
         """
         # Calculate percentage
         token_percentage = min(100, (current_tokens / max_tokens) * 100)
-        
-        # Determine color based on usage
-        if token_percentage >= 90:
-            color = "red"
-        elif token_percentage >= 75:
-            color = "yellow"
-        else:
-            color = "green"
-        
-        # Create the progress bar text
+
+        # Create the progress bar text with new layout
         memory_text = Text()
-        memory_text.append(f"{current_tokens:,}/{max_tokens:,} ", style="dim")
-        
-        # Create a simple text-based progress bar
-        bar_length = 25
+
+        # Calculate available width (PANEL_WIDTH - 4 for borders = 94 chars)
+        # Account for emoji width by using a slightly reduced width
+        available_width = 92  # Balance between full width and emoji spacing
+
+        # Left section: Floppy disk + token count
+        left_section = f"💾 {current_tokens:,}/{max_tokens:,}"
+        left_width = len(left_section)
+
+        # Right section: Message count + floppy disk
+        right_section = f"{current_messages}/{max_messages} 💾"
+        right_width = len(right_section)
+
+        # Center section: Progress bar (2x wider = 50 chars) + percentage
+        bar_length = 50
         token_filled = int((token_percentage / 100) * bar_length)
         token_bar = "█" * token_filled + "░" * (bar_length - token_filled)
-        memory_text.append(f"[{token_bar}] ", style="dim")
-        memory_text.append(f"{token_percentage:.1f}%", style="dim")
-        
-        # Add message count without progress bar
-        memory_text.append(" | ", style="dim")
-        memory_text.append(f"{current_messages}/{max_messages}", style="dim")
-        
+        center_section = f"[{token_bar}] {token_percentage:.1f}%"
+        center_width = len(center_section)
+
+        # Calculate spacing to center the progress bar
+        total_content_width = left_width + center_width + right_width
+        remaining_space = available_width - total_content_width
+
+        # Ensure we have enough space, if not, reduce the progress bar length
+        if remaining_space < 0:
+            # Reduce bar length to fit everything
+            excess = abs(remaining_space)
+            bar_length = max(30, 50 - excess)  # Minimum 30 chars
+            token_filled = int((token_percentage / 100) * bar_length)
+            token_bar = "█" * token_filled + "░" * (bar_length - token_filled)
+            center_section = f"[{token_bar}] {token_percentage:.1f}%"
+            center_width = len(center_section)
+            total_content_width = left_width + center_width + right_width
+            remaining_space = available_width - total_content_width
+
+        # Distribute remaining space equally for symmetrical layout
+        left_spacing = remaining_space // 2
+        right_spacing = remaining_space - left_spacing
+
+        # Build the final layout
+        memory_text.append(left_section, style="dim")
+        memory_text.append(" " * left_spacing)
+        memory_text.append(center_section, style="dim")
+        memory_text.append(" " * right_spacing)
+        memory_text.append(right_section, style="dim")
+
         return memory_text
