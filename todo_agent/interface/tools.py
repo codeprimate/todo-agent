@@ -63,8 +63,10 @@ class ToolCallHandler:
                         "1) User wants to see their tasks, "
                         "2) You need to find a specific task by description, "
                         "3) You need to check for potential duplicates before adding new tasks, "
-                        "4) You need to understand the current state before making changes. "
+                        "4) You need to understand the current state before making changes, "
+                        "5) User says they finished/completed a task and you need to find the matching task. "
                         "CRITICAL: ALWAYS use this before add_task() to check for similar existing tasks. "
+                        "CRITICAL: ALWAYS use this when user mentions task completion to find the correct task number. "
                         "IMPORTANT: When presenting the results to the user, convert the raw todo.txt format "
                         "into conversational language. Do not show the raw format like '(A) task +project @context'. "
                         "STRATEGIC CONTEXT: This is the primary discovery tool - call this FIRST when you need to "
@@ -77,7 +79,7 @@ class ToolCallHandler:
                                 "type": "string",
                                 "description": (
                                     "Optional filter string (e.g., '+work', '@office', '(A)') - "
-                                    "use when you want to see only specific tasks"
+                                    "use when you want to see only specific tasks or when searching for completion matches"
                                 ),
                             }
                         },
@@ -207,11 +209,11 @@ class ToolCallHandler:
                     "name": "complete_task",
                     "description": (
                         "Mark a specific task as complete by its line number. IMPORTANT: "
-                        "Before completing, use list_completed_tasks() to check if it's already done. "
-                        "If multiple tasks match the description, ask the user to clarify which one. "
+                        "When user says they finished/completed a task, FIRST use list_tasks() to find matching tasks, "
+                        "then list_completed_tasks() to verify it's not already done. "
+                        "If multiple tasks match, show numbered options and ask for clarification. "
                         "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
-                        "discovery tools (list_tasks, list_completed_tasks) "
-                        "to verify the task exists and hasn't already been completed."
+                        "discovery tools (list_tasks, list_completed_tasks) to verify the task exists and status."
                     ),
                     "parameters": {
                         "type": "object",
