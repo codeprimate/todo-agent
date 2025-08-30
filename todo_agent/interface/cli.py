@@ -3,6 +3,8 @@ Command-line interface for todo.sh LLM agent.
 """
 
 try:
+    import readline
+
     from rich.console import Console
     from rich.live import Live
     from rich.spinner import Spinner
@@ -31,6 +33,9 @@ class CLI:
     """User interaction loop and input/output handling."""
 
     def __init__(self) -> None:
+        # Initialize readline for arrow key navigation
+        readline.set_history_length(50)  # Match existing conversation cap
+
         # Initialize logger first
         self.logger = Logger("cli")
         self.logger.info("Initializing CLI")
