@@ -187,6 +187,16 @@ class Inference:
                 messages=messages, tools=self.tool_handler.tools
             )
 
+            # Extract actual token usage from API response
+            usage = response.get("usage", {})
+            actual_prompt_tokens = usage.get("prompt_tokens", 0)
+            actual_completion_tokens = usage.get("completion_tokens", 0)
+            actual_total_tokens = usage.get("total_tokens", 0)
+            
+            # Update conversation manager with actual token count
+            self.conversation_manager.update_request_tokens(actual_prompt_tokens)
+            self.logger.debug(f"Updated with actual API tokens: prompt={actual_prompt_tokens}, completion={actual_completion_tokens}, total={actual_total_tokens}")
+
             # Handle multiple tool calls in sequence
             tool_call_count = 0
             while True:
@@ -236,6 +246,12 @@ class Inference:
                 response = self.llm_client.chat_with_tools(
                     messages=messages, tools=self.tool_handler.tools
                 )
+                
+                # Update with actual tokens from subsequent API calls
+                usage = response.get("usage", {})
+                actual_prompt_tokens = usage.get("prompt_tokens", 0)
+                self.conversation_manager.update_request_tokens(actual_prompt_tokens)
+                self.logger.debug(f"Updated with actual API tokens after tool calls: prompt={actual_prompt_tokens}")
 
             # Calculate and log total thinking time
             end_time = time.time()
@@ -270,7 +286,7 @@ class Inference:
         Returns:
             Dictionary with conversation metrics
         """
-        return self.conversation_manager.get_conversation_summary()
+        return self.conversation_manager.get_conversation_summary(self.tool_handler.tools)
 
     def clear_conversation(self) -> None:
         """Clear conversation history."""

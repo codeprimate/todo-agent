@@ -43,6 +43,8 @@ class ConversationManager:
         self.system_prompt: Optional[str] = None
         self.token_counter = get_token_counter(model)
         self._total_tokens = 0  # Running total of tokens in conversation
+        self._tools_tokens = 0  # Cache for tools token count
+        self._last_tools_hash = None  # Track if tools have changed
 
     def add_message(
         self,
@@ -140,10 +142,44 @@ class ConversationManager:
                 self._total_tokens -= message.token_count
             self.history.pop(index)
 
-    def _trim_if_needed(self) -> None:
+    def get_request_tokens(self, tools: List[Dict[str, Any]]) -> int:
+        """
+        Get total request tokens (conversation + tools).
+        
+        Args:
+            tools: Current tool definitions
+            
+        Returns:
+            Total request tokens
+        """
+        # Check if tools have changed
+        tools_hash = hash(str(tools))
+        if tools_hash != self._last_tools_hash:
+            self._tools_tokens = self.token_counter.count_tools_tokens(tools)
+            self._last_tools_hash = tools_hash
+        
+        return self._total_tokens + self._tools_tokens
+
+    def update_request_tokens(self, actual_prompt_tokens: int) -> None:
+        """
+        Update the conversation with actual token count from API response.
+        
+        Args:
+            actual_prompt_tokens: Actual prompt tokens used by the API
+        """
+        # Calculate tools tokens by subtracting conversation tokens
+        tools_tokens = actual_prompt_tokens - self._total_tokens
+        if tools_tokens >= 0:
+            self._tools_tokens = tools_tokens
+        # Note: logger not available in this context, so we'll handle logging in the calling code
+
+    def _trim_if_needed(self, tools: Optional[List[Dict[str, Any]]] = None) -> None:
         """
         Trim conversation history if it exceeds token or message limits.
         Preserves most recent messages and system prompt.
+        
+        Args:
+            tools: Optional tools for request token calculation
         """
         # Check message count limit
         if len(self.history) > self.max_messages:
@@ -160,8 +196,10 @@ class ConversationManager:
             # Recalculate total tokens after message count trimming
             self._recalculate_total_tokens()
 
-        # Check token limit - remove oldest non-system messages until under limit
-        while self._total_tokens > self.max_tokens and len(self.history) > 2:
+        # Check token limit using request tokens if tools provided
+        current_tokens = self.get_request_tokens(tools) if tools else self._total_tokens
+        
+        while current_tokens > self.max_tokens and len(self.history) > 2:
             # Find oldest non-system message to remove
             for i, msg in enumerate(self.history):
                 if msg.role != MessageRole.SYSTEM:
@@ -170,6 +208,9 @@ class ConversationManager:
             else:
                 # No non-system messages found, break to avoid infinite loop
                 break
+            
+            # Recalculate request tokens
+            current_tokens = self.get_request_tokens(tools) if tools else self._total_tokens
 
     def _recalculate_total_tokens(self) -> None:
         """Recalculate total token count from scratch (used after major restructuring)."""
@@ -219,10 +260,13 @@ class ConversationManager:
         self.history.insert(0, system_message)
         self._total_tokens += token_count
 
-    def get_conversation_summary(self) -> Dict[str, Any]:
+    def get_conversation_summary(self, tools: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Get conversation statistics and summary.
-
+        
+        Args:
+            tools: Optional tools for request token calculation
+            
         Returns:
             Dictionary with conversation metrics
         """
@@ -256,6 +300,7 @@ class ConversationManager:
         return {
             "total_messages": len(self.history),
             "estimated_tokens": self._total_tokens,
+            "request_tokens": self.get_request_tokens(tools) if tools else self._total_tokens,
             "user_messages": len(
                 [msg for msg in self.history if msg.role == MessageRole.USER]
             ),

@@ -138,8 +138,8 @@ class CLI:
         conversation_manager = self.inference.get_conversation_manager()
 
         # Get current usage from conversation summary
-        summary = conversation_manager.get_conversation_summary()
-        current_tokens = summary.get("estimated_tokens", 0)
+        summary = self.inference.get_conversation_summary()
+        current_tokens = summary.get("request_tokens", 0)  # Use request_tokens
         current_messages = summary.get("total_messages", 0)
 
         # Get limits from conversation manager
