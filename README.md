@@ -4,7 +4,7 @@ A natural language interface for [todo.sh](https://github.com/todotxt/todo.txt-c
 
 ## What it does
 
-Transform natural language into todo.sh commands:
+Transform natural language into todo.sh commands with intelligent task management:
 
 ```bash
 # Use interactively
@@ -15,91 +15,43 @@ todo-agent "add buy groceries to shopping list"
 todo-agent "show my work tasks"
 ```
 
+## Why Todo Agent?
+
+**Speak naturally** instead of memorizing commands. Todo Agent understands "add dentist appointment next Monday" and automatically sets the right date, project, and context.
+
+**Get intelligent insights** beyond basic task lists. It organizes tasks strategically, suggests priorities, and recommends optimal timing based on your patterns.
+
+**Work smarter** with automatic duplicate detection, recurring task handling, and calendar-aware scheduling.
+
+**Choose your privacy** - use cloud AI (OpenRouter) or run locally (Ollama).
+
 ## Quick Start
 
 ### 1. Install
 
-#### Prerequisites
+#### Install todo.sh (required)
 
-**Install todo.sh (required)**
+**macOS:** `brew install todo-txt`  
+**Linux:** `sudo apt-get install todo-txt-cli` (Ubuntu/Debian) or `sudo pacman -S todo-txt-cli` (Arch)  
+**Windows:** `choco install todo-txt-cli` (Chocolatey) or `scoop install todo-txt-cli` (Scoop)
 
-todo.sh is the underlying task management system that todo-agent interfaces with.
-
-**macOS:**
-```bash
-# Using Homebrew
-brew install todo-txt
-# Or using MacPorts
-sudo port install todo-txt
-```
-
-**Linux:**
-```bash
-# Ubuntu/Debian
-sudo apt-get install todo-txt-cli
-# CentOS/RHEL/Fedora
-sudo yum install todo-txt-cli
-# or
-sudo dnf install todo-txt-cli
-# Arch Linux
-sudo pacman -S todo-txt-cli
-```
-
-**Windows:**
-```bash
-# Using Chocolatey
-choco install todo-txt-cli
-# Using Scoop
-scoop install todo-txt-cli
-```
-
-**From source:**
-```bash
-git clone https://github.com/todotxt/todo.txt-cli.git
-cd todo.txt-cli
-make
-sudo make install
-```
-
-#### Configure todo.sh
-
-After installing todo.sh, you need to set up your todo.txt repository:
+#### Set up todo.sh
 
 ```bash
-# Create a directory for your todo files
-mkdir ~/todo
-cd ~/todo
-
-# Initialize todo.sh (this creates the initial todo.txt file)
+# Create and initialize your todo directory
+mkdir ~/todo && cd ~/todo
 todo.sh init
 
-# Verify installation
-todo.sh version
-```
-
-**Important:** Set the `TODO_DIR` environment variable to point to your todo.txt repository:
-
-```bash
+# Add to your shell profile (.bashrc, .zshrc, etc.)
 export TODO_DIR="$HOME/todo"
 ```
-
-You can add this to your shell profile (`.bashrc`, `.zshrc`, etc.) to make it permanent.
 
 #### Install todo-agent
 
 ```bash
-# Clone and install from source
 git clone https://github.com/codeprimate/todo-agent.git
 cd todo_agent
-
-# Option 1: Install built package locally
 make install
-
-# Option 2: Install in development mode with dev dependencies
-make install-dev
-
-# Option 3: Install in development mode (basic)
-pip install -e .
 ```
 
 ### 2. Set up your LLM provider
@@ -151,6 +103,22 @@ todo-agent "set task 3 as high priority"
 todo-agent "what projects do I have?"
 todo-agent "show completed tasks"
 todo-agent "list my contexts"
+```
+
+### Strategic Planning
+```bash
+todo-agent "what should I do next?"
+todo-agent "organize my tasks by priority"
+todo-agent "show me everything due this week"
+todo-agent "what tasks are blocking other work?"
+```
+
+### Natural Language Intelligence
+```bash
+todo-agent "add dentist appointment next Monday"
+todo-agent "set up recurring daily vitamin reminder"
+todo-agent "move all completed tasks to archive"
+todo-agent "show me tasks I can do from home"
 ```
 
 ## Configuration

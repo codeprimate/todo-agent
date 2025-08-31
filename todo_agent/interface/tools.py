@@ -10,7 +10,7 @@ Discovery Tools (Call FIRST):
 - list_completed_tasks(filter?, project?, context?, text_search?, date_from?, date_to?) - List completed tasks with optional filtering
 
 Task Management Tools:
-- add_task(description, priority?, project?, context?, due?) - Add new task to todo.txt
+- add_task(description, priority?, project?, context?, due?, recurring?) - Add new task to todo.txt
 - complete_task(task_number) - Mark task as complete by line number
 - replace_task(task_number, new_description) - Replace entire task content
 - append_to_task(task_number, text) - Add text to end of existing task
@@ -20,12 +20,16 @@ Task Management Tools:
 Priority Management Tools:
 - set_priority(task_number, priority) - Set or change task priority (A-Z)
 - remove_priority(task_number) - Remove priority from task
+- set_due_date(task_number, due_date) - Set or update due date for a task by intelligently rewriting it (use empty string to remove due date)
+- set_context(task_number, context) - Set or update context for a task by intelligently rewriting it (use empty string to remove context)
+- set_project(task_number, projects) - Set or update projects for a task by intelligently rewriting it (handles array of projects with add/remove operations)
 
 Utility Tools:
 - get_overview() - Show task statistics and summary
 - move_task(task_number, destination, source?) - Move task between files
 - archive_tasks() - Archive completed tasks from todo.txt to done.txt
 - get_calendar(month, year) - Get calendar for specific month and year
+- parse_date(date_expression) - Convert natural language date expressions to YYYY-MM-DD format
 """
 
 import subprocess
@@ -296,7 +300,11 @@ class ToolCallHandler:
                     "name": "append_to_task",
                     "description": (
                         "Add text to the end of an existing task. Use this when user wants "
-                        "to add additional information to a task without replacing it entirely."
+                        "to add additional information to a task without replacing it entirely. "
+                        "CRITICAL: DO NOT use this for adding project tags (+project) or context tags (@context) - "
+                        "use set_project() or set_context() instead. "
+                        "DO NOT use this for adding due dates - use set_due_date() instead. "
+                        "This tool is for adding descriptive text, notes, or comments to tasks."
                     ),
                     "parameters": {
                         "type": "object",
@@ -408,6 +416,97 @@ class ToolCallHandler:
                             }
                         },
                         "required": ["task_number"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_due_date",
+                    "description": (
+                        "Set or update the due date for a task by intelligently rewriting it. "
+                        "This preserves all existing task components (priority, projects, contexts, etc.) "
+                        "while updating or adding the due date. Use empty string to remove the due date. "
+                        "IMPORTANT: Use list_tasks() first "
+                        "to find the correct task number if user doesn't specify it. "
+                        "Use parse_date() tool to convert natural language expressions like 'tomorrow', "
+                        "'next week', 'by Friday' to YYYY-MM-DD format."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_number": {
+                                "type": "integer",
+                                "description": "The line number of the task to modify (required)",
+                            },
+                            "due_date": {
+                                "type": "string",
+                                "description": "Due date in YYYY-MM-DD format, or empty string to remove due date (required). Use parse_date() tool to convert natural language expressions.",
+                            },
+                        },
+                        "required": ["task_number", "due_date"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_context",
+                    "description": (
+                        "Set or update the context for a task by intelligently rewriting it. "
+                        "This preserves all existing task components (priority, projects, due date, etc.) "
+                        "while updating or adding the context. Use empty string to remove the context. "
+                        "PREFERRED METHOD: Use this instead of append_to_task() when adding context tags (@context). "
+                        "This tool properly manages context organization and prevents formatting issues. "
+                        "IMPORTANT: Use list_tasks() first "
+                        "to find the correct task number if user doesn't specify it."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_number": {
+                                "type": "integer",
+                                "description": "The line number of the task to modify (required)",
+                            },
+                            "context": {
+                                "type": "string",
+                                "description": "Context to set for the task (required). Use empty string to remove context.",
+                            },
+                        },
+                        "required": ["task_number", "context"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_project",
+                    "description": (
+                        "Set or update projects for a task by intelligently rewriting it. "
+                        "This preserves all existing task components and manages projects intelligently. "
+                        "Supports multiple projects, prevents duplicates, and groups them together. "
+                        "Empty array or empty strings are NOOPs (no changes). "
+                        "Use '-project' syntax to remove specific projects. "
+                        "PREFERRED METHOD: Use this instead of append_to_task() when adding project tags (+project). "
+                        "This tool properly manages project organization and prevents formatting issues. "
+                        "IMPORTANT: Use list_tasks() first "
+                        "to find the correct task number if user doesn't specify it. "
+                        "Project names should be provided without the + symbol (e.g., 'work' not '+work')."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_number": {
+                                "type": "integer",
+                                "description": "The line number of the task to modify (required)",
+                            },
+                            "projects": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Array of project operations. Each item can be: project name (add), '-project' (remove), or empty string (remove all) (required).",
+                            },
+                        },
+                        "required": ["task_number", "projects"],
                     },
                 },
             },
@@ -724,10 +823,12 @@ class ToolCallHandler:
             "delete_task": self.todo_manager.delete_task,
             "set_priority": self.todo_manager.set_priority,
             "remove_priority": self.todo_manager.remove_priority,
+            "set_due_date": self.todo_manager.set_due_date,
+            "set_context": self.todo_manager.set_context,
+            "set_project": self.todo_manager.set_project,
             "get_overview": self.todo_manager.get_overview,
             "move_task": self.todo_manager.move_task,
             "archive_tasks": self.todo_manager.archive_tasks,
-            "deduplicate_tasks": self.todo_manager.deduplicate_tasks,
             "parse_date": self._parse_date,
             "get_calendar": self._get_calendar,
         }

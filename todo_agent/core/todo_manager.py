@@ -78,7 +78,9 @@ class TodoManager:
                     if interval < 1:
                         raise ValueError("Interval must be at least 1.")
                 except ValueError:
-                    raise ValueError(f"Invalid interval '{parts[2]}'. Must be a positive integer.")
+                    raise ValueError(
+                        f"Invalid interval '{parts[2]}'. Must be a positive integer."
+                    )
 
         # Build the full task description with priority, project, and context
         full_description = description
@@ -166,6 +168,114 @@ class TodoManager:
         """Remove priority from task."""
         result = self.todo_shell.remove_priority(task_number)
         return f"Removed priority from task {task_number}: {result}"
+
+    def set_due_date(self, task_number: int, due_date: str) -> str:
+        """
+        Set or update due date for a task by intelligently rewriting it.
+
+        Args:
+            task_number: The task number to modify
+            due_date: Due date in YYYY-MM-DD format, or empty string to remove due date
+
+        Returns:
+            Confirmation message with the updated task
+        """
+        # Validate due date format only if not empty
+        if due_date.strip():
+            try:
+                datetime.strptime(due_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError(
+                    f"Invalid due date format '{due_date}'. Must be YYYY-MM-DD."
+                )
+
+        result = self.todo_shell.set_due_date(task_number, due_date)
+        if due_date.strip():
+            return f"Set due date {due_date} for task {task_number}: {result}"
+        else:
+            return f"Removed due date from task {task_number}: {result}"
+
+    def set_context(self, task_number: int, context: str) -> str:
+        """
+        Set or update context for a task by intelligently rewriting it.
+
+        Args:
+            task_number: The task number to modify
+            context: Context name (without @ symbol), or empty string to remove context
+
+        Returns:
+            Confirmation message with the updated task
+        """
+        # Validate context name if not empty
+        if context.strip():
+            # Remove any existing @ symbols to prevent duplication
+            clean_context = context.strip().lstrip("@")
+            if not clean_context:
+                raise ValueError(
+                    "Context name cannot be empty after removing @ symbol."
+                )
+
+        result = self.todo_shell.set_context(task_number, context)
+        if context.strip():
+            clean_context = context.strip().lstrip("@")
+            return f"Set context @{clean_context} for task {task_number}: {result}"
+        else:
+            return f"Removed context from task {task_number}: {result}"
+
+    def set_project(self, task_number: int, projects: list) -> str:
+        """
+        Set or update projects for a task by intelligently rewriting it.
+
+        Args:
+            task_number: The task number to modify
+            projects: List of project operations. Each item can be:
+                     - "project" (add project)
+                     - "-project" (remove project)
+                     - Empty string removes all projects
+
+        Returns:
+            Confirmation message with the updated task
+        """
+        # Validate project names if not empty
+        if projects:
+            for project in projects:
+                if project.strip() and not project.startswith("-"):
+                    # Remove any existing + symbols to prevent duplication
+                    clean_project = project.strip().lstrip("+")
+                    if not clean_project:
+                        raise ValueError(
+                            "Project name cannot be empty after removing + symbol."
+                        )
+                elif project.startswith("-"):
+                    clean_project = project[1:].strip().lstrip("+")
+                    if not clean_project:
+                        raise ValueError(
+                            "Project name cannot be empty after removing - and + symbols."
+                        )
+
+        result = self.todo_shell.set_project(task_number, projects)
+
+        if not projects:
+            return f"No project changes made to task {task_number}: {result}"
+        else:
+            # Build operation description
+            operations = []
+            for project in projects:
+                if not project.strip():
+                    # Empty string is a NOOP - skip
+                    continue
+                elif project.startswith("-"):
+                    clean_project = project[1:].strip().lstrip("+")
+                    operations.append(f"removed +{clean_project}")
+                else:
+                    clean_project = project.strip().lstrip("+")
+                    operations.append(f"added +{clean_project}")
+
+            if not operations:
+                return f"No project changes made to task {task_number}: {result}"
+            else:
+                operation_desc = ", ".join(operations)
+                return f"Updated projects for task {task_number} ({operation_desc}): {result}"
 
     def list_projects(self, **kwargs: Any) -> str:
         """List all available projects in todo.txt."""
