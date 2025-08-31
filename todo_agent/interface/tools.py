@@ -1,5 +1,31 @@
 """
 Tool definitions and schemas for LLM function calling.
+
+AVAILABLE TOOLS:
+
+Discovery Tools (Call FIRST):
+- list_projects() - Get all available projects from todo.txt
+- list_contexts() - Get all available contexts from todo.txt  
+- list_tasks(filter?) - List current tasks with optional filtering
+- list_completed_tasks(filter?, project?, context?, text_search?, date_from?, date_to?) - List completed tasks with optional filtering
+
+Task Management Tools:
+- add_task(description, priority?, project?, context?, due?) - Add new task to todo.txt
+- complete_task(task_number) - Mark task as complete by line number
+- replace_task(task_number, new_description) - Replace entire task content
+- append_to_task(task_number, text) - Add text to end of existing task
+- prepend_to_task(task_number, text) - Add text to beginning of existing task
+- delete_task(task_number, term?) - Delete entire task or remove specific term
+
+Priority Management Tools:
+- set_priority(task_number, priority) - Set or change task priority (A-Z)
+- remove_priority(task_number) - Remove priority from task
+
+Utility Tools:
+- get_overview() - Show task statistics and summary
+- move_task(task_number, destination, source?) - Move task between files
+- archive_tasks() - Archive completed tasks from todo.txt to done.txt
+- get_calendar(month, year) - Get calendar for specific month and year
 """
 
 import subprocess
@@ -428,18 +454,6 @@ class ToolCallHandler:
                         "Archive completed tasks by moving them from todo.txt to done.txt "
                         "and removing blank lines. Use this when user wants to clean up "
                         "their todo list or archive completed tasks."
-                    ),
-                    "parameters": {"type": "object", "properties": {}, "required": []},
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "deduplicate_tasks",
-                    "description": (
-                        "Remove duplicate tasks from todo.txt. Use this when user wants "
-                        "to clean up duplicate entries or when you notice duplicate tasks "
-                        "in the list."
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
