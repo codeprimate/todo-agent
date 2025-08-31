@@ -230,6 +230,10 @@ class ToolCallHandler:
                                 "type": "string",
                                 "description": "Optional due date in YYYY-MM-DD format. Use parse_date() tool to convert natural language expressions like 'tomorrow', 'next week', 'by Friday' to YYYY-MM-DD format",
                             },
+                            "recurring": {
+                                "type": "string",
+                                "description": "Optional recurring pattern in rec:frequency[:interval] format (e.g., 'rec:daily', 'rec:weekly:2', 'rec:monthly'). Use for tasks that repeat automatically.",
+                            },
                         },
                         "required": ["description"],
                     },

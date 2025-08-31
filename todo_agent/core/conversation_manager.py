@@ -35,7 +35,7 @@ class ConversationManager:
     """Manages conversation state and memory for LLM interactions."""
 
     def __init__(
-        self, max_tokens: int = 16000, max_messages: int = 50, model: str = "gpt-4"
+        self, max_tokens: int = 32000, max_messages: int = 50, model: str = "gpt-4"
     ):
         self.history: List[ConversationMessage] = []
         self.max_tokens = max_tokens
