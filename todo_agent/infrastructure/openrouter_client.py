@@ -72,26 +72,32 @@ class OpenRouterClient(LLMClient):
             f"Token usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}, Total: {total_tokens}"
         )
 
-        # Log tool call details if present
-        if response.get("choices"):
-            choice = response["choices"][0]
-            if "message" in choice and "tool_calls" in choice["message"]:
-                tool_calls = choice["message"]["tool_calls"]
-                self.logger.info(f"Response contains {len(tool_calls)} tool calls")
-
-                # Log thinking content (response body) if present
-                content = choice["message"].get("content", "")
-                if content and content.strip():
-                    self.logger.info(f"LLM thinking before tool calls: {content}")
-
-                for i, tool_call in enumerate(tool_calls):
-                    tool_name = tool_call.get("function", {}).get("name", "unknown")
-                    self.logger.info(f"  Tool call {i + 1}: {tool_name}")
-            elif "message" in choice and "content" in choice["message"]:
-                content = choice["message"]["content"]
-                self.logger.debug(
-                    f"Response contains content: {content[:100]}{'...' if len(content) > 100 else ''}"
-                )
+        # Extract and log choice details
+        choices = response.get("choices", [])
+        if not choices:
+            return
+            
+        choice = choices[0]
+        message = choice.get("message", {})
+        
+        # Always log reasoning and content if present
+        reasoning = message.get("reasoning", "")
+        if reasoning:
+            self.logger.info(f"LLM reasoning: {reasoning}")
+            
+        content = message.get("content", "")
+        if content:
+            self.logger.info(f"LLM content: {content}")
+        
+        # Handle tool calls
+        tool_calls = message.get("tool_calls", [])
+        if tool_calls:
+            self.logger.info(f"Response contains {len(tool_calls)} tool calls")
+            
+            # Log each tool call
+            for i, tool_call in enumerate(tool_calls, 1):
+                tool_name = tool_call.get("function", {}).get("name", "unknown")
+                self.logger.info(f"  Tool call {i}: {tool_name}")
 
         self.logger.debug(f"Raw response: {json.dumps(response, indent=2)}")
 
