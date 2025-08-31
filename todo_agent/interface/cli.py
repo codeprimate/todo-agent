@@ -166,7 +166,7 @@ class CLI:
         while True:
             try:
                 # Print prompt character on separate line to prevent deletion
-                self.console.print("\n[bold cyan]▶[/bold cyan]", end="\n")
+                self.console.print("\n[bold cyan]▶[/bold cyan]", end=" ")
                 user_input = self.console.input().strip()
 
                 if user_input.lower() in ["quit", "exit", "q"]:
@@ -244,8 +244,10 @@ class CLI:
                 # Format the response and create a panel
                 formatted_response = ResponseFormatter.format_response(response)
 
-                # Get memory usage
-                memory_usage = self._get_memory_usage()
+                # Get memory usage 
+                # DISABLED FOR NOW
+                # memory_usage = self._get_memory_usage()
+                memory_usage = None 
 
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
