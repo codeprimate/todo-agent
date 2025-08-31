@@ -36,8 +36,6 @@ class TaskFormatter:
         formatted_text = Text()
         task_count = 0
 
-
-
         for line in lines:
             line = line.strip()
             # Skip empty lines, separators, and todo.sh's own summary line
@@ -57,8 +55,6 @@ class TaskFormatter:
 
         return formatted_text
 
-
-
     @staticmethod
     def format_completed_tasks(raw_tasks: str) -> Text:
         """
@@ -77,8 +73,6 @@ class TaskFormatter:
         formatted_text = Text()
         task_count = 0
 
-
-
         for line in lines:
             line = line.strip()
             # Skip empty lines, separators, and todo.sh's own summary line
@@ -96,8 +90,6 @@ class TaskFormatter:
             formatted_text = Text("No completed tasks found.")
 
         return formatted_text
-
-
 
     @staticmethod
     def _format_single_task(task_line: str, task_number: int) -> str:
@@ -404,7 +396,9 @@ class PanelFormatter:
         )
 
     @staticmethod
-    def create_task_panel(content: str | Text, title: str = "📋 Current Tasks") -> Panel:
+    def create_task_panel(
+        content: str | Text, title: str = "📋 Current Tasks"
+    ) -> Panel:
         """Create a panel for displaying task lists."""
         return Panel(
             content, title=title, border_style="dim", box=ROUNDED, width=PANEL_WIDTH

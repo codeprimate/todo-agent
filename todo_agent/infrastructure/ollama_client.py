@@ -72,12 +72,12 @@ class OllamaClient(LLMClient):
         if "message" in response and "tool_calls" in response["message"]:
             tool_calls = response["message"]["tool_calls"]
             self.logger.info(f"Response contains {len(tool_calls)} tool calls")
-            
+
             # Log thinking content (response body) if present
             content = response["message"].get("content", "")
             if content and content.strip():
                 self.logger.info(f"LLM thinking before tool calls: {content}")
-            
+
             for i, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
                 self.logger.info(f"  Tool call {i + 1}: {tool_name}")

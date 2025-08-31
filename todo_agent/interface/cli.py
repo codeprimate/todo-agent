@@ -209,9 +209,7 @@ class CLI:
                     try:
                         output = self.todo_shell.list_tasks()
                         formatted_output = TaskFormatter.format_task_list(output)
-                        task_panel = PanelFormatter.create_task_panel(
-                            formatted_output
-                        )
+                        task_panel = PanelFormatter.create_task_panel(formatted_output)
                         self.console.print(task_panel)
                     except Exception as e:
                         self.logger.error(f"Error listing tasks: {e!s}")

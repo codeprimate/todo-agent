@@ -237,3 +237,70 @@ class TestCalendarTool:
         assert "2025" in result["output"]
         assert result["tool_call_id"] == "test_id"
         assert result["name"] == "get_calendar"
+
+
+class TestParseDateTool:
+    """Test parse_date tool functionality."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_todo_manager = Mock(spec=TodoManager)
+        self.mock_logger = Mock()
+        self.tool_handler = ToolCallHandler(self.mock_todo_manager, self.mock_logger)
+
+    def test_parse_date_next_weekday(self):
+        """Test parsing 'next thursday'."""
+        tool_call = {
+            "function": {
+                "name": "parse_date",
+                "arguments": '{"date_expression": "next thursday"}',
+            },
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "parse_date"
+        # Should return a valid YYYY-MM-DD format
+        assert len(result["output"]) == 10
+        assert result["output"].count("-") == 2
+
+    def test_parse_date_tomorrow(self):
+        """Test parsing 'tomorrow'."""
+        tool_call = {
+            "function": {
+                "name": "parse_date",
+                "arguments": '{"date_expression": "tomorrow"}',
+            },
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "parse_date"
+        # Should return a valid YYYY-MM-DD format
+        assert len(result["output"]) == 10
+        assert result["output"].count("-") == 2
+
+    def test_parse_date_in_days(self):
+        """Test parsing 'in 3 days'."""
+        tool_call = {
+            "function": {
+                "name": "parse_date",
+                "arguments": '{"date_expression": "in 3 days"}',
+            },
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "parse_date"
+        # Should return a valid YYYY-MM-DD format
+        assert len(result["output"]) == 10
+        assert result["output"].count("-") == 2

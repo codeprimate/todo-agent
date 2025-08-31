@@ -5,7 +5,7 @@ AVAILABLE TOOLS:
 
 Discovery Tools (Call FIRST):
 - list_projects() - Get all available projects from todo.txt
-- list_contexts() - Get all available contexts from todo.txt  
+- list_contexts() - Get all available contexts from todo.txt
 - list_tasks(filter?) - List current tasks with optional filtering
 - list_completed_tasks(filter?, project?, context?, text_search?, date_from?, date_to?) - List completed tasks with optional filtering
 
@@ -199,7 +199,8 @@ class ToolCallHandler:
                         "ask the user if they want to add a new task or modify an existing one. "
                         "AUTOMATIC INFERENCE: When project, context, or due date is not specified, automatically infer appropriate tags "
                         "and due dates based on the task content, natural language expressions, task nature, calendar context, and existing patterns. "
-                        "DUE DATE INFERENCE: Extract temporal expressions and use common sense to infer appropriate due dates based on task type, "
+                        "DUE DATE INFERENCE: Use parse_date() tool to convert any temporal expressions to YYYY-MM-DD format. "
+                        "Extract temporal expressions and use common sense to infer appropriate due dates based on task type, "
                         "work patterns, personal schedules, and existing task due date patterns. Only ask for clarification when genuinely ambiguous. "
                         "Always provide a complete, natural response to the user. "
                         "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
@@ -227,7 +228,7 @@ class ToolCallHandler:
                             },
                             "due": {
                                 "type": "string",
-                                "description": "Optional due date in YYYY-MM-DD format. Automatically inferred from natural language expressions like 'tomorrow', 'next week', 'by Friday', 'urgent', 'asap'",
+                                "description": "Optional due date in YYYY-MM-DD format. Use parse_date() tool to convert natural language expressions like 'tomorrow', 'next week', 'by Friday' to YYYY-MM-DD format",
                             },
                         },
                         "required": ["description"],
@@ -461,6 +462,32 @@ class ToolCallHandler:
             {
                 "type": "function",
                 "function": {
+                    "name": "parse_date",
+                    "description": (
+                        "Convert natural language date expressions to YYYY-MM-DD format. "
+                        "Use this when: "
+                        "1) User mentions weekdays like 'due on Monday', 'by Friday', 'next Tuesday', "
+                        "2) User uses relative dates like 'tomorrow', 'next week', 'in 3 days', "
+                        "3) User says 'this Monday' vs 'next Monday' and you need the exact date, "
+                        "4) You need to convert any temporal expression to a specific calendar date. "
+                        "This tool handles all date parsing to ensure accuracy and consistency. "
+                        "CRITICAL: Use this tool whenever you need to convert any date expression to YYYY-MM-DD format."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "date_expression": {
+                                "type": "string",
+                                "description": "The natural language date expression to parse (e.g., 'next Monday', 'tomorrow', 'by Friday', 'in 3 days')",
+                            },
+                        },
+                        "required": ["date_expression"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "get_calendar",
                     "description": (
                         "Get a calendar for a specific month and year using the system 'cal' command. "
@@ -520,6 +547,115 @@ class ToolCallHandler:
             import calendar
 
             return calendar.month(year, month).strip()
+
+    def _parse_date(self, date_expression: str) -> str:
+        """
+        Parse natural language date expressions to YYYY-MM-DD format.
+
+        Args:
+            date_expression: Natural language date expression
+
+        Returns:
+            Date in YYYY-MM-DD format
+        """
+        try:
+            # Use the date command to parse natural language expressions
+            result = subprocess.run(
+                ["date", "-d", date_expression, "+%Y-%m-%d"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except (subprocess.SubprocessError, FileNotFoundError):
+            # Fallback to Python date parsing
+            import re
+            from datetime import datetime, timedelta
+
+            today = datetime.now()
+            date_expr = date_expression.lower().strip()
+
+            # Handle "next [weekday]" patterns
+            next_match = re.match(
+                r"next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)",
+                date_expr,
+            )
+            if next_match:
+                weekday_name = next_match.group(1)
+                weekday_map = {
+                    "monday": 0,
+                    "tuesday": 1,
+                    "wednesday": 2,
+                    "thursday": 3,
+                    "friday": 4,
+                    "saturday": 5,
+                    "sunday": 6,
+                }
+                target_weekday = weekday_map[weekday_name]
+                days_ahead = target_weekday - today.weekday()
+                if days_ahead <= 0:  # Target day already happened this week
+                    days_ahead += 7
+                target_date = today + timedelta(days=days_ahead)
+                return target_date.strftime("%Y-%m-%d")
+
+            # Handle "this [weekday]" patterns
+            this_match = re.match(
+                r"this\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)",
+                date_expr,
+            )
+            if this_match:
+                weekday_name = this_match.group(1)
+                weekday_map = {
+                    "monday": 0,
+                    "tuesday": 1,
+                    "wednesday": 2,
+                    "thursday": 3,
+                    "friday": 4,
+                    "saturday": 5,
+                    "sunday": 6,
+                }
+                target_weekday = weekday_map[weekday_name]
+                days_ahead = target_weekday - today.weekday()
+                if days_ahead < 0:  # Target day already happened this week
+                    days_ahead += 7
+                target_date = today + timedelta(days=days_ahead)
+                return target_date.strftime("%Y-%m-%d")
+
+            # Handle "tomorrow"
+            if date_expr == "tomorrow":
+                return (today + timedelta(days=1)).strftime("%Y-%m-%d")
+
+            # Handle "in X days"
+            days_match = re.match(r"in\s+(\d+)\s+days?", date_expr)
+            if days_match:
+                days = int(days_match.group(1))
+                return (today + timedelta(days=days)).strftime("%Y-%m-%d")
+
+            # Handle "by [weekday]" - same as "next [weekday]"
+            by_match = re.match(
+                r"by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)",
+                date_expr,
+            )
+            if by_match:
+                weekday_name = by_match.group(1)
+                weekday_map = {
+                    "monday": 0,
+                    "tuesday": 1,
+                    "wednesday": 2,
+                    "thursday": 3,
+                    "friday": 4,
+                    "saturday": 5,
+                    "sunday": 6,
+                }
+                target_weekday = weekday_map[weekday_name]
+                days_ahead = target_weekday - today.weekday()
+                if days_ahead <= 0:  # Target day already happened this week
+                    days_ahead += 7
+                target_date = today + timedelta(days=days_ahead)
+                return target_date.strftime("%Y-%m-%d")
+
+            # If we can't parse it, return today's date as fallback
+            return today.strftime("%Y-%m-%d")
 
     def _format_tool_signature(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Format tool signature with parameters for logging."""
@@ -588,6 +724,7 @@ class ToolCallHandler:
             "move_task": self.todo_manager.move_task,
             "archive_tasks": self.todo_manager.archive_tasks,
             "deduplicate_tasks": self.todo_manager.deduplicate_tasks,
+            "parse_date": self._parse_date,
             "get_calendar": self._get_calendar,
         }
 

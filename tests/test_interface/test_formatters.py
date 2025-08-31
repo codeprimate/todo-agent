@@ -15,12 +15,12 @@ class TestTaskFormatter:
         """Test that format_task_list preserves ANSI color codes."""
         # Sample output with ANSI color codes (simulating todo.sh output)
         raw_tasks = "\033[1;33m1\033[0m (A) \033[1;32m2025-08-29\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m \033[1;31mdue:2025-08-29\033[0m"
-        
+
         result = TaskFormatter.format_task_list(raw_tasks)
-        
+
         # The result should be a Rich Text object
         assert isinstance(result, Text)
-        
+
         # Check that the Rich Text object contains the original ANSI codes
         # We can check this by looking at the raw text content
         result_str = result.plain
@@ -35,12 +35,12 @@ class TestTaskFormatter:
         """Test that format_completed_tasks preserves ANSI color codes."""
         # Sample completed task output with ANSI color codes
         raw_tasks = "\033[1;32mx\033[0m \033[1;32m2025-08-29\033[0m \033[1;32m2025-08-28\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m"
-        
+
         result = TaskFormatter.format_completed_tasks(raw_tasks)
-        
+
         # The result should be a Rich Text object
         assert isinstance(result, Text)
-        
+
         # Check that the Rich Text object contains the original content
         # We can check this by looking at the raw text content
         result_str = result.plain
