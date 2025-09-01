@@ -430,9 +430,9 @@ class TodoShell:
                 components["description"] = word
 
         # Convert sets back to sorted lists for consistent ordering
-        components["projects"] = sorted(list(projects_set))
-        components["contexts"] = sorted(list(contexts_set))
-        components["other_tags"] = sorted(list(other_tags_set))
+        components["projects"] = sorted(projects_set)
+        components["contexts"] = sorted(contexts_set)
+        components["other_tags"] = sorted(other_tags_set)
 
         return components
 

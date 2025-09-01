@@ -197,18 +197,21 @@ class ToolCallHandler:
                 "function": {
                     "name": "add_task",
                     "description": (
-                        "Add a new task to todo.txt. CRITICAL: Before adding ANY task, you MUST "
-                        "use list_tasks() and list_completed_tasks() to check for potential duplicates. Look for tasks with "
-                        "similar descriptions, keywords, or intent. If you find similar tasks, "
+                        "Add a NEW task to todo.txt with intelligent automatic inference capabilities. "
+                        "USE CASE: Call this when user wants to create a NEW task, not when they want to complete, modify, or work with existing tasks. "
+                        "CRITICAL: Before adding ANY task, you MUST use list_tasks() and list_completed_tasks() to check for potential duplicates. "
+                        "Look for tasks with similar descriptions, keywords, or intent. If you find similar tasks, "
                         "ask the user if they want to add a new task or modify an existing one. "
-                        "AUTOMATIC INFERENCE: When project, context, or due date is not specified, automatically infer appropriate tags "
-                        "and due dates based on the task content, natural language expressions, task nature, calendar context, and existing patterns. "
-                        "DUE DATE INFERENCE: Use parse_date() tool to convert any temporal expressions to YYYY-MM-DD format. "
-                        "Extract temporal expressions and use common sense to infer appropriate due dates based on task type, "
-                        "work patterns, personal schedules, and existing task due date patterns. Only ask for clarification when genuinely ambiguous. "
-                        "Always provide a complete, natural response to the user. "
-                        "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
-                        "discovery tools (list_tasks, list_projects, list_contexts list_completed_tasks) "
+                        "INTELLIGENT INFERENCE ENGINE: This tool automatically infers missing elements to create complete, actionable tasks: "
+                        "PROJECT INFERENCE: Automatically detect and add appropriate +project tags based on task keywords, semantic patterns, and existing project usage. "
+                        "CONTEXT INFERENCE: Automatically infer @context tags from task nature, location requirements, and historical context patterns. "
+                        "DUE DATE INFERENCE: Use parse_date() tool to convert natural language expressions ('tomorrow', 'next week', 'by Friday') to YYYY-MM-DD format. "
+                        "Apply strategic timing based on task type, work patterns, personal schedules, and existing due date patterns. "
+                        "DURATION INFERENCE: Automatically estimate appropriate duration: tags based on task complexity, context, and historical patterns. "
+                        "PRIORITY INFERENCE: Suggest appropriate priority levels (A-Z) based on urgency, importance, and existing priority patterns. "
+                        "Only ask for clarification when genuinely ambiguous. Always provide a complete, natural response to the user. "
+                        "STRATEGIC CONTEXT: This is a CREATION tool - call this LAST after using "
+                        "discovery tools (list_tasks, list_projects, list_contexts, list_completed_tasks) "
                         "to gather all necessary context and verify no duplicates exist."
                     ),
                     "parameters": {
@@ -238,6 +241,10 @@ class ToolCallHandler:
                                 "type": "string",
                                 "description": "Optional recurring pattern in rec:frequency[:interval] format (e.g., 'rec:daily', 'rec:weekly:2', 'rec:monthly'). Use for tasks that repeat automatically.",
                             },
+                            "duration": {
+                                "type": "string",
+                                "description": "Optional duration estimate in format: minutes (e.g., '30m'), hours (e.g., '2h'), or days (e.g., '1d'). Use for time planning and task prioritization.",
+                            },
                         },
                         "required": ["description"],
                     },
@@ -248,14 +255,11 @@ class ToolCallHandler:
                 "function": {
                     "name": "complete_task",
                     "description": (
-                        "Mark a specific task as complete by its line number. IMPORTANT: "
-                        "When user says they finished/completed a task, FIRST use list_tasks() to find matching tasks, "
-                        "then list_completed_tasks() to verify it's not already done. "
-                        "COMPLETION LOGIC: If user's statement clearly matches exactly one task, complete it immediately. "
-                        "If multiple tasks match, show numbered options and ask for clarification. "
-                        "If the match is ambiguous, ask for confirmation. "
-                        "STRATEGIC CONTEXT: This is a modification tool - call this LAST after using "
-                        "discovery tools (list_tasks, list_completed_tasks) to verify the task exists and status."
+                        "Mark an existing task as complete by its line number. "
+                        "USE CASE: Only call this when user explicitly states they have finished/completed a task. "
+                        "WORKFLOW: 1) Use list_tasks() to find the task to complete, 2) Use list_completed_tasks() to verify it's not already done, 3) Call complete_task() with the task number. "
+                        "NOT FOR: Adding new tasks, modifying task content, or any other task operations. "
+                        "This tool ONLY marks existing tasks as complete."
                     ),
                     "parameters": {
                         "type": "object",
@@ -274,8 +278,10 @@ class ToolCallHandler:
                 "function": {
                     "name": "replace_task",
                     "description": (
-                        "Replace the entire content of a task. IMPORTANT: Use list_tasks() first "
-                        "to find the correct task number if user doesn't specify it. "
+                        "Replace the entire content of an EXISTING task. "
+                        "USE CASE: Call this when user wants to completely rewrite an existing task description. "
+                        "NOT FOR: Creating new tasks, completing tasks, or adding to tasks. "
+                        "Use list_tasks() first to find the correct task number if user doesn't specify it. "
                         "If multiple tasks match the description, ask for clarification."
                     ),
                     "parameters": {
@@ -299,12 +305,13 @@ class ToolCallHandler:
                 "function": {
                     "name": "append_to_task",
                     "description": (
-                        "Add text to the end of an existing task. Use this when user wants "
-                        "to add additional information to a task without replacing it entirely. "
+                        "Add text to the end of an EXISTING task. "
+                        "USE CASE: Call this when user wants to add additional descriptive text, notes, or comments to an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or adding project/context/due date tags. "
                         "CRITICAL: DO NOT use this for adding project tags (+project) or context tags (@context) - "
                         "use set_project() or set_context() instead. "
                         "DO NOT use this for adding due dates - use set_due_date() instead. "
-                        "This tool is for adding descriptive text, notes, or comments to tasks."
+                        "This tool is ONLY for adding descriptive text, notes, or comments to existing tasks."
                     ),
                     "parameters": {
                         "type": "object",
@@ -327,8 +334,10 @@ class ToolCallHandler:
                 "function": {
                     "name": "prepend_to_task",
                     "description": (
-                        "Add text to the beginning of an existing task. Use this when user "
-                        "wants to add a prefix or modifier to a task."
+                        "Add text to the beginning of an EXISTING task. "
+                        "USE CASE: Call this when user wants to add a prefix or modifier to an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or adding project/context/due date tags. "
+                        "This tool is ONLY for modifying existing tasks by adding text at the beginning."
                     ),
                     "parameters": {
                         "type": "object",
@@ -351,7 +360,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "delete_task",
                     "description": (
-                        "Delete an entire task or remove a specific term from a task. "
+                        "Delete an entire EXISTING task or remove a specific term from an EXISTING task. "
+                        "USE CASE: Call this when user wants to delete a task completely or remove specific text from an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "IMPORTANT: Use list_tasks() first to find the correct task number "
                         "if user doesn't specify it."
                     ),
@@ -379,7 +390,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "set_priority",
                     "description": (
-                        "Set or change the priority of a task (A-Z, where A is highest). "
+                        "Set or change the priority of an EXISTING task (A-Z, where A is highest). "
+                        "USE CASE: Call this when user wants to add, change, or remove priority on an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "IMPORTANT: Use list_tasks() first to find the correct task number "
                         "if user doesn't specify it."
                     ),
@@ -404,7 +417,10 @@ class ToolCallHandler:
                 "function": {
                     "name": "remove_priority",
                     "description": (
-                        "Remove the priority from a task. IMPORTANT: Use list_tasks() first "
+                        "Remove the priority from an EXISTING task. "
+                        "USE CASE: Call this when user wants to remove priority from an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
+                        "IMPORTANT: Use list_tasks() first "
                         "to find the correct task number if user doesn't specify it."
                     ),
                     "parameters": {
@@ -424,7 +440,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "set_due_date",
                     "description": (
-                        "Set or update the due date for a task by intelligently rewriting it. "
+                        "Set or update the due date for an EXISTING task by intelligently rewriting it. "
+                        "USE CASE: Call this when user wants to add, change, or remove a due date on an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "This preserves all existing task components (priority, projects, contexts, etc.) "
                         "while updating or adding the due date. Use empty string to remove the due date. "
                         "IMPORTANT: Use list_tasks() first "
@@ -453,7 +471,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "set_context",
                     "description": (
-                        "Set or update the context for a task by intelligently rewriting it. "
+                        "Set or update the context for an EXISTING task by intelligently rewriting it. "
+                        "USE CASE: Call this when user wants to add, change, or remove a context tag on an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "This preserves all existing task components (priority, projects, due date, etc.) "
                         "while updating or adding the context. Use empty string to remove the context. "
                         "PREFERRED METHOD: Use this instead of append_to_task() when adding context tags (@context). "
@@ -482,7 +502,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "set_project",
                     "description": (
-                        "Set or update projects for a task by intelligently rewriting it. "
+                        "Set or update projects for an EXISTING task by intelligently rewriting it. "
+                        "USE CASE: Call this when user wants to add, change, or remove project tags on an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "This preserves all existing task components and manages projects intelligently. "
                         "Supports multiple projects, prevents duplicates, and groups them together. "
                         "Empty array or empty strings are NOOPs (no changes). "
@@ -526,7 +548,9 @@ class ToolCallHandler:
                 "function": {
                     "name": "move_task",
                     "description": (
-                        "Move a task from one file to another (e.g., from todo.txt to done.txt). "
+                        "Move an EXISTING task from one file to another (e.g., from todo.txt to done.txt). "
+                        "USE CASE: Call this when user wants to move a task between different todo files. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
                         "IMPORTANT: Use list_tasks() first to find the correct task number "
                         "if user doesn't specify it."
                     ),

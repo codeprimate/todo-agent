@@ -219,7 +219,7 @@ class TestTodoShell:
         sample_task = "1 (B) Call dentist +health @phone"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "2025-01-20")
@@ -236,7 +236,7 @@ class TestTodoShell:
         sample_task = "1 (C) Review quarterly report +work @office rec:weekly due:2025-01-10 custom:tag"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "2025-01-25")
@@ -253,7 +253,7 @@ class TestTodoShell:
         sample_task = "1 Buy milk +shopping @grocery"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "2025-01-30")
@@ -270,7 +270,7 @@ class TestTodoShell:
         sample_task = "1 Test task"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        ):
             with pytest.raises(TodoShellError, match="Task number 5 not found"):
                 self.todo_shell.set_due_date(5, "2025-01-15")
 
@@ -280,7 +280,7 @@ class TestTodoShell:
         sample_task = "1 (A) Buy groceries +shopping @home due:2025-01-10"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "")
@@ -295,7 +295,7 @@ class TestTodoShell:
         sample_task = "1 (B) Call dentist +health @phone due:2025-01-15"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "   ")
@@ -310,7 +310,7 @@ class TestTodoShell:
         sample_task = "1 Buy milk +shopping @grocery due:2025-01-20"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_due_date(1, "")
@@ -344,7 +344,7 @@ class TestTodoShell:
         sample_task = "1 (B) Call dentist +health"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "phone")
@@ -359,7 +359,7 @@ class TestTodoShell:
         sample_task = "1 (C) Review quarterly report +work @office rec:weekly due:2025-01-10 custom:tag"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "home")
@@ -375,7 +375,7 @@ class TestTodoShell:
         sample_task = "1 Buy milk +shopping @grocery"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "store")
@@ -390,7 +390,7 @@ class TestTodoShell:
         sample_task = "1 (A) Buy groceries +shopping @home due:2025-01-10"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "")
@@ -407,7 +407,7 @@ class TestTodoShell:
         sample_task = "1 (B) Call dentist +health @phone"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "   ")
@@ -422,7 +422,7 @@ class TestTodoShell:
         sample_task = "1 Test task +project"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_context(1, "@office")
@@ -437,7 +437,7 @@ class TestTodoShell:
         sample_task = "1 Test task"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        ):
             with pytest.raises(TodoShellError, match="Context name cannot be empty"):
                 self.todo_shell.set_context(1, "@")
 
@@ -447,7 +447,7 @@ class TestTodoShell:
         sample_task = "1 Test task"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        ):
             with pytest.raises(TodoShellError, match="Task number 5 not found"):
                 self.todo_shell.set_context(5, "office")
 
@@ -590,7 +590,7 @@ class TestTodoShell:
         sample_task = "1 (A) Buy groceries @home due:2025-01-10"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["shopping", "errands"])
@@ -607,7 +607,7 @@ class TestTodoShell:
         sample_task = "1 (B) Call dentist +health @phone"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["appointment", "personal"])
@@ -624,7 +624,7 @@ class TestTodoShell:
         sample_task = "1 (C) Review report +work +urgent +review @office"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["-urgent", "-review"])
@@ -639,7 +639,7 @@ class TestTodoShell:
         sample_task = "1 (A) Task with projects +old +keep @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["-old", "new", "another"])
@@ -656,7 +656,7 @@ class TestTodoShell:
         sample_task = "1 (B) Test task +existing @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, [])
@@ -672,7 +672,7 @@ class TestTodoShell:
         sample_task = "1 (C) Test task +existing @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["", "valid", "  ", "another"])
@@ -689,7 +689,7 @@ class TestTodoShell:
         sample_task = "1 Test task @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["+work", "+home"])
@@ -704,7 +704,7 @@ class TestTodoShell:
         sample_task = "1 Test task +work +home +shopping @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["-+work", "-+shopping"])
@@ -719,7 +719,7 @@ class TestTodoShell:
         sample_task = "1 (A) Complex task +old +keep @office rec:weekly due:2025-01-15 custom:tag"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["-old", "new"])

@@ -4,6 +4,7 @@ LLM inference engine for todo.sh agent.
 
 import os
 import time
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 try:
@@ -71,9 +72,9 @@ class Inference:
         tools_section = self._generate_tools_section()
 
         # Get current datetime for interpolation
-        from datetime import datetime
-
-        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
+        timezone_info = time.tzname[time.daylight]
+        current_datetime = f"{now.strftime('%Y-%m-%d %H:%M:%S')} {timezone_info}"
 
         # Get calendar output
         from .calendar_utils import get_calendar_output

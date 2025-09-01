@@ -3,10 +3,9 @@ Tests for TodoManager.
 """
 
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
-from unittest.mock import patch
 
 try:
     from todo_agent.core.todo_manager import TodoManager
@@ -187,6 +186,36 @@ class TestTodoManager(unittest.TestCase):
             self.todo_manager.add_task("Test task", recurring="rec:weekly:0")
         self.assertIn("Must be a positive integer", str(context.exception))
 
+    def test_add_task_with_invalid_duration_format(self):
+        """Test adding a task with invalid duration format raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", duration="30s")
+        self.assertIn("Invalid duration format", str(context.exception))
+
+    def test_add_task_with_invalid_duration_unit(self):
+        """Test adding a task with invalid duration unit raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", duration="30s")
+        self.assertIn("Invalid duration format", str(context.exception))
+
+    def test_add_task_with_invalid_duration_value(self):
+        """Test adding a task with invalid duration value raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", duration="0m")
+        self.assertIn("Must be a positive number", str(context.exception))
+
+    def test_add_task_with_negative_duration(self):
+        """Test adding a task with negative duration raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", duration="-30m")
+        self.assertIn("Must be a positive number", str(context.exception))
+
+    def test_add_task_with_empty_duration(self):
+        """Test adding a task with empty duration raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            self.todo_manager.add_task("Test task", duration="")
+        self.assertIn("Duration must be a non-empty string", str(context.exception))
+
     def test_add_task_with_all_parameters_including_recurring(self):
         """Test adding a task with all parameters including recurring."""
         self.todo_shell.add.return_value = "Test task"
@@ -203,6 +232,39 @@ class TestTodoManager(unittest.TestCase):
         )
         self.todo_shell.add.assert_called_once_with(
             "(A) Test task +work @office due:2024-01-15 rec:daily"
+        )
+
+    def test_add_task_with_duration(self):
+        """Test adding a task with duration parameter."""
+        self.todo_shell.add.return_value = "Test task"
+        result = self.todo_manager.add_task(
+            "Test task",
+            duration="30m",
+        )
+        self.assertEqual(
+            result, "Added task: Test task duration:30m"
+        )
+        self.todo_shell.add.assert_called_once_with(
+            "Test task duration:30m"
+        )
+
+    def test_add_task_with_all_parameters_including_duration(self):
+        """Test adding a task with all parameters including duration."""
+        self.todo_shell.add.return_value = "Test task"
+        result = self.todo_manager.add_task(
+            "Test task",
+            priority="A",
+            project="work",
+            context="office",
+            due="2024-01-15",
+            recurring="rec:daily",
+            duration="2h",
+        )
+        self.assertEqual(
+            result, "Added task: (A) Test task +work @office due:2024-01-15 rec:daily duration:2h"
+        )
+        self.todo_shell.add.assert_called_once_with(
+            "(A) Test task +work @office due:2024-01-15 rec:daily duration:2h"
         )
 
     def test_list_tasks(self):
@@ -376,18 +438,19 @@ class TestTodoManager(unittest.TestCase):
 
     def test_todo_shell_set_project_actually_prevents_duplicates(self):
         """Test that the todo_shell set_project method actually prevents duplicates."""
-        from todo_agent.infrastructure.todo_shell import TodoShell
         from unittest.mock import patch
+
+        from todo_agent.infrastructure.todo_shell import TodoShell
         
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
         
         # Mock the list_tasks method to return a task with existing projects
-        with patch.object(shell, 'list_tasks') as mock_list_tasks:
+        with patch.object(shell, "list_tasks") as mock_list_tasks:
             mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
             
             # Mock the replace method to capture what gets called
-            with patch.object(shell, 'replace') as mock_replace:
+            with patch.object(shell, "replace") as mock_replace:
                 mock_replace.return_value = "1 (A) Existing task +existing_project @existing_context"
                 
                 # Try to add a project that already exists
@@ -403,18 +466,19 @@ class TestTodoManager(unittest.TestCase):
 
     def test_todo_shell_set_context_actually_prevents_duplicates(self):
         """Test that the todo_shell set_context method actually prevents duplicates."""
-        from todo_agent.infrastructure.todo_shell import TodoShell
         from unittest.mock import patch
+
+        from todo_agent.infrastructure.todo_shell import TodoShell
         
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
         
         # Mock the list_tasks method to return a task with existing context
-        with patch.object(shell, 'list_tasks') as mock_list_tasks:
+        with patch.object(shell, "list_tasks") as mock_list_tasks:
             mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
             
             # Mock the replace method to capture what gets called
-            with patch.object(shell, 'replace') as mock_replace:
+            with patch.object(shell, "replace") as mock_replace:
                 mock_replace.return_value = "1 (A) Existing task +existing_project @existing_context"
                 
                 # Try to set a context that already exists
@@ -430,22 +494,23 @@ class TestTodoManager(unittest.TestCase):
 
     def test_todo_shell_set_project_adds_new_projects(self):
         """Test that the todo_shell set_project method adds new projects and prevents duplicates."""
-        from todo_agent.infrastructure.todo_shell import TodoShell
         from unittest.mock import patch
+
+        from todo_agent.infrastructure.todo_shell import TodoShell
         
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
         
         # Mock the list_tasks method to return a task with existing projects
-        with patch.object(shell, 'list_tasks') as mock_list_tasks:
+        with patch.object(shell, "list_tasks") as mock_list_tasks:
             mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
             
             # Mock the replace method to capture what gets called
-            with patch.object(shell, 'replace') as mock_replace:
+            with patch.object(shell, "replace") as mock_replace:
                 mock_replace.return_value = "1 (A) Existing task +existing_project +new_project @existing_context"
                 
                 # Try to add a new project
-                result = shell.set_project(1, ["new_project"])
+                shell.set_project(1, ["new_project"])
                 
                 # Since we're adding a new project, replace should be called
                 mock_replace.assert_called_once()
@@ -460,22 +525,23 @@ class TestTodoManager(unittest.TestCase):
 
     def test_todo_shell_set_context_adds_new_contexts(self):
         """Test that the todo_shell set_context method adds new contexts and prevents duplicates."""
-        from todo_agent.infrastructure.todo_shell import TodoShell
         from unittest.mock import patch
+
+        from todo_agent.infrastructure.todo_shell import TodoShell
         
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
         
         # Mock the list_tasks method to return a task with existing context
-        with patch.object(shell, 'list_tasks') as mock_list_tasks:
+        with patch.object(shell, "list_tasks") as mock_list_tasks:
             mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
             
             # Mock the replace method to capture what gets called
-            with patch.object(shell, 'replace') as mock_replace:
+            with patch.object(shell, "replace") as mock_replace:
                 mock_replace.return_value = "1 (A) Existing task +existing_project @new_context"
                 
                 # Try to set a new context
-                result = shell.set_context(1, "new_context")
+                shell.set_context(1, "new_context")
                 
                 # Since we're adding a new context, replace should be called
                 mock_replace.assert_called_once()
