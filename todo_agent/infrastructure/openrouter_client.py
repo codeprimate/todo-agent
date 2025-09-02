@@ -76,24 +76,24 @@ class OpenRouterClient(LLMClient):
         choices = response.get("choices", [])
         if not choices:
             return
-            
+
         choice = choices[0]
         message = choice.get("message", {})
-        
+
         # Always log reasoning and content if present
         reasoning = message.get("reasoning", "")
         if reasoning:
             self.logger.info(f"LLM reasoning: {reasoning}")
-            
+
         content = message.get("content", "")
         if content:
             self.logger.info(f"LLM content: {content}")
-        
+
         # Handle tool calls
         tool_calls = message.get("tool_calls", [])
         if tool_calls:
             self.logger.info(f"Response contains {len(tool_calls)} tool calls")
-            
+
             # Log each tool call
             for i, tool_call in enumerate(tool_calls, 1):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")

@@ -268,9 +268,7 @@ class TestTodoShell:
         """Test that set_due_date raises error for invalid task number."""
         # Mock the list_tasks to return only one task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ):
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Task number 5 not found"):
                 self.todo_shell.set_due_date(5, "2025-01-15")
 
@@ -435,9 +433,7 @@ class TestTodoShell:
         """Test that set_context raises error for context that becomes empty after cleaning."""
         # Mock the list_tasks to return a task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ):
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Context name cannot be empty"):
                 self.todo_shell.set_context(1, "@")
 
@@ -445,9 +441,7 @@ class TestTodoShell:
         """Test that set_context raises error for invalid task number."""
         # Mock the list_tasks to return only one task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ):
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Task number 5 not found"):
                 self.todo_shell.set_context(5, "office")
 
@@ -716,7 +710,9 @@ class TestTodoShell:
     def test_set_project_preserves_all_other_components(self):
         """Test that set_project preserves all task components when modifying projects."""
         # Mock the list_tasks to return a complex task
-        sample_task = "1 (A) Complex task +old +keep @office rec:weekly due:2025-01-15 custom:tag"
+        sample_task = (
+            "1 (A) Complex task +old +keep @office rec:weekly due:2025-01-15 custom:tag"
+        )
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
         ), patch.object(
@@ -733,9 +729,7 @@ class TestTodoShell:
         """Test that set_project raises error for project that becomes empty after cleaning."""
         # Mock the list_tasks to return a task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Project name cannot be empty"):
                 self.todo_shell.set_project(1, ["+"])
 
@@ -743,9 +737,7 @@ class TestTodoShell:
         """Test that set_project raises error for remove project that becomes empty after cleaning."""
         # Mock the list_tasks to return a task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Project name cannot be empty"):
                 self.todo_shell.set_project(1, ["-+"])
 
@@ -753,9 +745,7 @@ class TestTodoShell:
         """Test that set_project raises error for invalid task number."""
         # Mock the list_tasks to return only one task
         sample_task = "1 Test task"
-        with patch.object(
-            self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list:
+        with patch.object(self.todo_shell, "list_tasks", return_value=sample_task):
             with pytest.raises(TodoShellError, match="Task number 5 not found"):
                 self.todo_shell.set_project(5, ["work"])
 
@@ -765,7 +755,7 @@ class TestTodoShell:
         sample_task = "1 Test task +work @context"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
-        ) as mock_list, patch.object(
+        ), patch.object(
             self.todo_shell, "replace", return_value="Task updated"
         ) as mock_replace:
             result = self.todo_shell.set_project(1, ["work", "new"])

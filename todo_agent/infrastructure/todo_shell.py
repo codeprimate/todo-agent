@@ -4,12 +4,24 @@ Subprocess wrapper for todo.sh operations.
 
 import os
 import subprocess  # nosec B404
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TypedDict
 
 try:
     from todo_agent.core.exceptions import TodoShellError
 except ImportError:
     from core.exceptions import TodoShellError  # type: ignore[no-redef]
+
+
+class TaskComponents(TypedDict):
+    """Type definition for task components."""
+
+    priority: str | None
+    description: str
+    projects: list[str]
+    contexts: list[str]
+    due: str | None
+    recurring: str | None
+    other_tags: list[str]
 
 
 class TodoShell:
@@ -243,19 +255,19 @@ class TodoShell:
     def _extract_task_number(self, line: str) -> Optional[int]:
         """
         Extract task number from a line that may contain ANSI color codes.
-        
+
         Args:
             line: Task line that may contain ANSI color codes
-            
+
         Returns:
             Task number if found, None otherwise
         """
         from rich.text import Text
-        
+
         # Use rich to properly handle ANSI color codes
         text = Text.from_ansi(line)
         clean_line = text.plain
-        
+
         # Split on first space and check if first part is a number
         parts = clean_line.split(" ", 1)
         if parts and parts[0].isdigit():
@@ -319,7 +331,8 @@ class TodoShell:
                     # Remove the project if it exists (with or without + prefix)
                     project_to_remove = f"+{clean_project}"
                     components["projects"] = [
-                        p for p in components["projects"] 
+                        p
+                        for p in components["projects"]
                         if p != project_to_remove and p != clean_project
                     ]
                 else:
@@ -345,7 +358,7 @@ class TodoShell:
         # Replace the task with the new description
         return self.replace(task_number, new_description)
 
-    def _parse_task_components(self, task_line: str) -> dict:
+    def _parse_task_components(self, task_line: str) -> TaskComponents:
         """
         Parse a todo.txt task line into its components.
 
@@ -357,9 +370,10 @@ class TodoShell:
         """
         # Remove ANSI color codes first using rich
         from rich.text import Text
+
         text = Text.from_ansi(task_line)
         task_line = text.plain
-        
+
         # Remove task number prefix if present (e.g., "1 " or "1. ")
         # First try the format without dot (standard todo.sh format)
         if " " in task_line and task_line.split(" ")[0].isdigit():
@@ -368,7 +382,7 @@ class TodoShell:
         elif ". " in task_line:
             task_line = task_line.split(". ", 1)[1]
 
-        components = {
+        components: TaskComponents = {
             "priority": None,
             "description": "",
             "projects": [],
@@ -436,7 +450,7 @@ class TodoShell:
 
         return components
 
-    def _reconstruct_task(self, components: dict) -> str:
+    def _reconstruct_task(self, components: TaskComponents) -> str:
         """
         Reconstruct a task description from parsed components.
 

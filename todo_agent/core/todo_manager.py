@@ -87,18 +87,18 @@ class TodoManager:
             # Validate duration format (e.g., "30m", "2h", "1d")
             if not duration or not isinstance(duration, str):
                 raise ValueError("Duration must be a non-empty string.")
-            
+
             # Check if duration ends with a valid unit
             if not any(duration.endswith(unit) for unit in ["m", "h", "d"]):
                 raise ValueError(
                     f"Invalid duration format '{duration}'. Must end with m (minutes), h (hours), or d (days)."
                 )
-            
+
             # Extract the numeric part and validate it
             value = duration[:-1]
             if not value:
                 raise ValueError("Duration value cannot be empty.")
-            
+
             try:
                 # Check if the value is a valid positive number
                 numeric_value = float(value)

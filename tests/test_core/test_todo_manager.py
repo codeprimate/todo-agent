@@ -241,12 +241,8 @@ class TestTodoManager(unittest.TestCase):
             "Test task",
             duration="30m",
         )
-        self.assertEqual(
-            result, "Added task: Test task duration:30m"
-        )
-        self.todo_shell.add.assert_called_once_with(
-            "Test task duration:30m"
-        )
+        self.assertEqual(result, "Added task: Test task duration:30m")
+        self.todo_shell.add.assert_called_once_with("Test task duration:30m")
 
     def test_add_task_with_all_parameters_including_duration(self):
         """Test adding a task with all parameters including duration."""
@@ -261,7 +257,8 @@ class TestTodoManager(unittest.TestCase):
             duration="2h",
         )
         self.assertEqual(
-            result, "Added task: (A) Test task +work @office due:2024-01-15 rec:daily duration:2h"
+            result,
+            "Added task: (A) Test task +work @office due:2024-01-15 rec:daily duration:2h",
         )
         self.todo_shell.add.assert_called_once_with(
             "(A) Test task +work @office due:2024-01-15 rec:daily duration:2h"
@@ -361,60 +358,62 @@ class TestTodoManager(unittest.TestCase):
         self.assertEqual(result, "No completed tasks found matching the criteria.")
         self.todo_shell.list_completed.assert_called_once_with("+nonexistent")
 
-
-
     def test_add_task_sanitizes_inputs(self):
         """Test that add_task sanitizes inputs to prevent duplicates."""
         # Mock the todo_shell
         mock_shell = Mock()
         mock_shell.add.return_value = "1 Test task +project1 @context1"
-        
+
         manager = TodoManager(mock_shell)
-        
+
         # Test with inputs that already have + and @ symbols
         result = manager.add_task(
             description="Test task",
             project="+project1",  # Already has + symbol
-            context="@context1"   # Already has @ symbol
+            context="@context1",  # Already has @ symbol
         )
-        
+
         # Verify the task was added with properly formatted projects and contexts
         mock_shell.add.assert_called_once()
         call_args = mock_shell.add.call_args[0][0]
-        
+
         # Should have exactly one instance of each (sanitization prevents duplicates)
         assert call_args.count("+project1") == 1
         assert call_args.count("@context1") == 1
-        
+
         # Verify the result message
         assert "Added task:" in result
-
-
 
     def test_parse_task_components_deduplicates(self):
         """Test that _parse_task_components deduplicates projects and contexts."""
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Test with duplicate projects and contexts in the task line
         task_line = "1 (A) Task description +project1 +project1 +project2 @context1 @context1 @context2"
         components = shell._parse_task_components(task_line)
-        
+
         # Verify deduplication
-        assert components["projects"] == ["+project1", "+project2"]  # Sorted and deduplicated
-        assert components["contexts"] == ["@context1", "@context2"]  # Sorted and deduplicated
+        assert components["projects"] == [
+            "+project1",
+            "+project2",
+        ]  # Sorted and deduplicated
+        assert components["contexts"] == [
+            "@context1",
+            "@context2",
+        ]  # Sorted and deduplicated
         assert components["priority"] == "A"
         assert components["description"] == "Task description"
 
     def test_reconstruct_task_maintains_deduplication(self):
         """Test that _reconstruct_task maintains deduplication."""
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Create components with potential duplicates
         components = {
             "priority": "A",
@@ -423,12 +422,12 @@ class TestTodoManager(unittest.TestCase):
             "contexts": ["@context1", "@context1", "@context2"],  # Duplicate context1
             "due": "2024-01-01",
             "recurring": None,
-            "other_tags": []
+            "other_tags": [],
         }
-        
+
         # Reconstruct the task
         reconstructed = shell._reconstruct_task(components)
-        
+
         # Verify that duplicates are preserved in reconstruction (since we handle deduplication in parsing)
         # This is expected behavior - reconstruction should preserve the exact components given
         assert reconstructed.count("+project1") == 2
@@ -441,25 +440,29 @@ class TestTodoManager(unittest.TestCase):
         from unittest.mock import patch
 
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Mock the list_tasks method to return a task with existing projects
         with patch.object(shell, "list_tasks") as mock_list_tasks:
-            mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
-            
+            mock_list_tasks.return_value = (
+                "1 (A) Existing task +existing_project @existing_context"
+            )
+
             # Mock the replace method to capture what gets called
             with patch.object(shell, "replace") as mock_replace:
-                mock_replace.return_value = "1 (A) Existing task +existing_project @existing_context"
-                
+                mock_replace.return_value = (
+                    "1 (A) Existing task +existing_project @existing_context"
+                )
+
                 # Try to add a project that already exists
                 result = shell.set_project(1, ["existing_project"])
-                
+
                 # Since the project already exists, replace should NOT be called
                 # (our deduplication logic prevents unnecessary updates)
                 mock_replace.assert_not_called()
-                
+
                 # The result should be the reconstructed task without duplicates
                 assert "+existing_project" in result
                 assert result.count("+existing_project") == 1  # Only one instance
@@ -469,25 +472,29 @@ class TestTodoManager(unittest.TestCase):
         from unittest.mock import patch
 
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Mock the list_tasks method to return a task with existing context
         with patch.object(shell, "list_tasks") as mock_list_tasks:
-            mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
-            
+            mock_list_tasks.return_value = (
+                "1 (A) Existing task +existing_project @existing_context"
+            )
+
             # Mock the replace method to capture what gets called
             with patch.object(shell, "replace") as mock_replace:
-                mock_replace.return_value = "1 (A) Existing task +existing_project @existing_context"
-                
+                mock_replace.return_value = (
+                    "1 (A) Existing task +existing_project @existing_context"
+                )
+
                 # Try to set a context that already exists
                 result = shell.set_context(1, "existing_context")
-                
+
                 # Since the context already exists, replace should NOT be called
                 # (our deduplication logic prevents unnecessary updates)
                 mock_replace.assert_not_called()
-                
+
                 # The result should be the reconstructed task without duplicates
                 assert "@existing_context" in result
                 assert result.count("@existing_context") == 1  # Only one instance
@@ -497,27 +504,29 @@ class TestTodoManager(unittest.TestCase):
         from unittest.mock import patch
 
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Mock the list_tasks method to return a task with existing projects
         with patch.object(shell, "list_tasks") as mock_list_tasks:
-            mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
-            
+            mock_list_tasks.return_value = (
+                "1 (A) Existing task +existing_project @existing_context"
+            )
+
             # Mock the replace method to capture what gets called
             with patch.object(shell, "replace") as mock_replace:
                 mock_replace.return_value = "1 (A) Existing task +existing_project +new_project @existing_context"
-                
+
                 # Try to add a new project
                 shell.set_project(1, ["new_project"])
-                
+
                 # Since we're adding a new project, replace should be called
                 mock_replace.assert_called_once()
-                
+
                 # Get the actual task description that was passed to replace
                 actual_task_description = mock_replace.call_args[0][1]
-                
+
                 # Verify that the new project was added and no duplicates exist
                 assert "+new_project" in actual_task_description
                 assert actual_task_description.count("+existing_project") == 1
@@ -528,54 +537,62 @@ class TestTodoManager(unittest.TestCase):
         from unittest.mock import patch
 
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Mock the list_tasks method to return a task with existing context
         with patch.object(shell, "list_tasks") as mock_list_tasks:
-            mock_list_tasks.return_value = "1 (A) Existing task +existing_project @existing_context"
-            
+            mock_list_tasks.return_value = (
+                "1 (A) Existing task +existing_project @existing_context"
+            )
+
             # Mock the replace method to capture what gets called
             with patch.object(shell, "replace") as mock_replace:
-                mock_replace.return_value = "1 (A) Existing task +existing_project @new_context"
-                
+                mock_replace.return_value = (
+                    "1 (A) Existing task +existing_project @new_context"
+                )
+
                 # Try to set a new context
                 shell.set_context(1, "new_context")
-                
+
                 # Since we're adding a new context, replace should be called
                 mock_replace.assert_called_once()
-                
+
                 # Get the actual task description that was passed to replace
                 actual_task_description = mock_replace.call_args[0][1]
-                
+
                 # Verify that the new context was added and the old context was replaced
                 # (set_context replaces all contexts with the new one)
                 assert "@new_context" in actual_task_description
-                assert "@existing_context" not in actual_task_description  # Old context replaced
-                assert actual_task_description.count("@new_context") == 1  # Only one instance
+                assert (
+                    "@existing_context" not in actual_task_description
+                )  # Old context replaced
+                assert (
+                    actual_task_description.count("@new_context") == 1
+                )  # Only one instance
 
     def test_parse_task_components_actually_deduplicates(self):
         """Test that _parse_task_components actually removes duplicates from input."""
         from todo_agent.infrastructure.todo_shell import TodoShell
-        
+
         # Create a TodoShell instance
         shell = TodoShell("/tmp/todo.txt")
-        
+
         # Test with a task line that has multiple duplicates
         task_line = "1 (A) Task description +project1 +project1 +project1 +project2 @context1 @context1 @context2"
         components = shell._parse_task_components(task_line)
-        
+
         # Verify that duplicates were actually removed
         assert len(components["projects"]) == 2  # Should only have 2 unique projects
         assert len(components["contexts"]) == 2  # Should only have 2 unique contexts
-        
+
         # Verify the specific projects and contexts
         assert "+project1" in components["projects"]
         assert "+project2" in components["projects"]
         assert "@context1" in components["contexts"]
         assert "@context2" in components["contexts"]
-        
+
         # Verify no duplicates exist in the lists
         assert components["projects"].count("+project1") == 1
         assert components["projects"].count("+project2") == 1
