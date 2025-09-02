@@ -576,6 +576,44 @@ class ToolCallHandler:
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "created_completed_task",
+                    "description": (
+                        "Create a task and immediately mark it as completed. "
+                        "USE CASE: Call this when user says they completed something on a specific date (e.g., 'I did the laundry today', 'I finished the report yesterday', 'I cleaned the garage last week') "
+                        "and you have already researched existing tasks to determine no match exists. "
+                        "WORKFLOW: 1) Use list_tasks() to search for existing tasks, 2) Use list_completed_tasks() to verify it's not already done, "
+                        "3) If no match found, call this tool to create and complete the task in one operation. "
+                        "STRATEGIC CONTEXT: This is a convenience tool for the common pattern of 'I did X on [date]' - "
+                        "it creates a task with the specified completion date and immediately marks it complete. "
+                        "The LLM should handle the research and decision-making about whether to use this tool."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "description": {
+                                "type": "string",
+                                "description": "The task description of what was completed (required)",
+                            },
+                            "completion_date": {
+                                "type": "string",
+                                "description": "Optional completion date in YYYY-MM-DD format (defaults to today)",
+                            },
+                            "project": {
+                                "type": "string",
+                                "description": "Optional project name (without the + symbol) for new task creation",
+                            },
+                            "context": {
+                                "type": "string",
+                                "description": "Optional context name (without the @ symbol) for new task creation",
+                            },
+                        },
+                        "required": ["description"],
+                    },
+                },
+            },
         ]
 
     def _get_calendar(self, month: int, year: int) -> str:
@@ -784,6 +822,7 @@ class ToolCallHandler:
             "archive_tasks": self.todo_manager.archive_tasks,
             "parse_date": self._parse_date,
             "get_calendar": self._get_calendar,
+            "created_completed_task": self.todo_manager.created_completed_task,
         }
 
         if tool_name not in method_map:

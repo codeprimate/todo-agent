@@ -123,12 +123,16 @@ class Inference:
                 "replace_task",
                 "append_to_task",
                 "prepend_to_task",
+                "created_completed_task",
             ],
             "Management Tools": [
                 "delete_task",
                 "set_priority",
                 "remove_priority",
                 "move_task",
+            ],
+            "Completion Tools": [
+                "created_completed_task",
             ],
             "Maintenance Tools": ["archive_tasks", "deduplicate_tasks", "get_overview"],
         }

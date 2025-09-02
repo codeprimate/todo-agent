@@ -17,7 +17,7 @@ class TestCalendarUtils:
 
     def test_get_calendar_output_success(self):
         """Test successful calendar output generation."""
-        mock_output = "Calendar output from cal -3"
+        mock_output = "Calendar output from cal"
 
         with patch("subprocess.run") as mock_run:
             mock_result = Mock()
@@ -29,7 +29,7 @@ class TestCalendarUtils:
             assert result == mock_output
             assert len(result) > 0
             mock_run.assert_called_once_with(
-                ["cal", "-3"], capture_output=True, text=True, check=True
+                ["cal"], capture_output=True, text=True, check=True
             )
 
     def test_get_calendar_output_fallback(self):

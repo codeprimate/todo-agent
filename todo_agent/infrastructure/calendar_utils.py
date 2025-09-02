@@ -15,10 +15,8 @@ def get_calendar_output() -> str:
         Formatted calendar string showing three months side by side
     """
     try:
-        # Use cal -3 to get three months side by side
-        result = subprocess.run(
-            ["cal", "-3"], capture_output=True, text=True, check=True
-        )
+        # Use cal to get current month calendar
+        result = subprocess.run(["cal"], capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except (subprocess.SubprocessError, FileNotFoundError):
         # Fallback to Python calendar module

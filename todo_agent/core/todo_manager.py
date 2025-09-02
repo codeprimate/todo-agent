@@ -406,3 +406,90 @@ class TodoManager:
         week_number = now.isocalendar()[1]
         timezone = now.astimezone().tzinfo
         return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} {timezone} ({now.strftime('%A, %B %d, %Y at %I:%M %p')}) - Week {week_number}"
+
+    def created_completed_task(
+        self,
+        description: str,
+        completion_date: Optional[str] = None,
+        project: Optional[str] = None,
+        context: Optional[str] = None,
+    ) -> str:
+        """
+        Create a task and immediately mark it as completed.
+
+        This is a convenience method for handling "I did X on [date]" statements.
+        The task is created with the specified completion date and immediately marked complete.
+
+        Args:
+            description: The task description of what was completed
+            completion_date: Completion date in YYYY-MM-DD format (defaults to today)
+            project: Optional project name (without the + symbol)
+            context: Optional context name (without the @ symbol)
+
+        Returns:
+            Confirmation message with the completed task details
+        """
+        # Set default completion date to today if not provided
+        if not completion_date:
+            completion_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Validate completion date format
+        try:
+            datetime.strptime(completion_date, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError(
+                f"Invalid completion date format '{completion_date}'. Must be YYYY-MM-DD."
+            )
+
+        # Build the task description with project and context
+        full_description = description
+
+        if project:
+            # Remove any existing + symbols to prevent duplication
+            clean_project = project.strip().lstrip("+")
+            if not clean_project:
+                raise ValueError(
+                    "Project name cannot be empty after removing + symbol."
+                )
+            full_description = f"{full_description} +{clean_project}"
+
+        if context:
+            # Remove any existing @ symbols to prevent duplication
+            clean_context = context.strip().lstrip("@")
+            if not clean_context:
+                raise ValueError(
+                    "Context name cannot be empty after removing @ symbol."
+                )
+            full_description = f"{full_description} @{clean_context}"
+
+        # Add the task first
+        self.todo_shell.add(full_description)
+
+        # Get the task number by finding the newly added task
+        tasks = self.todo_shell.list_tasks()
+        task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
+        if not task_lines:
+            raise RuntimeError("Failed to add task - no tasks found after addition")
+
+        # Find the task that matches our description (it should be the last one added)
+        # Look for the task that contains our description
+        task_number = None
+        for i, line in enumerate(task_lines, 1):  # Start from 1 for todo.sh numbering
+            if description in line:
+                task_number = i
+                break
+
+        if task_number is None:
+            # Fallback: use the last task number if we can't find a match
+            task_number = len(task_lines)
+            # Log a warning that we're using fallback logic
+            import logging
+
+            logging.warning(
+                f"Could not find exact match for '{description}', using fallback task number {task_number}"
+            )
+
+        # Mark it as complete
+        self.todo_shell.complete(task_number)
+
+        return f"Created and completed task: {full_description} (completed on {completion_date})"

@@ -108,6 +108,33 @@ class TestToolErrorHandling:
         assert "Permission denied" in result["user_message"]
         assert "check file permissions" in result["user_message"]
 
+    def test_created_completed_task_tool_execution(self):
+        """Test that the created_completed_task tool can be executed successfully."""
+        # Mock the todo_manager method
+        self.mock_todo_manager.created_completed_task.return_value = (
+            "Created and completed task: Test task (completed on 2025-01-15)"
+        )
+
+        tool_call = {
+            "function": {
+                "name": "created_completed_task",
+                "arguments": '{"description": "Test task", "completion_date": "2025-01-15"}',
+            },
+            "id": "test_id",
+        }
+
+        result = self.tool_handler.execute_tool(tool_call)
+
+        assert result["error"] is False
+        assert "Created and completed task: Test task" in result["output"]
+        assert result["tool_call_id"] == "test_id"
+        assert result["name"] == "created_completed_task"
+
+        # Verify the method was called with correct arguments
+        self.mock_todo_manager.created_completed_task.assert_called_once_with(
+            description="Test task", completion_date="2025-01-15"
+        )
+
     def test_successful_tool_execution(self):
         """Test that successful tool execution returns proper structure."""
         self.mock_todo_manager.list_tasks.return_value = "1. Test task"
