@@ -6,8 +6,8 @@ AVAILABLE TOOLS:
 Discovery Tools (Call FIRST):
 - list_projects() - Get all available projects from todo.txt
 - list_contexts() - Get all available contexts from todo.txt
-- list_tasks(filter?) - List current tasks with optional filtering
-- list_completed_tasks(filter?, project?, context?, text_search?, date_from?, date_to?) - List completed tasks with optional filtering
+- list_tasks() - List all current tasks from todo.txt
+- list_completed_tasks() - List all completed tasks from done.txt
 
 Task Management Tools:
 - add_task(description, priority?, project?, context?, due?, recurring?) - Add new task to todo.txt
@@ -89,34 +89,18 @@ class ToolCallHandler:
                 "function": {
                     "name": "list_tasks",
                     "description": (
-                        "List current tasks with optional filtering. Use this when: "
+                        "List all current tasks from todo.txt. Use this when: "
                         "1) User wants to see their tasks, "
-                        "2) You need to find a specific task by description, "
-                        "3) You need to check for potential duplicates before adding new tasks, "
-                        "4) You need to understand the current state before making changes, "
-                        "5) User says they finished/completed a task and you need to find the matching task. "
+                        "2) You need to check for potential duplicates before adding new tasks, "
+                        "3) You need to understand the current state before making changes, "
+                        "4) User says they finished/completed a task and you need to find the matching task. "
                         "CRITICAL: ALWAYS use this before add_task() to check for similar existing tasks. "
                         "CRITICAL: ALWAYS use this when user mentions task completion to find the correct task number. "
-                        "COMPLETION INTELLIGENCE: When searching for completion matches, if exactly one task clearly "
-                        "matches the user's description, proceed to complete it immediately without asking for confirmation. "
-                        "IMPORTANT: When presenting the results to the user, convert the raw todo.txt format "
-                        "into conversational language. Do not show the raw format like '(A) task +project @context'. "
                         "STRATEGIC CONTEXT: This is the primary discovery tool - call this FIRST when you need to "
-                        "understand existing tasks before making any modifications."
+                        "understand existing tasks before making any modifications. Always get the complete task list "
+                        "for full context rather than trying to filter."
                     ),
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "filter": {
-                                "type": "string",
-                                "description": (
-                                    "Optional filter string (e.g., '+work', '@office', '(A)') - "
-                                    "use when you want to see only specific tasks or when searching for completion matches"
-                                ),
-                            }
-                        },
-                        "required": [],
-                    },
+                    "parameters": {"type": "object", "properties": {}, "required": []},
                 },
             },
             {
@@ -124,72 +108,17 @@ class ToolCallHandler:
                 "function": {
                     "name": "list_completed_tasks",
                     "description": (
-                        "List completed tasks from done.txt with optional filtering. Use this when: "
+                        "List all completed tasks from done.txt. Use this when: "
                         "1) User tries to complete a task that might already be done, "
                         "2) User asks about completed tasks, "
                         "3) You need to verify task status before taking action, "
-                        "4) User wants to search for specific completed tasks by project, context, text, or date. "
+                        "4) User wants to see their task completion history. "
                         "STRATEGIC CONTEXT: Call this BEFORE complete_task() to verify the task hasn't already "
                         "been completed, preventing duplicate completion attempts. "
-                        "FILTERING: Use the filtering parameters to help users find specific completed tasks "
-                        "when they ask about work tasks, home tasks, tasks from a specific date, etc. "
-                        "DATE FILTERING LIMITATIONS: Due to todo.sh constraints, date filtering has specific behavior: "
-                        "• When both date_from and date_to are provided, filtering uses the year-month pattern (YYYY-MM) "
-                        "from date_from, matching all tasks in that month. "
-                        "• When only date_from is provided, filtering uses the exact date pattern (YYYY-MM-DD). "
-                        "• When only date_to is provided, filtering uses the year-month pattern (YYYY-MM) from date_to. "
-                        "• Complex date ranges (e.g., spanning multiple months) are not supported by todo.sh."
+                        "Always get the complete completed task list for full historical context rather than "
+                        "trying to filter by specific criteria."
                     ),
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "filter": {
-                                "type": "string",
-                                "description": (
-                                    "Optional raw filter string (e.g., '+work', '@office') - "
-                                    "use for advanced filtering when other parameters aren't sufficient"
-                                ),
-                            },
-                            "project": {
-                                "type": "string",
-                                "description": (
-                                    "Optional project name to filter by (without the + symbol) - "
-                                    "e.g., 'work', 'home', 'bills'"
-                                ),
-                            },
-                            "context": {
-                                "type": "string",
-                                "description": (
-                                    "Optional context name to filter by (without the @ symbol) - "
-                                    "e.g., 'office', 'home', 'phone'"
-                                ),
-                            },
-                            "text_search": {
-                                "type": "string",
-                                "description": (
-                                    "Optional text to search for in task descriptions - "
-                                    "e.g., 'review', 'call', 'email'"
-                                ),
-                            },
-                            "date_from": {
-                                "type": "string",
-                                "description": (
-                                    "Optional start date for filtering (YYYY-MM-DD format) - "
-                                    "e.g., '2025-08-01'. When used alone, matches exact date. "
-                                    "When used with date_to, uses year-month pattern (YYYY-MM) for month-based filtering."
-                                ),
-                            },
-                            "date_to": {
-                                "type": "string",
-                                "description": (
-                                    "Optional end date for filtering (YYYY-MM-DD format) - "
-                                    "e.g., '2025-08-31'. When used alone, uses year-month pattern (YYYY-MM) "
-                                    "for month-based filtering. When used with date_from, uses date_from's year-month pattern."
-                                ),
-                            },
-                        },
-                        "required": [],
-                    },
+                    "parameters": {"type": "object", "properties": {}, "required": []},
                 },
             },
             {

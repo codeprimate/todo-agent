@@ -403,4 +403,6 @@ class TodoManager:
     def get_current_datetime(self, **kwargs: Any) -> str:
         """Get the current date and time."""
         now = datetime.now()
-        return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} ({now.strftime('%A, %B %d, %Y at %I:%M %p')})"
+        week_number = now.isocalendar()[1]
+        timezone = now.astimezone().tzinfo
+        return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} {timezone} ({now.strftime('%A, %B %d, %Y at %I:%M %p')}) - Week {week_number}"
