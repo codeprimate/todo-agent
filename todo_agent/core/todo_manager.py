@@ -19,7 +19,6 @@ class TodoManager:
         project: Optional[str] = None,
         context: Optional[str] = None,
         due: Optional[str] = None,
-        recurring: Optional[str] = None,
         duration: Optional[str] = None,
     ) -> str:
         """Add new task with explicit project/context parameters."""
@@ -55,33 +54,6 @@ class TodoManager:
                 raise ValueError(
                     f"Invalid due date format '{due}'. Must be YYYY-MM-DD."
                 )
-
-        if recurring:
-            # Validate recurring format
-            if not recurring.startswith("rec:"):
-                raise ValueError(
-                    f"Invalid recurring format '{recurring}'. Must start with 'rec:'."
-                )
-            # Basic validation of recurring syntax
-            parts = recurring.split(":")
-            if len(parts) < 2 or len(parts) > 3:
-                raise ValueError(
-                    f"Invalid recurring format '{recurring}'. Expected 'rec:frequency' or 'rec:frequency:interval'."
-                )
-            frequency = parts[1]
-            if frequency not in ["daily", "weekly", "monthly", "yearly"]:
-                raise ValueError(
-                    f"Invalid frequency '{frequency}'. Must be one of: daily, weekly, monthly, yearly."
-                )
-            if len(parts) == 3:
-                try:
-                    interval = int(parts[2])
-                    if interval < 1:
-                        raise ValueError("Interval must be at least 1.")
-                except ValueError:
-                    raise ValueError(
-                        f"Invalid interval '{parts[2]}'. Must be a positive integer."
-                    )
 
         if duration is not None:
             # Validate duration format (e.g., "30m", "2h", "1d")
@@ -123,9 +95,6 @@ class TodoManager:
 
         if due:
             full_description = f"{full_description} due:{due}"
-
-        if recurring:
-            full_description = f"{full_description} {recurring}"
 
         if duration:
             full_description = f"{full_description} duration:{duration}"

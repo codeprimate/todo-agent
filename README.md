@@ -21,7 +21,7 @@ todo-agent "show my work tasks"
 
 **Get intelligent insights** beyond basic task lists. It organizes tasks strategically, suggests priorities, and recommends optimal timing based on your patterns.
 
-**Work smarter** with automatic duplicate detection, recurring task handling, and calendar-aware scheduling.
+**Work smarter** with automatic duplicate detection and calendar-aware scheduling.
 
 **Choose your privacy** - use cloud AI (OpenRouter) or run locally (Ollama).
 
@@ -116,7 +116,7 @@ todo-agent "what tasks are blocking other work?"
 ### Natural Language Intelligence
 ```bash
 todo-agent "add dentist appointment next Monday"
-todo-agent "set up recurring daily vitamin reminder"
+
 todo-agent "move all completed tasks to archive"
 todo-agent "show me tasks I can do from home"
 ```

@@ -10,7 +10,7 @@ Discovery Tools (Call FIRST):
 - list_completed_tasks() - List all completed tasks from done.txt
 
 Task Management Tools:
-- add_task(description, priority?, project?, context?, due?, recurring?, duration?) - Add new task to todo.txt
+- add_task(description, priority?, project?, context?, due?, duration?) - Add new task to todo.txt
 - complete_task(task_number) - Mark task as complete by line number
 - replace_task(task_number, new_description) - Replace entire task content
 - append_to_task(task_number, text) - Add text to end of existing task
@@ -168,10 +168,6 @@ class ToolCallHandler:
                             "due": {
                                 "type": "string",
                                 "description": "Optional due date in YYYY-MM-DD format. Use parse_date() tool to convert natural language expressions like 'tomorrow', 'next week', 'by Friday' to YYYY-MM-DD format",
-                            },
-                            "recurring": {
-                                "type": "string",
-                                "description": "Optional recurring pattern in rec:frequency[:interval] format (e.g., 'rec:daily', 'rec:weekly:2', 'rec:monthly'). Use for tasks that repeat automatically.",
                             },
                             "duration": {
                                 "type": "string",

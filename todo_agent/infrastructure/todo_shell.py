@@ -20,7 +20,7 @@ class TaskComponents(TypedDict):
     projects: list[str]
     contexts: list[str]
     due: str | None
-    recurring: str | None
+
     other_tags: list[str]
 
 
@@ -388,7 +388,6 @@ class TodoShell:
             "projects": [],
             "contexts": [],
             "due": None,
-            "recurring": None,
             "other_tags": [],
         }
 
@@ -423,17 +422,8 @@ class TodoShell:
                 components["due"] = word[4:]  # Remove 'due:' prefix
                 continue
 
-            # Recurring: rec:frequency[:interval]
-            if word.startswith("rec:"):
-                components["recurring"] = word
-                continue
-
             # Other tags (like custom tags)
-            if (
-                ":" in word
-                and not word.startswith("due:")
-                and not word.startswith("rec:")
-            ):
+            if ":" in word and not word.startswith("due:"):
                 other_tags_set.add(word)
                 continue
 
@@ -479,10 +469,6 @@ class TodoShell:
         # Add due date
         if components["due"]:
             parts.append(f"due:{components['due']}")
-
-        # Add recurring pattern
-        if components["recurring"]:
-            parts.append(components["recurring"])
 
         # Add other tags
         parts.extend(components["other_tags"])

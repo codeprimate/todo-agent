@@ -148,44 +148,6 @@ class TestTodoManager(unittest.TestCase):
             self.todo_manager.set_due_date(1, "2025/1/5")
         self.assertIn("Invalid due date format", str(context.exception))
 
-    def test_add_task_with_valid_recurring_daily(self):
-        """Test adding a task with valid daily recurring format."""
-        self.todo_shell.add.return_value = "Test task"
-        result = self.todo_manager.add_task("Test task", recurring="rec:daily")
-        self.assertEqual(result, "Added task: Test task rec:daily")
-        self.todo_shell.add.assert_called_once_with("Test task rec:daily")
-
-    def test_add_task_with_valid_recurring_weekly_interval(self):
-        """Test adding a task with valid weekly recurring format with interval."""
-        self.todo_shell.add.return_value = "Test task"
-        result = self.todo_manager.add_task("Test task", recurring="rec:weekly:2")
-        self.assertEqual(result, "Added task: Test task rec:weekly:2")
-        self.todo_shell.add.assert_called_once_with("Test task rec:weekly:2")
-
-    def test_add_task_with_invalid_recurring_format(self):
-        """Test adding a task with invalid recurring format raises ValueError."""
-        with self.assertRaises(ValueError) as context:
-            self.todo_manager.add_task("Test task", recurring="invalid")
-        self.assertIn("Invalid recurring format", str(context.exception))
-
-    def test_add_task_with_invalid_recurring_frequency(self):
-        """Test adding a task with invalid recurring frequency raises ValueError."""
-        with self.assertRaises(ValueError) as context:
-            self.todo_manager.add_task("Test task", recurring="rec:invalid")
-        self.assertIn("Invalid frequency", str(context.exception))
-
-    def test_add_task_with_invalid_recurring_interval(self):
-        """Test adding a task with invalid recurring interval raises ValueError."""
-        with self.assertRaises(ValueError) as context:
-            self.todo_manager.add_task("Test task", recurring="rec:weekly:invalid")
-        self.assertIn("Invalid interval", str(context.exception))
-
-    def test_add_task_with_zero_recurring_interval(self):
-        """Test adding a task with zero recurring interval raises ValueError."""
-        with self.assertRaises(ValueError) as context:
-            self.todo_manager.add_task("Test task", recurring="rec:weekly:0")
-        self.assertIn("Must be a positive integer", str(context.exception))
-
     def test_add_task_with_invalid_duration_format(self):
         """Test adding a task with invalid duration format raises ValueError."""
         with self.assertRaises(ValueError) as context:
@@ -216,24 +178,6 @@ class TestTodoManager(unittest.TestCase):
             self.todo_manager.add_task("Test task", duration="")
         self.assertIn("Duration must be a non-empty string", str(context.exception))
 
-    def test_add_task_with_all_parameters_including_recurring(self):
-        """Test adding a task with all parameters including recurring."""
-        self.todo_shell.add.return_value = "Test task"
-        result = self.todo_manager.add_task(
-            "Test task",
-            priority="A",
-            project="work",
-            context="office",
-            due="2024-01-15",
-            recurring="rec:daily",
-        )
-        self.assertEqual(
-            result, "Added task: (A) Test task +work @office due:2024-01-15 rec:daily"
-        )
-        self.todo_shell.add.assert_called_once_with(
-            "(A) Test task +work @office due:2024-01-15 rec:daily"
-        )
-
     def test_add_task_with_duration(self):
         """Test adding a task with duration parameter."""
         self.todo_shell.add.return_value = "Test task"
@@ -253,15 +197,14 @@ class TestTodoManager(unittest.TestCase):
             project="work",
             context="office",
             due="2024-01-15",
-            recurring="rec:daily",
             duration="2h",
         )
         self.assertEqual(
             result,
-            "Added task: (A) Test task +work @office due:2024-01-15 rec:daily duration:2h",
+            "Added task: (A) Test task +work @office due:2024-01-15 duration:2h",
         )
         self.todo_shell.add.assert_called_once_with(
-            "(A) Test task +work @office due:2024-01-15 rec:daily duration:2h"
+            "(A) Test task +work @office due:2024-01-15 duration:2h"
         )
 
     def test_list_tasks(self):
@@ -421,7 +364,6 @@ class TestTodoManager(unittest.TestCase):
             "projects": ["+project1", "+project1", "+project2"],  # Duplicate project1
             "contexts": ["@context1", "@context1", "@context2"],  # Duplicate context1
             "due": "2024-01-01",
-            "recurring": None,
             "other_tags": [],
         }
 

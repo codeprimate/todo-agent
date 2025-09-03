@@ -233,7 +233,9 @@ class TestTodoShell:
     def test_set_due_date_preserves_all_components(self):
         """Test that set_due_date preserves all task components."""
         # Mock the list_tasks to return a complex task
-        sample_task = "1 (C) Review quarterly report +work @office rec:weekly due:2025-01-10 custom:tag"
+        sample_task = (
+            "1 (C) Review quarterly report +work @office due:2025-01-10 custom:tag"
+        )
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
         ), patch.object(
@@ -242,8 +244,9 @@ class TestTodoShell:
             result = self.todo_shell.set_due_date(1, "2025-01-25")
 
             # Should preserve all components and update due date
-            # Note: _reconstruct_task puts due date before recurring pattern
-            expected = "(C) Review quarterly report +work @office due:2025-01-25 rec:weekly custom:tag"
+            expected = (
+                "(C) Review quarterly report +work @office due:2025-01-25 custom:tag"
+            )
             mock_replace.assert_called_once_with(1, expected)
             assert result == "Task updated"
 
@@ -354,7 +357,9 @@ class TestTodoShell:
     def test_set_context_preserves_all_components(self):
         """Test that set_context preserves all task components."""
         # Mock the list_tasks to return a complex task
-        sample_task = "1 (C) Review quarterly report +work @office rec:weekly due:2025-01-10 custom:tag"
+        sample_task = (
+            "1 (C) Review quarterly report +work @office due:2025-01-10 custom:tag"
+        )
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
         ), patch.object(
@@ -363,7 +368,9 @@ class TestTodoShell:
             result = self.todo_shell.set_context(1, "home")
 
             # Should preserve all components and update context
-            expected = "(C) Review quarterly report +work @home due:2025-01-10 rec:weekly custom:tag"
+            expected = (
+                "(C) Review quarterly report +work @home due:2025-01-10 custom:tag"
+            )
             mock_replace.assert_called_once_with(1, expected)
             assert result == "Task updated"
 
@@ -448,7 +455,7 @@ class TestTodoShell:
     def test_parse_task_components_handles_various_formats(self):
         """Test that _parse_task_components correctly parses different task formats."""
         # Test task with all components
-        task = "(A) Buy groceries +shopping @home due:2025-01-10 rec:daily custom:tag"
+        task = "(A) Buy groceries +shopping @home due:2025-01-10 custom:tag"
         components = self.todo_shell._parse_task_components(task)
 
         assert components["priority"] == "A"
@@ -456,7 +463,7 @@ class TestTodoShell:
         assert components["projects"] == ["+shopping"]
         assert components["contexts"] == ["@home"]
         assert components["due"] == "2025-01-10"
-        assert components["recurring"] == "rec:daily"
+
         assert components["other_tags"] == ["custom:tag"]
 
     def test_reconstruct_task_preserves_order(self):
@@ -467,12 +474,11 @@ class TestTodoShell:
             "projects": ["+work"],
             "contexts": ["@office"],
             "due": "2025-01-15",
-            "recurring": "rec:weekly",
             "other_tags": ["custom:tag"],
         }
 
         result = self.todo_shell._reconstruct_task(components)
-        expected = "(B) Test task +work @office due:2025-01-15 rec:weekly custom:tag"
+        expected = "(B) Test task +work @office due:2025-01-15 custom:tag"
         assert result == expected
 
     def test_remove_priority_uses_depriority_command(self):
@@ -710,9 +716,7 @@ class TestTodoShell:
     def test_set_project_preserves_all_other_components(self):
         """Test that set_project preserves all task components when modifying projects."""
         # Mock the list_tasks to return a complex task
-        sample_task = (
-            "1 (A) Complex task +old +keep @office rec:weekly due:2025-01-15 custom:tag"
-        )
+        sample_task = "1 (A) Complex task +old +keep @office due:2025-01-15 custom:tag"
         with patch.object(
             self.todo_shell, "list_tasks", return_value=sample_task
         ), patch.object(
@@ -721,7 +725,7 @@ class TestTodoShell:
             result = self.todo_shell.set_project(1, ["-old", "new"])
 
             # Should preserve all components and update projects
-            expected = "(A) Complex task +keep +new @office due:2025-01-15 rec:weekly custom:tag"
+            expected = "(A) Complex task +keep +new @office due:2025-01-15 custom:tag"
             mock_replace.assert_called_once_with(1, expected)
             assert result == "Task updated"
 
