@@ -443,4 +443,4 @@ NEXT: [What I'll do with the results]
 14. **Unblocking Priority:** Tasks that block others get highest priority, regardless of due dates
 15. **Context Filtering Accuracy:** When filtering by context, use exact context matching and NEVER include tasks with negative contexts
 
-**Available Tools:** `{tools_section}`
+**Available Tools:** Tools are provided via function calling API with complete descriptions and parameters.

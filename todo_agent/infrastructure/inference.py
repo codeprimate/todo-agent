@@ -68,9 +68,6 @@ class Inference:
 
     def _load_system_prompt(self) -> str:
         """Load and format the system prompt from file."""
-        # Generate tools section programmatically
-        tools_section = self._generate_tools_section()
-
         # Get current datetime for interpolation
         now = datetime.now()
         timezone_info = time.tzname[time.daylight]
@@ -94,9 +91,8 @@ class Inference:
             with open(prompt_file_path, encoding="utf-8") as f:
                 system_prompt_template = f.read()
 
-            # Format the template with the tools section, current datetime, and calendar
+            # Format the template with current datetime and calendar
             return system_prompt_template.format(
-                tools_section=tools_section,
                 current_datetime=current_datetime,
                 calendar_output=calendar_output,
             )
@@ -108,56 +104,7 @@ class Inference:
             self.logger.error(f"Error loading system prompt: {e!s}")
             raise
 
-    def _generate_tools_section(self) -> str:
-        """Generate the AVAILABLE TOOLS section with strategic categorization."""
-        tool_categories = {
-            "Discovery Tools": [
-                "list_projects",
-                "list_contexts",
-                "list_tasks",
-                "list_completed_tasks",
-            ],
-            "Modification Tools": [
-                "add_task",
-                "complete_task",
-                "replace_task",
-                "append_to_task",
-                "prepend_to_task",
-                "created_completed_task",
-            ],
-            "Management Tools": [
-                "delete_task",
-                "set_priority",
-                "remove_priority",
-                "move_task",
-            ],
-            "Completion Tools": [
-                "created_completed_task",
-                "restore_completed_task",
-            ],
-            "Maintenance Tools": ["archive_tasks", "deduplicate_tasks", "get_overview"],
-        }
 
-        tools_section = []
-        for category, tool_names in tool_categories.items():
-            tools_section.append(f"\n**{category}:**")
-            for tool_name in tool_names:
-                tool_info = next(
-                    (
-                        t
-                        for t in self.tool_handler.tools
-                        if t["function"]["name"] == tool_name
-                    ),
-                    None,
-                )
-                if tool_info:
-                    # Get first sentence of description for concise overview
-                    first_sentence = (
-                        tool_info["function"]["description"].split(".")[0] + "."
-                    )
-                    tools_section.append(f"- {tool_name}(): {first_sentence}")
-
-        return "\n".join(tools_section)
 
     def process_request(self, user_input: str) -> tuple[str, float]:
         """

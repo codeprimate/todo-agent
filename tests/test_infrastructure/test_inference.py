@@ -104,7 +104,7 @@ class TestInference:
     def test_system_prompt_datetime_interpolation(self):
         """Test that current datetime is properly interpolated into system prompt."""
         # Mock the file reading
-        mock_prompt_content = "CURRENT DATE/TIME: {current_datetime}\n{tools_section}"
+        mock_prompt_content = "CURRENT DATE/TIME: {current_datetime}\nCALENDAR: {calendar_output}"
 
         with patch("builtins.open", mock_open(read_data=mock_prompt_content)):
             # Call the method that loads the system prompt
@@ -122,9 +122,9 @@ class TestInference:
                 "System prompt should contain properly formatted datetime"
             )
 
-            # Verify that tools_section is also interpolated
-            assert "{tools_section}" not in result
-            assert "list_tasks" in result  # Should contain tool information
+            # Verify that calendar_output is also interpolated
+            assert "{calendar_output}" not in result
+            assert "September" in result  # Should contain calendar month information
 
     def test_process_request_with_tool_calls(self):
         """Test request processing with tool calls."""
