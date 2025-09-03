@@ -129,15 +129,61 @@ class OpenRouterClient(LLMClient):
         start_time = time.time()
         self._log_request_details(payload, start_time)
 
-        response = requests.post(  # nosec B113
-            f"{self.base_url}/chat/completions", headers=headers, json=payload
-        )
+        try:
+            response = requests.post(  # nosec B113
+                f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=30
+            )
+        except requests.exceptions.Timeout:
+            self.logger.error("OpenRouter API request timed out")
+            return {
+                "error": True,
+                "error_type": "timeout",
+                "provider": "openrouter",
+                "status_code": 0,
+                "raw_error": "Request timed out"
+            }
+        except requests.exceptions.ConnectionError as e:
+            self.logger.error(f"OpenRouter API connection error: {e}")
+            return {
+                "error": True,
+                "error_type": "timeout",
+                "provider": "openrouter",
+                "status_code": 0,
+                "raw_error": f"Connection error: {e}"
+            }
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"OpenRouter API request error: {e}")
+            return {
+                "error": True,
+                "error_type": "general_error",
+                "provider": "openrouter",
+                "status_code": 0,
+                "raw_error": f"Request error: {e}"
+            }
 
         if response.status_code != 200:
             self.logger.error(f"OpenRouter API error: {response.text}")
-            raise Exception(f"OpenRouter API error: {response.text}")
+            error_type = self.classify_error(Exception(response.text), "openrouter")
+            return {
+                "error": True,
+                "error_type": error_type,
+                "provider": "openrouter",
+                "status_code": response.status_code,
+                "raw_error": response.text
+            }
 
-        response_data: Dict[str, Any] = response.json()
+        try:
+            response_data: Dict[str, Any] = response.json()
+        except Exception as e:
+            self.logger.error(f"Failed to parse OpenRouter response JSON: {e}")
+            return {
+                "error": True,
+                "error_type": "malformed_response",
+                "provider": "openrouter",
+                "status_code": response.status_code,
+                "raw_error": f"JSON parsing failed: {e}"
+            }
+            
         self._log_response_details(response_data, start_time)
 
         return response_data
@@ -157,13 +203,50 @@ class OpenRouterClient(LLMClient):
 
     def extract_tool_calls(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract tool calls from API response."""
+        # Check for provider errors first
+        if response.get("error", False):
+            self.logger.warning(f"Cannot extract tool calls from error response: {response.get('error_type')}")
+            return []
+            
         tool_calls = []
         if response.get("choices"):
             choice = response["choices"][0]
             if "message" in choice and "tool_calls" in choice["message"]:
-                tool_calls = choice["message"]["tool_calls"]
+                raw_tool_calls = choice["message"]["tool_calls"]
+                
+                # Validate each tool call
+                for i, tool_call in enumerate(raw_tool_calls):
+                    try:
+                        # Check if tool call has required structure
+                        if not isinstance(tool_call, dict):
+                            self.logger.warning(f"Tool call {i+1} is not a dictionary: {tool_call}")
+                            continue
+                            
+                        function = tool_call.get("function", {})
+                        if not isinstance(function, dict):
+                            self.logger.warning(f"Tool call {i+1} function is not a dictionary: {function}")
+                            continue
+                            
+                        tool_name = function.get("name")
+                        if not tool_name:
+                            self.logger.warning(f"Tool call {i+1} missing function name: {tool_call}")
+                            continue
+                            
+                        # Validate arguments if present
+                        arguments = function.get("arguments", "{}")
+                        if arguments and not isinstance(arguments, str):
+                            self.logger.warning(f"Tool call {i+1} arguments not a string: {arguments}")
+                            continue
+                            
+                        # If we get here, the tool call is valid
+                        tool_calls.append(tool_call)
+                        
+                    except Exception as e:
+                        self.logger.warning(f"Error validating tool call {i+1}: {e}")
+                        continue
+                
                 self.logger.debug(
-                    f"Extracted {len(tool_calls)} tool calls from response"
+                    f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total"
                 )
                 for i, tool_call in enumerate(tool_calls):
                     tool_name = tool_call.get("function", {}).get("name", "unknown")
@@ -179,6 +262,11 @@ class OpenRouterClient(LLMClient):
 
     def extract_content(self, response: Dict[str, Any]) -> str:
         """Extract content from API response."""
+        # Check for provider errors first
+        if response.get("error", False):
+            self.logger.warning(f"Cannot extract content from error response: {response.get('error_type')}")
+            return ""
+            
         if response.get("choices"):
             choice = response["choices"][0]
             if "message" in choice and "content" in choice["message"]:

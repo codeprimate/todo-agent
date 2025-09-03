@@ -60,3 +60,31 @@ class LLMClient(ABC):
             Model name string
         """
         pass
+
+    def classify_error(self, error: Exception, provider: str) -> str:
+        """
+        Classify provider errors using simple string matching.
+        
+        Args:
+            error: The exception that occurred
+            provider: The provider name (e.g., 'openrouter', 'ollama')
+            
+        Returns:
+            Error type string for message lookup
+        """
+        error_str = str(error).lower()
+        
+        if "malformed" in error_str or "invalid" in error_str or "parse" in error_str:
+            return "malformed_response"
+        elif "rate limit" in error_str or "429" in error_str or "too many requests" in error_str:
+            return "rate_limit"
+        elif "unauthorized" in error_str or "401" in error_str or "authentication" in error_str:
+            return "auth_error"
+        elif "timeout" in error_str or "timed out" in error_str:
+            return "timeout"
+        elif "connection" in error_str or "network" in error_str or "dns" in error_str:
+            return "timeout"  # Treat connection issues as timeouts for user messaging
+        elif "refused" in error_str or "unreachable" in error_str:
+            return "timeout"  # Connection refused is similar to timeout for users
+        else:
+            return "general_error"

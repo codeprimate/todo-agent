@@ -803,8 +803,54 @@ class ToolCallHandler:
 
     def execute_tool(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a tool call and return the result."""
-        tool_name = tool_call["function"]["name"]
-        arguments = tool_call["function"]["arguments"]
+        # Validate tool call structure
+        if not isinstance(tool_call, dict):
+            return {
+                "tool_call_id": "unknown",
+                "name": "unknown",
+                "output": "ERROR: Invalid tool call format",
+                "error": True,
+                "error_type": "malformed_tool_call",
+                "error_details": "Tool call is not a dictionary",
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+            }
+            
+        if "function" not in tool_call:
+            return {
+                "tool_call_id": tool_call.get("id", "unknown"),
+                "name": "unknown",
+                "output": "ERROR: Tool call missing function definition",
+                "error": True,
+                "error_type": "malformed_tool_call",
+                "error_details": "Tool call missing function field",
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+            }
+            
+        function = tool_call["function"]
+        if not isinstance(function, dict):
+            return {
+                "tool_call_id": tool_call.get("id", "unknown"),
+                "name": "unknown",
+                "output": "ERROR: Function definition is not a dictionary",
+                "error": True,
+                "error_type": "malformed_tool_call",
+                "error_details": "Function field is not a dictionary",
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+            }
+            
+        tool_name = function.get("name")
+        if not tool_name:
+            return {
+                "tool_call_id": tool_call.get("id", "unknown"),
+                "name": "unknown",
+                "output": "ERROR: Tool call missing function name",
+                "error": True,
+                "error_type": "malformed_tool_call",
+                "error_details": "Function missing name field",
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+            }
+            
+        arguments = function.get("arguments", {})
         tool_call_id = tool_call.get("id", "unknown")
 
         # Handle arguments that might be a string (JSON) or already a dict

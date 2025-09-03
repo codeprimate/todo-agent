@@ -150,6 +150,30 @@ class Inference:
                 messages=messages, tools=self.tool_handler.tools
             )
 
+            # Check for provider errors
+            if response.get("error", False):
+                error_type = response.get("error_type", "general_error")
+                provider = response.get("provider", "unknown")
+                self.logger.error(f"Provider error from {provider}: {error_type}")
+                
+                # Import here to avoid circular imports
+                try:
+                    from todo_agent.interface.formatters import get_provider_error_message
+                    error_message = get_provider_error_message(error_type)
+                except ImportError:
+                    from interface.formatters import get_provider_error_message
+                    error_message = get_provider_error_message(error_type)
+                
+                # Add error message to conversation
+                self.conversation_manager.add_message(MessageRole.ASSISTANT, error_message)
+                
+                # Calculate thinking time and return
+                end_time = time.time()
+                thinking_time = end_time - start_time
+                progress_callback.on_thinking_complete(thinking_time)
+                
+                return error_message, thinking_time
+
             # Extract actual token usage from API response
             usage = response.get("usage", {})
             actual_prompt_tokens = usage.get("prompt_tokens", 0)
@@ -224,6 +248,30 @@ class Inference:
                 response = self.llm_client.chat_with_tools(
                     messages=messages, tools=self.tool_handler.tools
                 )
+
+                # Check for provider errors in continuation
+                if response.get("error", False):
+                    error_type = response.get("error_type", "general_error")
+                    provider = response.get("provider", "unknown")
+                    self.logger.error(f"Provider error in continuation from {provider}: {error_type}")
+                    
+                    # Import here to avoid circular imports
+                    try:
+                        from todo_agent.interface.formatters import get_provider_error_message
+                        error_message = get_provider_error_message(error_type)
+                    except ImportError:
+                        from interface.formatters import get_provider_error_message
+                        error_message = get_provider_error_message(error_type)
+                    
+                    # Add error message to conversation
+                    self.conversation_manager.add_message(MessageRole.ASSISTANT, error_message)
+                    
+                    # Calculate thinking time and return
+                    end_time = time.time()
+                    thinking_time = end_time - start_time
+                    progress_callback.on_thinking_complete(thinking_time)
+                    
+                    return error_message, thinking_time
 
                 # Update with actual tokens from subsequent API calls
                 usage = response.get("usage", {})

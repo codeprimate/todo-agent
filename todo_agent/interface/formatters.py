@@ -14,6 +14,28 @@ from rich.text import Text
 CLI_WIDTH = 100
 PANEL_WIDTH = CLI_WIDTH - 2  # Leave 2 characters for borders
 
+# Provider error message mapping
+PROVIDER_ERROR_MESSAGES = {
+    "malformed_response": "I got a confusing response from my AI service. Please try again, or type 'clear' to reset our conversation.",
+    "malformed_tool_call": "I received a malformed request. Please try again, or type 'clear' to reset our conversation.",
+    "rate_limit": "I'm a bit overwhelmed right now. Please wait a moment and try again, or type 'clear' to start fresh.",
+    "auth_error": "I can't connect to my AI service. Please check your configuration, or type 'clear' to reset.",
+    "timeout": "The request took too long. Please try again, or type 'clear' to reset our conversation.",
+    "general_error": "Something went wrong with my AI service. Please try again, or type 'clear' to reset our conversation."
+}
+
+def get_provider_error_message(error_type: str) -> str:
+    """
+    Get user-friendly error message for provider errors.
+    
+    Args:
+        error_type: The type of provider error
+        
+    Returns:
+        User-friendly error message with recovery suggestion
+    """
+    return PROVIDER_ERROR_MESSAGES.get(error_type, PROVIDER_ERROR_MESSAGES["general_error"])
+
 
 class TaskFormatter:
     """Formats task-related output with unicode characters and consistent styling."""
