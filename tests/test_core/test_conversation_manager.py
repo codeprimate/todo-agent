@@ -14,7 +14,7 @@ class TestConversationManager:
         """Test ConversationManager initialization."""
         manager = ConversationManager()
         assert len(manager.history) == 0
-        assert manager.max_tokens == 32000
+        assert manager.max_tokens == 64000
         assert manager.max_messages == 50
         assert manager.system_prompt is None
 

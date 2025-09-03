@@ -335,8 +335,8 @@ class CLI:
 
                 # Get memory usage
                 # DISABLED FOR NOW
-                # memory_usage = self._get_memory_usage()
-                memory_usage = None
+                memory_usage = self._get_memory_usage()
+                #memory_usage = None
 
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
