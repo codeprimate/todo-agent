@@ -613,6 +613,32 @@ class ToolCallHandler:
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "restore_completed_task",
+                    "description": (
+                        "Restore a completed task from done.txt back to todo.txt, making it active again. "
+                        "USE CASE: Call this when user wants to reactivate a previously completed task. "
+                        "WORKFLOW: 1) Use list_completed_tasks() to find the completed task to restore, "
+                        "2) Call restore_completed_task() with the task number from done.txt. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
+                        "This tool ONLY restores existing completed tasks to active status. "
+                        "IMPORTANT: Use list_completed_tasks() first to find the correct task number "
+                        "if user doesn't specify it."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_number": {
+                                "type": "integer",
+                                "description": "The line number of the completed task in done.txt to restore (required)",
+                            }
+                        },
+                        "required": ["task_number"],
+                    },
+                },
+            },
         ]
 
     def _get_calendar(self, month: int, year: int) -> str:
@@ -822,6 +848,7 @@ class ToolCallHandler:
             "parse_date": self._parse_date,
             "get_calendar": self._get_calendar,
             "created_completed_task": self.todo_manager.created_completed_task,
+            "restore_completed_task": self.todo_manager.restore_completed_task,
         }
 
         if tool_name not in method_map:

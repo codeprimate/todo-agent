@@ -462,3 +462,31 @@ class TodoManager:
         self.todo_shell.complete(task_number)
 
         return f"Created and completed task: {full_description} (completed on {completion_date})"
+
+    def restore_completed_task(self, task_number: int) -> str:
+        """
+        Restore a completed task from done.txt back to todo.txt.
+
+        This method moves a completed task from done.txt back to todo.txt,
+        effectively restoring it to active status.
+
+        Args:
+            task_number: The line number of the completed task in done.txt to restore
+
+        Returns:
+            Confirmation message with the restored task details
+        """
+        # Validate task number
+        if task_number <= 0:
+            raise ValueError("Task number must be a positive integer")
+
+        # Use the move command to restore the task from done.txt to todo.txt
+        result = self.todo_shell.move(task_number, "todo.txt", "done.txt")
+        
+        # Extract the task description from the result for confirmation
+        # The result format is typically: "TODO: X moved from '.../done.txt' to '.../todo.txt'."
+        if "moved from" in result and "to" in result:
+            # Try to extract the task description if possible
+            return f"Restored completed task {task_number} to active status: {result}"
+        else:
+            return f"Restored completed task {task_number} to active status"

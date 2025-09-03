@@ -133,6 +133,7 @@ class Inference:
             ],
             "Completion Tools": [
                 "created_completed_task",
+                "restore_completed_task",
             ],
             "Maintenance Tools": ["archive_tasks", "deduplicate_tasks", "get_overview"],
         }
