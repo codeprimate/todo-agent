@@ -28,7 +28,6 @@ Task Modification Tools:
 - set_project(task_number, projects) - Set or update projects for a task by intelligently rewriting it (handles array of projects with add/remove operations)
 
 Utility Tools:
-- get_overview() - Show task statistics and summary
 - move_task(task_number, destination, source?) - Move task between files
 - archive_tasks() - Archive completed tasks from todo.txt to done.txt
 - get_calendar(month, year) - Get calendar for specific month and year
@@ -478,18 +477,6 @@ class ToolCallHandler:
             {
                 "type": "function",
                 "function": {
-                    "name": "get_overview",
-                    "description": (
-                        "Show task statistics and summary. Use this when user asks for "
-                        "an overview, summary, or statistics about their tasks."
-                    ),
-                    "parameters": {"type": "object", "properties": {}, "required": []},
-                },
-                "progress_description": "📊 Analyzing task distribution...",
-            },
-            {
-                "type": "function",
-                "function": {
                     "name": "move_task",
                     "description": (
                         "Move an EXISTING task from one file to another (e.g., from todo.txt to done.txt). "
@@ -864,7 +851,6 @@ class ToolCallHandler:
             "set_due_date": self.todo_manager.set_due_date,
             "set_context": self.todo_manager.set_context,
             "set_project": self.todo_manager.set_project,
-            "get_overview": self.todo_manager.get_overview,
             "move_task": self.todo_manager.move_task,
             "archive_tasks": self.todo_manager.archive_tasks,
             "parse_date": self._parse_date,

@@ -117,24 +117,6 @@ class TodoManager:
         result = self.todo_shell.complete(task_number)
         return f"Completed task {task_number}: {result}"
 
-    def get_overview(self, **kwargs: Any) -> str:
-        """Show current task statistics."""
-        tasks = self.todo_shell.list_tasks()
-        completed = self.todo_shell.list_completed()
-
-        task_count = (
-            len([line for line in tasks.split("\n") if line.strip()])
-            if tasks.strip()
-            else 0
-        )
-        completed_count = (
-            len([line for line in completed.split("\n") if line.strip()])
-            if completed.strip()
-            else 0
-        )
-
-        return f"Task Overview:\n- Active tasks: {task_count}\n- Completed tasks: {completed_count}"
-
     def replace_task(self, task_number: int, new_description: str) -> str:
         """Replace entire task content."""
         result = self.todo_shell.replace(task_number, new_description)

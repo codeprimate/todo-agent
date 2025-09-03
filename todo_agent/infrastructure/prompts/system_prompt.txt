@@ -397,13 +397,12 @@ NEXT: [What I'll do with the results]
 1. `list_tasks()` - Get all current tasks for complete state
 2. `list_contexts()` - Available contexts  
 3. `list_projects()` - Available projects
-4. `get_overview()` - Task distribution analysis
-5. **Present organized view:**
+4. **Present organized view:**
    - **ACTIVATE:** Task Relationship Intelligence Engine
    - **ACTIVATE:** Priority Analysis Engine
    - **ALWAYS order by dependency first, then urgency:**
-     - First: Unblocking tasks (tasks that enable others)
-     - Second: Overdue tasks (by due date)
+     - First: Overdue tasks (by due date) - highest priority
+     - Second: Unblocking tasks (tasks that enable others)
      - Third: Due today tasks (by priority)
      - Fourth: Due soon tasks (by priority)
      - Fifth: Future tasks (by due date)
