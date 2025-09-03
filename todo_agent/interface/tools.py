@@ -71,6 +71,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "📁 Discovering available projects...",
             },
             {
                 "type": "function",
@@ -86,6 +87,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "📍 Finding available contexts...",
             },
             {
                 "type": "function",
@@ -105,6 +107,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "📋 Scanning your task list...",
             },
             {
                 "type": "function",
@@ -123,6 +126,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "✅ Checking completion history...",
             },
             {
                 "type": "function",
@@ -177,6 +181,7 @@ class ToolCallHandler:
                         "required": ["description"],
                     },
                 },
+                "progress_description": "➕ Creating new task...",
             },
             {
                 "type": "function",
@@ -200,6 +205,7 @@ class ToolCallHandler:
                         "required": ["task_number"],
                     },
                 },
+                "progress_description": "🎯 Marking task complete...",
             },
             {
                 "type": "function",
@@ -227,6 +233,7 @@ class ToolCallHandler:
                         "required": ["task_number", "new_description"],
                     },
                 },
+                "progress_description": "✏️ Updating task description...",
             },
             {
                 "type": "function",
@@ -248,14 +255,15 @@ class ToolCallHandler:
                                 "type": "integer",
                                 "description": "The line number of the task to modify (required)",
                             },
-                            "text": {
+                            "text_to_append": {
                                 "type": "string",
-                                "description": "The text to append to the task (required)",
+                                "description": "Text to add to the end of the task (required)",
                             },
                         },
-                        "required": ["task_number", "text"],
+                        "required": ["task_number", "text_to_append"],
                     },
                 },
+                "progress_description": "📝 Adding notes to task...",
             },
             {
                 "type": "function",
@@ -282,6 +290,7 @@ class ToolCallHandler:
                         "required": ["task_number", "text"],
                     },
                 },
+                "progress_description": "📝 Adding prefix to task...",
             },
             {
                 "type": "function",
@@ -312,6 +321,7 @@ class ToolCallHandler:
                         "required": ["task_number"],
                     },
                 },
+                "progress_description": "🗑️ Deleting task...",
             },
             {
                 "type": "function",
@@ -339,6 +349,7 @@ class ToolCallHandler:
                         "required": ["task_number", "priority"],
                     },
                 },
+                "progress_description": "🏷️ Setting priority...",
             },
             {
                 "type": "function",
@@ -362,6 +373,7 @@ class ToolCallHandler:
                         "required": ["task_number"],
                     },
                 },
+                "progress_description": "🏷️ Removing priority...",
             },
             {
                 "type": "function",
@@ -393,6 +405,7 @@ class ToolCallHandler:
                         "required": ["task_number", "due_date"],
                     },
                 },
+                "progress_description": "📅 Setting due date...",
             },
             {
                 "type": "function",
@@ -424,6 +437,7 @@ class ToolCallHandler:
                         "required": ["task_number", "context"],
                     },
                 },
+                "progress_description": "📍 Setting context...",
             },
             {
                 "type": "function",
@@ -459,6 +473,7 @@ class ToolCallHandler:
                         "required": ["task_number", "projects"],
                     },
                 },
+                "progress_description": "🏷️ Setting project tags...",
             },
             {
                 "type": "function",
@@ -470,6 +485,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "📊 Analyzing task distribution...",
             },
             {
                 "type": "function",
@@ -501,6 +517,7 @@ class ToolCallHandler:
                         "required": ["task_number", "destination"],
                     },
                 },
+                "progress_description": "📦 Moving task...",
             },
             {
                 "type": "function",
@@ -513,6 +530,7 @@ class ToolCallHandler:
                     ),
                     "parameters": {"type": "object", "properties": {}, "required": []},
                 },
+                "progress_description": "📦 Archiving completed tasks...",
             },
             {
                 "type": "function",
@@ -539,6 +557,7 @@ class ToolCallHandler:
                         "required": ["date_expression"],
                     },
                 },
+                "progress_description": "📅 Converting date expression...",
             },
             {
                 "type": "function",
@@ -574,6 +593,7 @@ class ToolCallHandler:
                         "required": ["month", "year"],
                     },
                 },
+                "progress_description": "📅 Generating calendar...",
             },
             {
                 "type": "function",
@@ -612,6 +632,7 @@ class ToolCallHandler:
                         "required": ["description"],
                     },
                 },
+                "progress_description": "✅ Creating completed task...",
             },
             {
                 "type": "function",
@@ -638,6 +659,7 @@ class ToolCallHandler:
                         "required": ["task_number"],
                     },
                 },
+                "progress_description": "🔄 Restoring completed task...",
             },
         ]
 

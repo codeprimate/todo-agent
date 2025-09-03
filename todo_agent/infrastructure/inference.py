@@ -13,6 +13,7 @@ try:
     from todo_agent.infrastructure.llm_client_factory import LLMClientFactory
     from todo_agent.infrastructure.logger import Logger
     from todo_agent.interface.tools import ToolCallHandler
+    from todo_agent.interface.progress import ToolCallProgress, NoOpProgress
 except ImportError:
     from core.conversation_manager import (  # type: ignore[no-redef]
         ConversationManager,
@@ -24,6 +25,7 @@ except ImportError:
     )
     from infrastructure.logger import Logger  # type: ignore[no-redef]
     from interface.tools import ToolCallHandler  # type: ignore[no-redef]
+    from interface.progress import ToolCallProgress, NoOpProgress  # type: ignore[no-redef]
 
 
 class Inference:
@@ -106,18 +108,26 @@ class Inference:
 
 
 
-    def process_request(self, user_input: str) -> tuple[str, float]:
+    def process_request(self, user_input: str, progress_callback: Optional[ToolCallProgress] = None) -> tuple[str, float]:
         """
         Process a user request through the LLM with tool orchestration.
 
         Args:
             user_input: Natural language user request
+            progress_callback: Optional progress callback for tool call tracking
 
         Returns:
             Tuple of (formatted response for user, thinking time in seconds)
         """
         # Start timing the request
         start_time = time.time()
+        
+        # Initialize progress callback if not provided
+        if progress_callback is None:
+            progress_callback = NoOpProgress()
+        
+        # Notify progress callback that thinking has started
+        progress_callback.on_thinking_start()
 
         try:
             self.logger.debug(
@@ -154,6 +164,8 @@ class Inference:
 
             # Handle multiple tool calls in sequence
             tool_call_count = 0
+            total_sequences = 0  # We'll track this as we go
+            
             while True:
                 tool_calls = self.llm_client.extract_tool_calls(response)
 
@@ -164,6 +176,9 @@ class Inference:
                 self.logger.debug(
                     f"Executing tool call sequence #{tool_call_count} with {len(tool_calls)} tools"
                 )
+                
+                # Notify progress callback of sequence start
+                progress_callback.on_sequence_complete(tool_call_count, 0)  # We don't know total yet
 
                 # Execute all tool calls and collect results
                 tool_results = []
@@ -177,6 +192,14 @@ class Inference:
                     self.logger.debug(f"Tool Call ID: {tool_call_id}")
                     self.logger.debug(f"Raw tool call: {tool_call}")
 
+                    # Get progress description for the tool
+                    progress_description = self._get_tool_progress_description(tool_name)
+                    
+                    # Notify progress callback of tool call start
+                    progress_callback.on_tool_call_start(
+                        tool_name, progress_description, tool_call_count, 0  # We don't know total yet
+                    )
+                    
                     result = self.tool_handler.execute_tool(tool_call)
 
                     # Log tool execution result (success or error)
@@ -213,6 +236,9 @@ class Inference:
             # Calculate and log total thinking time
             end_time = time.time()
             thinking_time = end_time - start_time
+            
+            # Notify progress callback that thinking is complete
+            progress_callback.on_thinking_complete(thinking_time)
 
             # Add final assistant response to conversation with thinking time
             final_content = self.llm_client.extract_content(response)
@@ -246,6 +272,25 @@ class Inference:
         return self.conversation_manager.get_conversation_summary(
             self.tool_handler.tools
         )
+
+    def _get_tool_progress_description(self, tool_name: str) -> str:
+        """
+        Get user-friendly progress description for a tool.
+        
+        Args:
+            tool_name: Name of the tool
+            
+        Returns:
+            Progress description string
+        """
+        tool_def = next((t for t in self.tool_handler.tools 
+                         if t.get("function", {}).get("name") == tool_name), None)
+        
+        if tool_def and "progress_description" in tool_def:
+            return tool_def["progress_description"]
+        
+        # Fallback to generic description
+        return f"🔧 Executing {tool_name}..."
 
     def clear_conversation(self) -> None:
         """Clear conversation history."""

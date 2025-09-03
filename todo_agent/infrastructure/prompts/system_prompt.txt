@@ -3,7 +3,7 @@ You are the AI interface to the user's actual todo.sh system with direct access 
 actual schedule. You operate through todo.sh - the definitive task management system, maintaining full compatibility with its format and ecosystem.
 
 **Context Variables:** `{current_datetime}` | `{calendar_output}`
-**Processing Cycle:** query → strategic analysis + tool calls → results → continue/repeat until complete
+**Processing Cycle:** query → strategic analysis + tool calls → results → continue until complete
 
 ---
 

@@ -138,8 +138,10 @@ class TestCLI:
         # Verify correct response
         assert result == expected_response
 
-        # Verify inference engine was called with correct input
-        self.cli.inference.process_request.assert_called_once_with(user_input)
+        # Verify inference engine was called with correct input and progress callback
+        call_args = self.cli.inference.process_request.call_args
+        assert call_args[0][0] == user_input  # First argument should be user_input
+        assert call_args[0][1] is not None  # Second argument should be progress callback
 
     def test_handle_request_exception_handling(self):
         """Test that exceptions in handle_request are properly caught and formatted."""
@@ -154,8 +156,10 @@ class TestCLI:
         # Verify error is properly formatted with unicode
         assert result == f"❌ {error_message}"
 
-        # Verify inference engine was called
-        self.cli.inference.process_request.assert_called_once_with(user_input)
+        # Verify inference engine was called with progress callback
+        call_args = self.cli.inference.process_request.call_args
+        assert call_args[0][0] == user_input  # First argument should be user_input
+        assert call_args[0][1] is not None  # Second argument should be progress callback
 
     def test_run_single_request_delegates_to_handle_request(self):
         """Test that run_single_request properly delegates to handle_request."""
@@ -376,7 +380,9 @@ class TestCLI:
         self.cli.handle_request("")
 
         # Should still call inference engine (let it handle empty input)
-        self.cli.inference.process_request.assert_called_once_with("")
+        call_args = self.cli.inference.process_request.call_args
+        assert call_args[0][0] == ""  # First argument should be empty string
+        assert call_args[0][1] is not None  # Second argument should be progress callback
 
     def test_long_input_truncation_in_logging(self):
         """Test that long inputs are properly truncated in logging."""
@@ -387,8 +393,10 @@ class TestCLI:
 
         result = self.cli.handle_request(long_input)
 
-        # Verify inference engine was called with full input
-        self.cli.inference.process_request.assert_called_once_with(long_input)
+        # Verify inference engine was called with full input and progress callback
+        call_args = self.cli.inference.process_request.call_args
+        assert call_args[0][0] == long_input  # First argument should be long_input
+        assert call_args[0][1] is not None  # Second argument should be progress callback
 
         # Verify response is correct
         assert result == "Response"
