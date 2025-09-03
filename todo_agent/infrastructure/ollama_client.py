@@ -2,92 +2,72 @@
 LLM client for Ollama API communication.
 """
 
-import json
-import time
 from typing import Any, Dict, List
 
-import requests
-
-try:
-    from todo_agent.infrastructure.config import Config
-    from todo_agent.infrastructure.llm_client import LLMClient
-    from todo_agent.infrastructure.logger import Logger
-    from todo_agent.infrastructure.token_counter import get_token_counter
-except ImportError:
-    from infrastructure.config import Config  # type: ignore[no-redef]
-    from infrastructure.llm_client import LLMClient  # type: ignore[no-redef]
-    from infrastructure.logger import Logger  # type: ignore[no-redef]
-    from infrastructure.token_counter import get_token_counter  # type: ignore[no-redef]
+from todo_agent.infrastructure.llm_client import LLMClient
 
 
 class OllamaClient(LLMClient):
     """Ollama API client implementation."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config):
         """
         Initialize Ollama client.
 
         Args:
             config: Configuration object
         """
-        self.config = config
+        super().__init__(config, config.ollama_model, "ollama_client")
         self.base_url = config.ollama_base_url
-        self.model = config.ollama_model
-        self.logger = Logger("ollama_client")
-        self.token_counter = get_token_counter(self.model)
 
-    def _estimate_tokens(self, text: str) -> int:
-        """
-        Estimate token count for text using accurate tokenization.
+    def _get_request_headers(self) -> Dict[str, str]:
+        """Get request headers for Ollama API."""
+        return {
+            "Content-Type": "application/json",
+        }
 
-        Args:
-            text: Text to count tokens for
+    def _get_request_payload(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Get request payload for Ollama API."""
+        return {
+            "model": self.model,
+            "messages": messages,
+            "tools": tools,
+            "stream": False,
+        }
 
-        Returns:
-            Number of tokens
-        """
-        return self.token_counter.count_tokens(text)
+    def _get_api_endpoint(self) -> str:
+        """Get Ollama API endpoint."""
+        return f"{self.base_url}/api/chat"
 
-    def _log_request_details(self, payload: Dict[str, Any], start_time: float) -> None:
-        """Log request details including accurate token count."""
-        # Count tokens for messages
-        messages = payload.get("messages", [])
-        tools = payload.get("tools", [])
-
-        total_tokens = self.token_counter.count_request_tokens(messages, tools)
-
-        self.logger.info(f"Request sent - Token count: {total_tokens}")
-        # self.logger.debug(f"Raw request payload: {json.dumps(payload, indent=2)}")
-
-    def _log_response_details(
-        self, response: Dict[str, Any], start_time: float
-    ) -> None:
-        """Log response details including latency."""
+    def _process_response(self, response_data: Dict[str, Any], start_time: float) -> None:
+        """Process and log Ollama response details."""
+        import time
+        
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
 
         self.logger.info(f"Response received - Latency: {latency_ms:.2f}ms")
 
         # Log tool call details if present
-        if "message" in response and "tool_calls" in response["message"]:
-            tool_calls = response["message"]["tool_calls"]
+        if "message" in response_data and "tool_calls" in response_data["message"]:
+            tool_calls = response_data["message"]["tool_calls"]
             self.logger.info(f"Response contains {len(tool_calls)} tool calls")
 
             # Log thinking content (response body) if present
-            content = response["message"].get("content", "")
+            content = response_data["message"].get("content", "")
             if content and content.strip():
                 self.logger.info(f"LLM thinking before tool calls: {content}")
 
             for i, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
                 self.logger.info(f"  Tool call {i + 1}: {tool_name}")
-        elif "message" in response and "content" in response["message"]:
-            content = response["message"]["content"]
+        elif "message" in response_data and "content" in response_data["message"]:
+            content = response_data["message"]["content"]
             self.logger.debug(
                 f"Response contains content: {content[:100]}{'...' if len(content) > 100 else ''}"
             )
 
-        self.logger.debug(f"Raw response: {json.dumps(response, indent=2)}")
+        self.logger.debug(f"Raw response: {response_data}")
 
     def chat_with_tools(
         self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
@@ -102,78 +82,7 @@ class OllamaClient(LLMClient):
         Returns:
             API response dictionary
         """
-        headers = {
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "tools": tools,
-            "stream": False,
-        }
-
-        start_time = time.time()
-        self._log_request_details(payload, start_time)
-
-        try:
-            response = requests.post(  # nosec B113
-                f"{self.base_url}/api/chat", headers=headers, json=payload, timeout=30
-            )
-        except requests.exceptions.Timeout:
-            self.logger.error("Ollama API request timed out")
-            return {
-                "error": True,
-                "error_type": "timeout",
-                "provider": "ollama",
-                "status_code": 0,
-                "raw_error": "Request timed out"
-            }
-        except requests.exceptions.ConnectionError as e:
-            self.logger.error(f"Ollama API connection error: {e}")
-            return {
-                "error": True,
-                "error_type": "timeout",
-                "provider": "ollama",
-                "status_code": 0,
-                "raw_error": f"Connection error: {e}"
-            }
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"Ollama API request error: {e}")
-            return {
-                "error": True,
-                "error_type": "general_error",
-                "provider": "ollama",
-                "status_code": 0,
-                "raw_error": f"Request error: {e}"
-            }
-
-        if response.status_code != 200:
-            self.logger.error(f"Ollama API error: {response.text}")
-            error_type = self.classify_error(Exception(response.text), "ollama")
-            return {
-                "error": True,
-                "error_type": error_type,
-                "provider": "ollama",
-                "status_code": response.status_code,
-                "raw_error": response.text
-            }
-
-        try:
-            response_data: Dict[str, Any] = response.json()
-        except Exception as e:
-            self.logger.error(f"Failed to parse Ollama response JSON: {e}")
-            return {
-                "error": True,
-                "error_type": "malformed_response",
-                "provider": "ollama",
-                "status_code": response.status_code,
-                "raw_error": f"JSON parsing failed: {e}"
-            }
-            
-        self._log_response_details(response_data, start_time)
-
-        return response_data
+        return self._make_http_request(messages, tools)
 
     def extract_tool_calls(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract tool calls from API response."""
@@ -188,36 +97,10 @@ class OllamaClient(LLMClient):
         if "message" in response and "tool_calls" in response["message"]:
             raw_tool_calls = response["message"]["tool_calls"]
             
-            # Validate each tool call
+            # Validate each tool call using common validation
             for i, tool_call in enumerate(raw_tool_calls):
-                try:
-                    # Check if tool call has required structure
-                    if not isinstance(tool_call, dict):
-                        self.logger.warning(f"Tool call {i+1} is not a dictionary: {tool_call}")
-                        continue
-                        
-                    function = tool_call.get("function", {})
-                    if not isinstance(function, dict):
-                        self.logger.warning(f"Tool call {i+1} function is not a dictionary: {function}")
-                        continue
-                        
-                    tool_name = function.get("name")
-                    if not tool_name:
-                        self.logger.warning(f"Tool call {i+1} missing function name: {tool_call}")
-                        continue
-                        
-                    # Validate arguments if present
-                    arguments = function.get("arguments", "{}")
-                    if arguments and not isinstance(arguments, str):
-                        self.logger.warning(f"Tool call {i+1} arguments not a string: {arguments}")
-                        continue
-                        
-                    # If we get here, the tool call is valid
+                if self._validate_tool_call(tool_call, i):
                     tool_calls.append(tool_call)
-                    
-                except Exception as e:
-                    self.logger.warning(f"Error validating tool call {i+1}: {e}")
-                    continue
             
             self.logger.debug(f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total")
             for i, tool_call in enumerate(tool_calls):
@@ -251,3 +134,23 @@ class OllamaClient(LLMClient):
             Model name string
         """
         return self.model
+
+    def get_provider_name(self) -> str:
+        """
+        Get the provider name for this client.
+
+        Returns:
+            Provider name string
+        """
+        return "ollama"
+
+    def get_request_timeout(self) -> int:
+        """
+        Get the request timeout in seconds for Ollama.
+        
+        Ollama can be slower than cloud providers, so we use a 2-minute timeout.
+        
+        Returns:
+            Timeout value in seconds (120)
+        """
+        return 120

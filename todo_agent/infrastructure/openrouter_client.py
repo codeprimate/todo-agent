@@ -2,67 +2,54 @@
 LLM client for OpenRouter API communication.
 """
 
-import json
-import time
 from typing import Any, Dict, List
 
-import requests
-
-try:
-    from todo_agent.infrastructure.config import Config
-    from todo_agent.infrastructure.llm_client import LLMClient
-    from todo_agent.infrastructure.logger import Logger
-    from todo_agent.infrastructure.token_counter import get_token_counter
-except ImportError:
-    from infrastructure.config import Config  # type: ignore[no-redef]
-    from infrastructure.llm_client import LLMClient  # type: ignore[no-redef]
-    from infrastructure.logger import Logger  # type: ignore[no-redef]
-    from infrastructure.token_counter import get_token_counter  # type: ignore[no-redef]
+from todo_agent.infrastructure.llm_client import LLMClient
 
 
 class OpenRouterClient(LLMClient):
     """LLM API communication and response handling."""
 
-    def __init__(self, config: Config):
-        self.config = config
-        self.api_key = config.openrouter_api_key
-        self.model = config.model
-        self.base_url = "https://openrouter.ai/api/v1"
-        self.logger = Logger("openrouter_client")
-        self.token_counter = get_token_counter(self.model)
-
-    def _estimate_tokens(self, text: str) -> int:
+    def __init__(self, config):
         """
-        Estimate token count for text using accurate tokenization.
+        Initialize OpenRouter client.
 
         Args:
-            text: Text to count tokens for
-
-        Returns:
-            Number of tokens
+            config: Configuration object
         """
-        return self.token_counter.count_tokens(text)
+        super().__init__(config, config.model, "openrouter_client")
+        self.api_key = config.openrouter_api_key
+        self.base_url = "https://openrouter.ai/api/v1"
 
-    def _log_request_details(self, payload: Dict[str, Any], start_time: float) -> None:
-        """Log request details including accurate token count."""
-        # Count tokens for messages
-        messages = payload.get("messages", [])
-        tools = payload.get("tools", [])
+    def _get_request_headers(self) -> Dict[str, str]:
+        """Get request headers for OpenRouter API."""
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
 
-        total_tokens = self.token_counter.count_request_tokens(messages, tools)
+    def _get_request_payload(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Get request payload for OpenRouter API."""
+        return {
+            "model": self.model,
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": "auto",
+        }
 
-        self.logger.info(f"Request sent - Token count: {total_tokens}")
-        # self.logger.debug(f"Raw request payload: {json.dumps(payload, indent=2)}")
+    def _get_api_endpoint(self) -> str:
+        """Get OpenRouter API endpoint."""
+        return f"{self.base_url}/chat/completions"
 
-    def _log_response_details(
-        self, response: Dict[str, Any], start_time: float
-    ) -> None:
-        """Log response details including token count and latency."""
+    def _process_response(self, response_data: Dict[str, Any], start_time: float) -> None:
+        """Process and log OpenRouter response details."""
+        import time
+        
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
 
         # Extract token usage from response if available
-        usage = response.get("usage", {})
+        usage = response_data.get("usage", {})
         prompt_tokens = usage.get("prompt_tokens", "unknown")
         completion_tokens = usage.get("completion_tokens", "unknown")
         total_tokens = usage.get("total_tokens", "unknown")
@@ -73,7 +60,7 @@ class OpenRouterClient(LLMClient):
         )
 
         # Extract and log choice details
-        choices = response.get("choices", [])
+        choices = response_data.get("choices", [])
         if not choices:
             return
 
@@ -99,7 +86,7 @@ class OpenRouterClient(LLMClient):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
                 self.logger.info(f"  Tool call {i}: {tool_name}")
 
-        self.logger.debug(f"Raw response: {json.dumps(response, indent=2)}")
+        self.logger.debug(f"Raw response: {response_data}")
 
     def chat_with_tools(
         self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
@@ -114,79 +101,7 @@ class OpenRouterClient(LLMClient):
         Returns:
             API response dictionary
         """
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "tools": tools,
-            "tool_choice": "auto",
-        }
-
-        start_time = time.time()
-        self._log_request_details(payload, start_time)
-
-        try:
-            response = requests.post(  # nosec B113
-                f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=30
-            )
-        except requests.exceptions.Timeout:
-            self.logger.error("OpenRouter API request timed out")
-            return {
-                "error": True,
-                "error_type": "timeout",
-                "provider": "openrouter",
-                "status_code": 0,
-                "raw_error": "Request timed out"
-            }
-        except requests.exceptions.ConnectionError as e:
-            self.logger.error(f"OpenRouter API connection error: {e}")
-            return {
-                "error": True,
-                "error_type": "timeout",
-                "provider": "openrouter",
-                "status_code": 0,
-                "raw_error": f"Connection error: {e}"
-            }
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"OpenRouter API request error: {e}")
-            return {
-                "error": True,
-                "error_type": "general_error",
-                "provider": "openrouter",
-                "status_code": 0,
-                "raw_error": f"Request error: {e}"
-            }
-
-        if response.status_code != 200:
-            self.logger.error(f"OpenRouter API error: {response.text}")
-            error_type = self.classify_error(Exception(response.text), "openrouter")
-            return {
-                "error": True,
-                "error_type": error_type,
-                "provider": "openrouter",
-                "status_code": response.status_code,
-                "raw_error": response.text
-            }
-
-        try:
-            response_data: Dict[str, Any] = response.json()
-        except Exception as e:
-            self.logger.error(f"Failed to parse OpenRouter response JSON: {e}")
-            return {
-                "error": True,
-                "error_type": "malformed_response",
-                "provider": "openrouter",
-                "status_code": response.status_code,
-                "raw_error": f"JSON parsing failed: {e}"
-            }
-            
-        self._log_response_details(response_data, start_time)
-
-        return response_data
+        return self._make_http_request(messages, tools)
 
     def continue_with_tool_result(self, tool_result: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -214,36 +129,10 @@ class OpenRouterClient(LLMClient):
             if "message" in choice and "tool_calls" in choice["message"]:
                 raw_tool_calls = choice["message"]["tool_calls"]
                 
-                # Validate each tool call
+                # Validate each tool call using common validation
                 for i, tool_call in enumerate(raw_tool_calls):
-                    try:
-                        # Check if tool call has required structure
-                        if not isinstance(tool_call, dict):
-                            self.logger.warning(f"Tool call {i+1} is not a dictionary: {tool_call}")
-                            continue
-                            
-                        function = tool_call.get("function", {})
-                        if not isinstance(function, dict):
-                            self.logger.warning(f"Tool call {i+1} function is not a dictionary: {function}")
-                            continue
-                            
-                        tool_name = function.get("name")
-                        if not tool_name:
-                            self.logger.warning(f"Tool call {i+1} missing function name: {tool_call}")
-                            continue
-                            
-                        # Validate arguments if present
-                        arguments = function.get("arguments", "{}")
-                        if arguments and not isinstance(arguments, str):
-                            self.logger.warning(f"Tool call {i+1} arguments not a string: {arguments}")
-                            continue
-                            
-                        # If we get here, the tool call is valid
+                    if self._validate_tool_call(tool_call, i):
                         tool_calls.append(tool_call)
-                        
-                    except Exception as e:
-                        self.logger.warning(f"Error validating tool call {i+1}: {e}")
-                        continue
                 
                 self.logger.debug(
                     f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total"
@@ -282,3 +171,23 @@ class OpenRouterClient(LLMClient):
             Model name string
         """
         return self.model
+
+    def get_provider_name(self) -> str:
+        """
+        Get the provider name for this client.
+
+        Returns:
+            Provider name string
+        """
+        return "openrouter"
+
+    def get_request_timeout(self) -> int:
+        """
+        Get the request timeout in seconds for OpenRouter.
+        
+        Cloud APIs typically respond quickly, so we use a 30-second timeout.
+        
+        Returns:
+            Timeout value in seconds (30)
+        """
+        return 30
