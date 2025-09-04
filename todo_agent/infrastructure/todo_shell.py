@@ -320,15 +320,13 @@ class TodoShell:
             parent_tag = f"parent:{parent_number}"
             # Remove any existing parent tag and add the new one
             components["other_tags"] = [
-                tag for tag in components["other_tags"] 
-                if not tag.startswith("parent:")
+                tag for tag in components["other_tags"] if not tag.startswith("parent:")
             ]
             components["other_tags"].append(parent_tag)
         else:
             # Remove parent tag
             components["other_tags"] = [
-                tag for tag in components["other_tags"] 
-                if not tag.startswith("parent:")
+                tag for tag in components["other_tags"] if not tag.startswith("parent:")
             ]
 
         # Reconstruct the task

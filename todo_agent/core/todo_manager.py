@@ -12,6 +12,184 @@ class TodoManager:
     def __init__(self, todo_shell: Any) -> None:
         self.todo_shell = todo_shell
 
+    # ============================================================================
+    # VALIDATION METHODS
+    # ============================================================================
+
+    def _normalize_empty_to_none(self, value: Optional[str]) -> Optional[str]:
+        """Convert empty strings to None for consistent handling."""
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    def _validate_date_format(
+        self, date_str: Optional[str], field_name: str = "date"
+    ) -> None:
+        """Validate date format (YYYY-MM-DD)."""
+        if date_str is None or not date_str.strip():
+            return
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError(
+                f"Invalid {field_name} format '{date_str}'. Must be YYYY-MM-DD."
+            )
+
+    def _validate_priority(self, priority: Optional[str]) -> None:
+        """Validate priority format (single uppercase letter A-Z)."""
+        if priority is None:
+            return
+        if not (len(priority) == 1 and priority.isalpha() and priority.isupper()):
+            raise ValueError(
+                f"Invalid priority '{priority}'. Must be a single uppercase letter (A-Z)."
+            )
+
+    def _validate_parent_number(self, parent_number: Optional[int]) -> None:
+        """Validate parent task number."""
+        if parent_number is not None and (
+            not isinstance(parent_number, int) or parent_number <= 0
+        ):
+            raise ValueError(
+                f"Invalid parent_number '{parent_number}'. Must be a positive integer."
+            )
+
+    def _validate_duration(self, duration: Optional[str]) -> None:
+        """Validate duration format (e.g., '30m', '2h', '1d')."""
+        if duration is None:
+            return
+
+        if not isinstance(duration, str) or not duration.strip():
+            raise ValueError("Duration must be a non-empty string.")
+
+        if not any(duration.endswith(unit) for unit in ["m", "h", "d"]):
+            raise ValueError(
+                f"Invalid duration format '{duration}'. Must end with m (minutes), h (hours), or d (days)."
+            )
+
+        value = duration[:-1]
+        if not value:
+            raise ValueError("Duration value cannot be empty.")
+
+        try:
+            numeric_value = float(value)
+            if numeric_value <= 0:
+                raise ValueError("Duration value must be positive.")
+        except ValueError:
+            raise ValueError(
+                f"Invalid duration value '{value}'. Must be a positive number."
+            )
+
+    def _clean_project_name(self, project: Optional[str]) -> Optional[str]:
+        """Clean and validate project name."""
+        if project is None:
+            return None
+        if not project.strip():
+            return None
+        clean_project = project.strip().lstrip("+")
+        if not clean_project:
+            raise ValueError("Project name cannot be empty after removing + symbol.")
+        return clean_project
+
+    def _clean_context_name(self, context: Optional[str]) -> Optional[str]:
+        """Clean and validate context name."""
+        if context is None:
+            return None
+        if not context.strip():
+            return ""  # Return empty string for empty input (used by set_context for removal)
+        clean_context = context.strip().lstrip("@")
+        if not clean_context:
+            raise ValueError("Context name cannot be empty after removing @ symbol.")
+        return clean_context
+
+    # ============================================================================
+    # TASK BUILDING AND UTILITY METHODS
+    # ============================================================================
+
+    def _build_task_description(
+        self,
+        description: str,
+        priority: Optional[str] = None,
+        project: Optional[str] = None,
+        context: Optional[str] = None,
+        due: Optional[str] = None,
+        duration: Optional[str] = None,
+        parent_number: Optional[int] = None,
+    ) -> str:
+        """Build full task description with all components."""
+        full_description = description
+
+        if priority:
+            full_description = f"({priority}) {full_description}"
+
+        if project:
+            clean_project = self._clean_project_name(project)
+            if clean_project:  # Only add if not None/empty after cleaning
+                full_description = f"{full_description} +{clean_project}"
+
+        if context:
+            clean_context = self._clean_context_name(context)
+            if clean_context:  # Only add if not None/empty after cleaning
+                full_description = f"{full_description} @{clean_context}"
+
+        if due:
+            full_description = f"{full_description} due:{due}"
+
+        if duration:
+            full_description = f"{full_description} duration:{duration}"
+
+        if parent_number:
+            full_description = f"{full_description} parent:{parent_number}"
+
+        return full_description
+
+    def _format_task_operation_response(
+        self, operation: str, task_number: int, result: str, additional_info: str = ""
+    ) -> str:
+        """Format consistent task operation response messages."""
+        # Handle special cases for backward compatibility with tests
+        if operation == "Set due date" and additional_info:
+            return f"Set due date {additional_info} for task {task_number}: {result}"
+        elif operation == "Set context" and additional_info:
+            return f"Set context {additional_info} for task {task_number}: {result}"
+        elif operation == "Set priority" and additional_info:
+            return f"Set priority {additional_info} for task {task_number}: {result}"
+        else:
+            base_message = f"{operation} task {task_number}"
+            if additional_info:
+                base_message += f" ({additional_info})"
+            return f"{base_message}: {result}"
+
+    def _handle_empty_result(self, result: str, empty_message: str) -> str:
+        """Handle empty results with consistent messaging."""
+        return empty_message if not result.strip() else result
+
+    def _find_task_number_by_description(self, description: str) -> int:
+        """Find task number by description in the current task list."""
+        tasks = self.todo_shell.list_tasks()
+        task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
+
+        if not task_lines:
+            raise RuntimeError("Failed to add task - no tasks found after addition")
+
+        import re
+
+        for line in reversed(task_lines):
+            if description in line:
+                match = re.match(r"^(\d+)", line)
+                if match:
+                    return int(match.group(1))
+
+        raise RuntimeError(
+            f"Could not find task with description '{description}' after adding it. "
+            f"This indicates a serious issue with task matching."
+        )
+
+    # ============================================================================
+    # CORE CRUD OPERATIONS
+    # ============================================================================
+
     def add_task(
         self,
         description: str,
@@ -23,92 +201,23 @@ class TodoManager:
         parent_number: Optional[int] = None,
     ) -> str:
         """Add new task with explicit project/context parameters."""
-        # Validate and sanitize inputs
-        if priority and not (
-            len(priority) == 1 and priority.isalpha() and priority.isupper()
-        ):
-            raise ValueError(
-                f"Invalid priority '{priority}'. Must be a single uppercase letter (A-Z)."
-            )
+        # Normalize empty strings to None for optional parameters
+        priority = self._normalize_empty_to_none(priority)
+        project = self._normalize_empty_to_none(project)
+        context = self._normalize_empty_to_none(context)
+        due = self._normalize_empty_to_none(due)
+        # Note: duration is not normalized - empty strings should raise validation errors
 
-        if project:
-            # Remove any existing + symbols to prevent duplication
-            project = project.strip().lstrip("+")
-            if not project:
-                raise ValueError(
-                    "Project name cannot be empty after removing + symbol."
-                )
+        # Validate inputs
+        self._validate_priority(priority)
+        self._validate_date_format(due, "due date")
+        self._validate_duration(duration)
+        self._validate_parent_number(parent_number)
 
-        if context:
-            # Remove any existing @ symbols to prevent duplication
-            context = context.strip().lstrip("@")
-            if not context:
-                raise ValueError(
-                    "Context name cannot be empty after removing @ symbol."
-                )
-
-        if due:
-            # Basic date format validation
-            try:
-                datetime.strptime(due, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError(
-                    f"Invalid due date format '{due}'. Must be YYYY-MM-DD."
-                )
-
-        if duration is not None:
-            # Validate duration format (e.g., "30m", "2h", "1d")
-            if not duration or not isinstance(duration, str):
-                raise ValueError("Duration must be a non-empty string.")
-
-            # Check if duration ends with a valid unit
-            if not any(duration.endswith(unit) for unit in ["m", "h", "d"]):
-                raise ValueError(
-                    f"Invalid duration format '{duration}'. Must end with m (minutes), h (hours), or d (days)."
-                )
-
-            # Extract the numeric part and validate it
-            value = duration[:-1]
-            if not value:
-                raise ValueError("Duration value cannot be empty.")
-
-            try:
-                # Check if the value is a valid positive number
-                numeric_value = float(value)
-                if numeric_value <= 0:
-                    raise ValueError("Duration value must be positive.")
-            except ValueError:
-                raise ValueError(
-                    f"Invalid duration value '{value}'. Must be a positive number."
-                )
-
-        # Validate parent_number if provided
-        if parent_number is not None:
-            if not isinstance(parent_number, int) or parent_number <= 0:
-                raise ValueError(
-                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
-                )
-
-        # Build the full task description with priority, project, and context
-        full_description = description
-
-        if priority:
-            full_description = f"({priority}) {full_description}"
-
-        if project:
-            full_description = f"{full_description} +{project}"
-
-        if context:
-            full_description = f"{full_description} @{context}"
-
-        if due:
-            full_description = f"{full_description} due:{due}"
-
-        if duration:
-            full_description = f"{full_description} duration:{duration}"
-
-        if parent_number:
-            full_description = f"{full_description} parent:{parent_number}"
+        # Build the full task description
+        full_description = self._build_task_description(
+            description, priority, project, context, due, duration, parent_number
+        )
 
         self.todo_shell.add(full_description)
         return f"Added task: {full_description}"
@@ -118,50 +227,53 @@ class TodoManager:
     ) -> str:
         """List tasks with optional filtering."""
         result = self.todo_shell.list_tasks(filter, suppress_color=suppress_color)
-        if not result.strip():
-            return "No tasks found."
-
-        # Return the raw todo.txt format for the LLM to format conversationally
-        # The LLM will convert this into natural language in its response
-        return result
+        return self._handle_empty_result(result, "No tasks found.")
 
     def complete_task(self, task_number: int) -> str:
         """Mark task complete by line number."""
         result = self.todo_shell.complete(task_number)
-        return f"Completed task {task_number}: {result}"
+        return self._format_task_operation_response("Completed", task_number, result)
 
     def replace_task(self, task_number: int, new_description: str) -> str:
         """Replace entire task content."""
         result = self.todo_shell.replace(task_number, new_description)
-        return f"Replaced task {task_number}: {result}"
+        return self._format_task_operation_response("Replaced", task_number, result)
 
     def append_to_task(self, task_number: int, text: str) -> str:
         """Add text to end of existing task."""
         result = self.todo_shell.append(task_number, text)
-        return f"Appended to task {task_number}: {result}"
+        return self._format_task_operation_response("Appended to", task_number, result)
 
     def prepend_to_task(self, task_number: int, text: str) -> str:
         """Add text to beginning of existing task."""
         result = self.todo_shell.prepend(task_number, text)
-        return f"Prepended to task {task_number}: {result}"
+        return self._format_task_operation_response("Prepended to", task_number, result)
 
     def delete_task(self, task_number: int, term: Optional[str] = None) -> str:
         """Delete entire task or specific term from task."""
         result = self.todo_shell.delete(task_number, term)
-        if term:
-            return f"Removed '{term}' from task {task_number}: {result}"
+        if term is not None:
+            return self._format_task_operation_response(
+                "Removed", task_number, result, f"'{term}'"
+            )
         else:
-            return f"Deleted task {task_number}: {result}"
+            return self._format_task_operation_response("Deleted", task_number, result)
 
     def set_priority(self, task_number: int, priority: str) -> str:
         """Set or change task priority (A-Z)."""
+        priority = self._normalize_empty_to_none(priority)
+        self._validate_priority(priority)
         result = self.todo_shell.set_priority(task_number, priority)
-        return f"Set priority {priority} for task {task_number}: {result}"
+        return self._format_task_operation_response(
+            "Set priority", task_number, result, priority or ""
+        )
 
     def remove_priority(self, task_number: int) -> str:
         """Remove priority from task."""
         result = self.todo_shell.remove_priority(task_number)
-        return f"Removed priority from task {task_number}: {result}"
+        return self._format_task_operation_response(
+            "Removed priority from", task_number, result
+        )
 
     def set_due_date(self, task_number: int, due_date: str) -> str:
         """
@@ -175,19 +287,17 @@ class TodoManager:
             Confirmation message with the updated task
         """
         # Validate due date format only if not empty
-        if due_date.strip():
-            try:
-                datetime.strptime(due_date, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError(
-                    f"Invalid due date format '{due_date}'. Must be YYYY-MM-DD."
-                )
+        self._validate_date_format(due_date, "due date")
 
         result = self.todo_shell.set_due_date(task_number, due_date)
         if due_date.strip():
-            return f"Set due date {due_date} for task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Set due date", task_number, result, due_date
+            )
         else:
-            return f"Removed due date from task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Removed due date from", task_number, result
+            )
 
     def set_context(self, task_number: int, context: str) -> str:
         """
@@ -201,20 +311,17 @@ class TodoManager:
             Confirmation message with the updated task
         """
         # Validate context name if not empty
-        if context.strip():
-            # Remove any existing @ symbols to prevent duplication
-            clean_context = context.strip().lstrip("@")
-            if not clean_context:
-                raise ValueError(
-                    "Context name cannot be empty after removing @ symbol."
-                )
+        clean_context = self._clean_context_name(context) if context.strip() else ""
 
         result = self.todo_shell.set_context(task_number, context)
         if context.strip():
-            clean_context = context.strip().lstrip("@")
-            return f"Set context @{clean_context} for task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Set context", task_number, result, f"@{clean_context}"
+            )
         else:
-            return f"Removed context from task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Removed context from", task_number, result
+            )
 
     def set_project(self, task_number: int, projects: list) -> str:
         """
@@ -234,12 +341,7 @@ class TodoManager:
         if projects:
             for project in projects:
                 if project.strip() and not project.startswith("-"):
-                    # Remove any existing + symbols to prevent duplication
-                    clean_project = project.strip().lstrip("+")
-                    if not clean_project:
-                        raise ValueError(
-                            "Project name cannot be empty after removing + symbol."
-                        )
+                    self._clean_project_name(project)
                 elif project.startswith("-"):
                     clean_project = project[1:].strip().lstrip("+")
                     if not clean_project:
@@ -250,7 +352,9 @@ class TodoManager:
         result = self.todo_shell.set_project(task_number, projects)
 
         if not projects:
-            return f"No project changes made to task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "No project changes made to", task_number, result
+            )
         else:
             # Build operation description
             operations = []
@@ -266,10 +370,14 @@ class TodoManager:
                     operations.append(f"added +{clean_project}")
 
             if not operations:
-                return f"No project changes made to task {task_number}: {result}"
+                return self._format_task_operation_response(
+                    "No project changes made to", task_number, result
+                )
             else:
                 operation_desc = ", ".join(operations)
-                return f"Updated projects for task {task_number} ({operation_desc}): {result}"
+                return self._format_task_operation_response(
+                    "Updated projects for", task_number, result, operation_desc
+                )
 
     def set_parent(self, task_number: int, parent_number: Optional[int]) -> str:
         """
@@ -283,31 +391,31 @@ class TodoManager:
             Confirmation message with the updated task
         """
         # Validate parent_number if provided
-        if parent_number is not None:
-            if not isinstance(parent_number, int) or parent_number <= 0:
-                raise ValueError(
-                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
-                )
+        self._validate_parent_number(parent_number)
 
         result = self.todo_shell.set_parent(task_number, parent_number)
         if parent_number is not None:
-            return f"Set parent task {parent_number} for task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Set parent task", task_number, result, str(parent_number)
+            )
         else:
-            return f"Removed parent from task {task_number}: {result}"
+            return self._format_task_operation_response(
+                "Removed parent from", task_number, result
+            )
+
+    # ============================================================================
+    # LISTING AND QUERY METHODS
+    # ============================================================================
 
     def list_projects(self, suppress_color: bool = True, **kwargs: Any) -> str:
         """List all available projects in todo.txt."""
         result = self.todo_shell.list_projects(suppress_color=suppress_color)
-        if not result.strip():
-            return "No projects found."
-        return result
+        return self._handle_empty_result(result, "No projects found.")
 
     def list_contexts(self, suppress_color: bool = True, **kwargs: Any) -> str:
         """List all available contexts in todo.txt."""
         result = self.todo_shell.list_contexts(suppress_color=suppress_color)
-        if not result.strip():
-            return "No contexts found."
-        return result
+        return self._handle_empty_result(result, "No contexts found.")
 
     def list_completed_tasks(
         self,
@@ -370,16 +478,22 @@ class TodoManager:
         result = self.todo_shell.list_completed(
             combined_filter, suppress_color=suppress_color
         )
-        if not result.strip():
-            return "No completed tasks found matching the criteria."
-        return result
+        return self._handle_empty_result(
+            result, "No completed tasks found matching the criteria."
+        )
+
+    # ============================================================================
+    # UTILITY OPERATIONS
+    # ============================================================================
 
     def move_task(
         self, task_number: int, destination: str, source: Optional[str] = None
     ) -> str:
         """Move task from source to destination file."""
         result = self.todo_shell.move(task_number, destination, source)
-        return f"Moved task {task_number} to {destination}: {result}"
+        return self._format_task_operation_response(
+            "Moved", task_number, result, f"to {destination}"
+        )
 
     def archive_tasks(self, **kwargs: Any) -> str:
         """Archive completed tasks."""
@@ -397,6 +511,10 @@ class TodoManager:
         week_number = now.isocalendar()[1]
         timezone = now.astimezone().tzinfo
         return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} {timezone} ({now.strftime('%A, %B %d, %Y at %I:%M %p')}) - Week {week_number}"
+
+    # ============================================================================
+    # ADVANCED OPERATIONS
+    # ============================================================================
 
     def create_completed_task(
         self,
@@ -422,48 +540,22 @@ class TodoManager:
         Returns:
             Confirmation message with the completed task details
         """
+        # Normalize empty strings to None
+        project = self._normalize_empty_to_none(project)
+        context = self._normalize_empty_to_none(context)
+
         # Set default completion date to today if not provided
         if not completion_date:
             completion_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Validate completion date format
-        try:
-            datetime.strptime(completion_date, "%Y-%m-%d")
-        except ValueError:
-            raise ValueError(
-                f"Invalid completion date format '{completion_date}'. Must be YYYY-MM-DD."
-            )
+        # Validate inputs
+        self._validate_date_format(completion_date, "completion date")
+        self._validate_parent_number(parent_number)
 
-        # Validate parent_number if provided
-        if parent_number is not None:
-            if not isinstance(parent_number, int) or parent_number <= 0:
-                raise ValueError(
-                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
-                )
-
-        # Build the task description with project and context
-        full_description = description
-
-        if project:
-            # Remove any existing + symbols to prevent duplication
-            clean_project = project.strip().lstrip("+")
-            if not clean_project:
-                raise ValueError(
-                    "Project name cannot be empty after removing + symbol."
-                )
-            full_description = f"{full_description} +{clean_project}"
-
-        if context:
-            # Remove any existing @ symbols to prevent duplication
-            clean_context = context.strip().lstrip("@")
-            if not clean_context:
-                raise ValueError(
-                    "Context name cannot be empty after removing @ symbol."
-                )
-            full_description = f"{full_description} @{clean_context}"
-
-        if parent_number:
-            full_description = f"{full_description} parent:{parent_number}"
+        # Build the task description
+        full_description = self._build_task_description(
+            description, project=project, context=context, parent_number=parent_number
+        )
 
         # Check if we need to use a specific completion date
         current_date = datetime.now().strftime("%Y-%m-%d")
@@ -480,33 +572,8 @@ class TodoManager:
             # Add the task first
             self.todo_shell.add(full_description)
 
-            # Get the task number by finding the newly added task
-            tasks = self.todo_shell.list_tasks()
-            task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
-            if not task_lines:
-                raise RuntimeError("Failed to add task - no tasks found after addition")
-
-            # Find the task that matches our description (it should be the last one added)
-            # Look for the task that contains our description and extract the actual task number
-            # Search from last to first since the newly added task should be most recent
-            task_number = None
-            import re
-            for line in reversed(task_lines):
-                if description in line:
-                    # Extract the task number from the beginning of the line (e.g., "01 (A) ..." -> 1)
-                    match = re.match(r'^(\d+)', line)
-                    if match:
-                        task_number = int(match.group(1))
-                        break
-
-            if task_number is None:
-                # We must find an exact match - failing to do so could complete the wrong task
-                raise RuntimeError(
-                    f"Could not find task with description '{description}' after adding it. "
-                    f"This indicates a serious issue with task matching."
-                )
-
-            # Mark it as complete
+            # Find the task number and mark it complete
+            task_number = self._find_task_number_by_description(description)
             self.todo_shell.complete(task_number)
 
             return f"Created and completed task: {full_description} (completed on {completion_date})"

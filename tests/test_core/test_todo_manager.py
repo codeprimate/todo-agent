@@ -618,7 +618,9 @@ class TestTodoManager(unittest.TestCase):
         )
 
         # Verify the task was added directly to done.txt with the custom date
-        self.todo_shell.addto.assert_called_once_with("done.txt", "x 2025-01-10 Test task")
+        self.todo_shell.addto.assert_called_once_with(
+            "done.txt", "x 2025-01-10 Test task"
+        )
         # Verify add and complete were NOT called when using custom date
         self.todo_shell.add.assert_not_called()
         self.todo_shell.complete.assert_not_called()
