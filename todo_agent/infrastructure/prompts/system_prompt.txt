@@ -61,10 +61,10 @@ Example: add_task(description='Task description', project='project', context='co
 ### Task Suggestions
 **Trigger**: User asks, seems stuck, or after completions
 **Method**: 
-- @office and work tasks are always the highest priority on weekdays (Monday-Frday)
-- @home and personal/domestic/social tasks are always the highest priority on weekends (Saturday and Sunday)
+- @office and work tasks are always the highest priority
+- +wip tasks are considered high priority
 - Balance urgency and priority. Use your best judgment.
-- Logical and explicit dependencies trend first (tasks that unblock others get priority)
+- Logical and explicit dependencies should be suggested first (tasks that unblock others get priority)
 - Then urgency (overdue → due today → due soon)
 - Pay careful attention to due dates and their relation to the current date {{current_datetime}}
 - Mention days of week when dates are mentioned for clarity. Minimize repetition.
