@@ -577,14 +577,14 @@ class TestTodoManager(unittest.TestCase):
             self.assertIn("2025-01-15 10:30:00", result)
             self.assertIn("Week 3", result)
 
-    def test_created_completed_task_basic(self):
+    def test_create_completed_task_basic(self):
         """Test creating and immediately completing a task."""
         # Mock the todo_shell methods
         self.todo_shell.add.return_value = "Task added"
         self.todo_shell.list_tasks.return_value = "1 Test task\n2 Another task"
         self.todo_shell.complete.return_value = "Task completed"
 
-        result = self.todo_manager.created_completed_task("Test task")
+        result = self.todo_manager.create_completed_task("Test task")
 
         # Verify the task was added
         self.todo_shell.add.assert_called_once_with("Test task")
@@ -593,13 +593,13 @@ class TestTodoManager(unittest.TestCase):
         # Verify the result message
         self.assertIn("Created and completed task: Test task", result)
 
-    def test_created_completed_task_with_project_and_context(self):
+    def test_create_completed_task_with_project_and_context(self):
         """Test creating and completing a task with project and context."""
         self.todo_shell.add.return_value = "Task added"
         self.todo_shell.list_tasks.return_value = "1 Test task\n2 Another task"
         self.todo_shell.complete.return_value = "Task completed"
 
-        result = self.todo_manager.created_completed_task(
+        result = self.todo_manager.create_completed_task(
             "Test task", project="work", context="office"
         )
 
@@ -609,35 +609,36 @@ class TestTodoManager(unittest.TestCase):
         self.todo_shell.complete.assert_called_once_with(1)
         self.assertIn("+work @office", result)
 
-    def test_created_completed_task_with_custom_date(self):
+    def test_create_completed_task_with_custom_date(self):
         """Test creating and completing a task with a custom completion date."""
-        self.todo_shell.add.return_value = "Task added"
-        self.todo_shell.list_tasks.return_value = "1 Test task"
-        self.todo_shell.complete.return_value = "Task completed"
+        self.todo_shell.addto.return_value = "Task added to done.txt"
 
-        result = self.todo_manager.created_completed_task(
+        result = self.todo_manager.create_completed_task(
             "Test task", completion_date="2025-01-10"
         )
 
-        # Verify the task was completed (should find task number 1 since it contains "Test task")
-        self.todo_shell.complete.assert_called_once_with(1)
+        # Verify the task was added directly to done.txt with the custom date
+        self.todo_shell.addto.assert_called_once_with("done.txt", "x 2025-01-10 Test task")
+        # Verify add and complete were NOT called when using custom date
+        self.todo_shell.add.assert_not_called()
+        self.todo_shell.complete.assert_not_called()
         self.assertIn("completed on 2025-01-10", result)
 
-    def test_created_completed_task_with_invalid_date(self):
+    def test_create_completed_task_with_invalid_date(self):
         """Test that invalid completion date raises ValueError."""
         with self.assertRaises(ValueError) as context:
-            self.todo_manager.created_completed_task(
+            self.todo_manager.create_completed_task(
                 "Test task", completion_date="invalid-date"
             )
         self.assertIn("Invalid completion date format", str(context.exception))
 
-    def test_created_completed_task_sanitizes_project_and_context(self):
+    def test_create_completed_task_sanitizes_project_and_context(self):
         """Test that project and context with existing symbols are properly sanitized."""
         self.todo_shell.add.return_value = "Task added"
         self.todo_shell.list_tasks.return_value = "1 Test task"
         self.todo_shell.complete.return_value = "Task completed"
 
-        result = self.todo_manager.created_completed_task(
+        result = self.todo_manager.create_completed_task(
             "Test task", project="+work", context="@office"
         )
 
@@ -645,25 +646,25 @@ class TestTodoManager(unittest.TestCase):
         self.todo_shell.add.assert_called_once_with("Test task +work @office")
         self.assertIn("+work @office", result)
 
-    def test_created_completed_task_with_empty_project_after_sanitization(self):
+    def test_create_completed_task_with_empty_project_after_sanitization(self):
         """Test that empty project after sanitization raises ValueError."""
         with self.assertRaises(ValueError) as context:
-            self.todo_manager.created_completed_task("Test task", project="+")
+            self.todo_manager.create_completed_task("Test task", project="+")
         self.assertIn("Project name cannot be empty", str(context.exception))
 
-    def test_created_completed_task_with_empty_context_after_sanitization(self):
+    def test_create_completed_task_with_empty_context_after_sanitization(self):
         """Test that empty context after sanitization raises ValueError."""
         with self.assertRaises(ValueError) as context:
-            self.todo_manager.created_completed_task("Test task", context="@")
+            self.todo_manager.create_completed_task("Test task", context="@")
         self.assertIn("Context name cannot be empty", str(context.exception))
 
-    def test_created_completed_task_no_tasks_after_addition(self):
+    def test_create_completed_task_no_tasks_after_addition(self):
         """Test that RuntimeError is raised when no tasks are found after addition."""
         self.todo_shell.add.return_value = "Task added"
         self.todo_shell.list_tasks.return_value = ""  # No tasks found
 
         with self.assertRaises(RuntimeError) as context:
-            self.todo_manager.created_completed_task("Test task")
+            self.todo_manager.create_completed_task("Test task")
         self.assertIn("Failed to add task", str(context.exception))
 
 

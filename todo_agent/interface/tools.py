@@ -16,7 +16,7 @@ Task Management Tools:
 - append_to_task(task_number, text) - Add text to end of existing task
 - prepend_to_task(task_number, text) - Add text to beginning of existing task
 - delete_task(task_number, term?) - Delete entire task or remove specific term
-- created_completed_task(description, completion_date?, project?, context?) - Create task and immediately mark as completed
+- create_completed_task(description, completion_date?, project?, context?) - Create task and immediately mark as completed
 
 Priority Management Tools:
 - set_priority(task_number, priority) - Set or change task priority (A-Z)
@@ -26,6 +26,7 @@ Task Modification Tools:
 - set_due_date(task_number, due_date) - Set or update due date for a task by intelligently rewriting it (use empty string to remove due date)
 - set_context(task_number, context) - Set or update context for a task by intelligently rewriting it (use empty string to remove context)
 - set_project(task_number, projects) - Set or update projects for a task by intelligently rewriting it (handles array of projects with add/remove operations)
+- set_parent(task_number, parent_number) - Set or update parent task number for a task by intelligently rewriting it (use None to remove parent)
 
 Utility Tools:
 - move_task(task_number, destination, source?) - Move task between files
@@ -481,6 +482,39 @@ class ToolCallHandler:
             {
                 "type": "function",
                 "function": {
+                    "name": "set_parent",
+                    "description": (
+                        "Set or update the parent task number for an EXISTING task by intelligently rewriting it. "
+                        "USE CASE: Call this when user wants to add, change, or remove a parent task relationship on an existing task. "
+                        "NOT FOR: Creating new tasks, completing tasks, or any other task operations. "
+                        "This preserves all existing task components (priority, projects, contexts, due date, etc.) "
+                        "while updating or adding the parent relationship. Use None to remove the parent. "
+                        "PREFERRED METHOD: Use this instead of append_to_task() when adding parent tags (parent:XX). "
+                        "This tool properly manages parent relationships and prevents formatting issues. "
+                        "IMPORTANT: Use list_tasks() first "
+                        "to find the correct task number if user doesn't specify it. "
+                        "Parent task numbers should be provided as integers (e.g., 12 not 'parent:12')."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_number": {
+                                "type": "integer",
+                                "description": "The line number of the task to modify (required)",
+                            },
+                            "parent_number": {
+                                "type": "integer",
+                                "description": "Parent task number to set, or null to remove parent (required)",
+                            },
+                        },
+                        "required": ["task_number", "parent_number"],
+                    },
+                },
+                "progress_description": "🔗 Setting parent task {parent_number} for task #{task_number}...",
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "move_task",
                     "description": (
                         "Move an EXISTING task from one file to another (e.g., from todo.txt to done.txt). "
@@ -589,7 +623,7 @@ class ToolCallHandler:
             {
                 "type": "function",
                 "function": {
-                    "name": "created_completed_task",
+                    "name": "create_completed_task",
                     "description": (
                         "Create a task and immediately mark it as completed. "
                         "USE CASE: Call this when user says they completed something on a specific date (e.g., 'I did the laundry today', 'I finished the report yesterday', 'I cleaned the garage last week') "
@@ -905,11 +939,12 @@ class ToolCallHandler:
             "set_due_date": self.todo_manager.set_due_date,
             "set_context": self.todo_manager.set_context,
             "set_project": self.todo_manager.set_project,
+            "set_parent": self.todo_manager.set_parent,
             "move_task": self.todo_manager.move_task,
             "archive_tasks": self.todo_manager.archive_tasks,
             "parse_date": self._parse_date,
             "get_calendar": self._get_calendar,
-            "created_completed_task": self.todo_manager.created_completed_task,
+            "create_completed_task": self.todo_manager.create_completed_task,
             "restore_completed_task": self.todo_manager.restore_completed_task,
         }
 

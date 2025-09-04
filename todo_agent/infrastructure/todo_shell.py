@@ -108,6 +108,10 @@ class TodoShell:
         """Add new task."""
         return self.execute(["todo.sh", "add", description])
 
+    def addto(self, destination: str, text: str) -> str:
+        """Add text to a specific file in the todo.txt directory."""
+        return self.execute(["todo.sh", "addto", destination, text])
+
     def list_tasks(
         self, filter_str: Optional[str] = None, suppress_color: bool = True
     ) -> str:
@@ -269,6 +273,63 @@ class TodoShell:
                 return self._reconstruct_task(components)
         else:
             components["contexts"] = []
+
+        # Reconstruct the task
+        new_description = self._reconstruct_task(components)
+
+        # Replace the task with the new description
+        return self.replace(task_number, new_description)
+
+    def set_parent(self, task_number: int, parent_number: Optional[int]) -> str:
+        """
+        Set or update parent task number for a task by intelligently rewriting it.
+
+        Args:
+            task_number: The task number to modify
+            parent_number: Parent task number, or None to remove parent
+
+        Returns:
+            The updated task description
+        """
+        # First, get the current task to parse its components
+        tasks_output = self.list_tasks()
+        task_lines = tasks_output.strip().split("\n")
+
+        # Find the task by its actual number (not array index)
+        current_task = None
+        for line in task_lines:
+            if line.strip():
+                # Extract task number from the beginning of the line (handling ANSI codes)
+                extracted_number = self._extract_task_number(line)
+                if extracted_number == task_number:
+                    current_task = line
+                    break
+
+        if not current_task:
+            raise TodoShellError(f"Task number {task_number} not found")
+
+        # Parse the current task components
+        components = self._parse_task_components(current_task)
+
+        # Update the parent (None removes it)
+        if parent_number is not None:
+            if not isinstance(parent_number, int) or parent_number <= 0:
+                raise TodoShellError(
+                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
+                )
+            parent_tag = f"parent:{parent_number}"
+            # Remove any existing parent tag and add the new one
+            components["other_tags"] = [
+                tag for tag in components["other_tags"] 
+                if not tag.startswith("parent:")
+            ]
+            components["other_tags"].append(parent_tag)
+        else:
+            # Remove parent tag
+            components["other_tags"] = [
+                tag for tag in components["other_tags"] 
+                if not tag.startswith("parent:")
+            ]
 
         # Reconstruct the task
         new_description = self._reconstruct_task(components)

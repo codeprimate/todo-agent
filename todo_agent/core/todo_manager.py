@@ -271,6 +271,30 @@ class TodoManager:
                 operation_desc = ", ".join(operations)
                 return f"Updated projects for task {task_number} ({operation_desc}): {result}"
 
+    def set_parent(self, task_number: int, parent_number: Optional[int]) -> str:
+        """
+        Set or update parent task number for a task by intelligently rewriting it.
+
+        Args:
+            task_number: The task number to modify
+            parent_number: Parent task number, or None to remove parent
+
+        Returns:
+            Confirmation message with the updated task
+        """
+        # Validate parent_number if provided
+        if parent_number is not None:
+            if not isinstance(parent_number, int) or parent_number <= 0:
+                raise ValueError(
+                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
+                )
+
+        result = self.todo_shell.set_parent(task_number, parent_number)
+        if parent_number is not None:
+            return f"Set parent task {parent_number} for task {task_number}: {result}"
+        else:
+            return f"Removed parent from task {task_number}: {result}"
+
     def list_projects(self, suppress_color: bool = True, **kwargs: Any) -> str:
         """List all available projects in todo.txt."""
         result = self.todo_shell.list_projects(suppress_color=suppress_color)
@@ -374,7 +398,7 @@ class TodoManager:
         timezone = now.astimezone().tzinfo
         return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} {timezone} ({now.strftime('%A, %B %d, %Y at %I:%M %p')}) - Week {week_number}"
 
-    def created_completed_task(
+    def create_completed_task(
         self,
         description: str,
         completion_date: Optional[str] = None,
@@ -441,37 +465,51 @@ class TodoManager:
         if parent_number:
             full_description = f"{full_description} parent:{parent_number}"
 
-        # Add the task first
-        self.todo_shell.add(full_description)
+        # Check if we need to use a specific completion date
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        use_specific_date = completion_date != current_date
 
-        # Get the task number by finding the newly added task
-        tasks = self.todo_shell.list_tasks()
-        task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
-        if not task_lines:
-            raise RuntimeError("Failed to add task - no tasks found after addition")
+        if use_specific_date:
+            # When using a specific completion date, add directly to done.txt
+            # Format: "x YYYY-MM-DD [task description]"
+            completed_task_line = f"x {completion_date} {full_description}"
+            self.todo_shell.addto("done.txt", completed_task_line)
+            return f"Created and completed task: {full_description} (completed on {completion_date})"
+        else:
+            # When using current date, use the standard add + complete workflow
+            # Add the task first
+            self.todo_shell.add(full_description)
 
-        # Find the task that matches our description (it should be the last one added)
-        # Look for the task that contains our description
-        task_number = None
-        for i, line in enumerate(task_lines, 1):  # Start from 1 for todo.sh numbering
-            if description in line:
-                task_number = i
-                break
+            # Get the task number by finding the newly added task
+            tasks = self.todo_shell.list_tasks()
+            task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
+            if not task_lines:
+                raise RuntimeError("Failed to add task - no tasks found after addition")
 
-        if task_number is None:
-            # Fallback: use the last task number if we can't find a match
-            task_number = len(task_lines)
-            # Log a warning that we're using fallback logic
-            import logging
+            # Find the task that matches our description (it should be the last one added)
+            # Look for the task that contains our description and extract the actual task number
+            # Search from last to first since the newly added task should be most recent
+            task_number = None
+            import re
+            for line in reversed(task_lines):
+                if description in line:
+                    # Extract the task number from the beginning of the line (e.g., "01 (A) ..." -> 1)
+                    match = re.match(r'^(\d+)', line)
+                    if match:
+                        task_number = int(match.group(1))
+                        break
 
-            logging.warning(
-                f"Could not find exact match for '{description}', using fallback task number {task_number}"
-            )
+            if task_number is None:
+                # We must find an exact match - failing to do so could complete the wrong task
+                raise RuntimeError(
+                    f"Could not find task with description '{description}' after adding it. "
+                    f"This indicates a serious issue with task matching."
+                )
 
-        # Mark it as complete
-        self.todo_shell.complete(task_number)
+            # Mark it as complete
+            self.todo_shell.complete(task_number)
 
-        return f"Created and completed task: {full_description} (completed on {completion_date})"
+            return f"Created and completed task: {full_description} (completed on {completion_date})"
 
     def restore_completed_task(self, task_number: int) -> str:
         """
