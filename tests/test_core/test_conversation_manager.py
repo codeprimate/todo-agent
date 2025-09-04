@@ -15,7 +15,7 @@ class TestConversationManager:
         manager = ConversationManager()
         assert len(manager.history) == 0
         assert manager.max_tokens == 64000
-        assert manager.max_messages == 50
+        assert manager.max_messages == 100
         assert manager.system_prompt is None
 
     def test_add_message(self):

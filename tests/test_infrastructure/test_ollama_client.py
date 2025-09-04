@@ -22,9 +22,7 @@ class TestOllamaClient:
         self.config.ollama_model = "llama3.2"
 
         # Patch the dependencies that are now initialized in the parent class
-        with patch(
-            "todo_agent.infrastructure.llm_client.Logger"
-        ) as mock_logger, patch(
+        with patch("todo_agent.infrastructure.llm_client.Logger") as mock_logger, patch(
             "todo_agent.infrastructure.llm_client.get_token_counter"
         ) as mock_token_counter:
             mock_logger.return_value = Mock()
@@ -61,7 +59,7 @@ class TestOllamaClient:
         """Test request payload generation."""
         messages = [{"role": "user", "content": "Hello"}]
         tools = [{"name": "test_tool", "description": "A test tool"}]
-        
+
         payload = self.client._get_request_payload(messages, tools)
         expected = {
             "model": "llama3.2",
@@ -102,7 +100,7 @@ class TestOllamaClient:
             "error_type": "general_error",
             "provider": "ollama",
             "status_code": 500,
-            "raw_error": "Internal Server Error"
+            "raw_error": "Internal Server Error",
         }
         mock_make_request.return_value = error_response
 
@@ -144,11 +142,7 @@ class TestOllamaClient:
 
     def test_extract_tool_calls_with_error_response(self):
         """Test extracting tool calls from error response."""
-        error_response = {
-            "error": True,
-            "error_type": "timeout",
-            "provider": "ollama"
-        }
+        error_response = {"error": True, "error_type": "timeout", "provider": "ollama"}
 
         tool_calls = self.client.extract_tool_calls(error_response)
         assert len(tool_calls) == 0
@@ -166,9 +160,7 @@ class TestOllamaClient:
 
     def test_extract_content_without_content(self):
         """Test extracting content from response without content."""
-        response = {
-            "message": {}
-        }
+        response = {"message": {}}
 
         content = self.client.extract_content(response)
         assert content == ""
@@ -182,11 +174,7 @@ class TestOllamaClient:
 
     def test_extract_content_with_error_response(self):
         """Test extracting content from error response."""
-        error_response = {
-            "error": True,
-            "error_type": "timeout",
-            "provider": "ollama"
-        }
+        error_response = {"error": True, "error_type": "timeout", "provider": "ollama"}
 
         content = self.client.extract_content(error_response)
         assert content == ""
@@ -196,16 +184,15 @@ class TestOllamaClient:
         response_data = {
             "message": {
                 "content": "Hello",
-                "tool_calls": [
-                    {"id": "call_1", "function": {"name": "test_tool"}}
-                ]
+                "tool_calls": [{"id": "call_1", "function": {"name": "test_tool"}}],
             }
         }
 
-        with patch.object(self.client.logger, "info") as mock_info, \
-             patch.object(self.client.logger, "debug") as mock_debug:
+        with patch.object(self.client.logger, "info") as mock_info, patch.object(
+            self.client.logger, "debug"
+        ) as mock_debug:
             self.client._process_response(response_data, 0.0)
-            
+
             # Should log response details
             assert mock_info.call_count >= 1
             assert mock_debug.call_count >= 1

@@ -102,7 +102,9 @@ class TodoManager:
         self.todo_shell.add(full_description)
         return f"Added task: {full_description}"
 
-    def list_tasks(self, filter: Optional[str] = None, suppress_color: bool = True) -> str:
+    def list_tasks(
+        self, filter: Optional[str] = None, suppress_color: bool = True
+    ) -> str:
         """List tasks with optional filtering."""
         result = self.todo_shell.list_tasks(filter, suppress_color=suppress_color)
         if not result.strip():
@@ -330,7 +332,9 @@ class TodoManager:
         # Combine all filters
         combined_filter = " ".join(filter_parts) if filter_parts else None
 
-        result = self.todo_shell.list_completed(combined_filter, suppress_color=suppress_color)
+        result = self.todo_shell.list_completed(
+            combined_filter, suppress_color=suppress_color
+        )
         if not result.strip():
             return "No completed tasks found matching the criteria."
         return result
@@ -465,7 +469,7 @@ class TodoManager:
 
         # Use the move command to restore the task from done.txt to todo.txt
         result = self.todo_shell.move(task_number, "todo.txt", "done.txt")
-        
+
         # Extract the task description from the result for confirmation
         # The result format is typically: "TODO: X moved from '.../done.txt' to '.../todo.txt'."
         if "moved from" in result and "to" in result:

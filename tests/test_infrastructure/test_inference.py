@@ -104,7 +104,9 @@ class TestInference:
     def test_system_prompt_datetime_interpolation(self):
         """Test that current datetime is properly interpolated into system prompt."""
         # Mock the file reading
-        mock_prompt_content = "CURRENT DATE/TIME: {current_datetime}\nCALENDAR: {calendar_output}"
+        mock_prompt_content = (
+            "CURRENT DATE/TIME: {current_datetime}\nCALENDAR: {calendar_output}"
+        )
 
         with patch("builtins.open", mock_open(read_data=mock_prompt_content)):
             # Call the method that loads the system prompt

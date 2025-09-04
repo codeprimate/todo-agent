@@ -10,7 +10,7 @@ from todo_agent.infrastructure.llm_client import LLMClient
 class OllamaClient(LLMClient):
     """Ollama API client implementation."""
 
-    def __init__(self, config):
+    def __init__(self, config: Any) -> None:
         """
         Initialize Ollama client.
 
@@ -26,7 +26,9 @@ class OllamaClient(LLMClient):
             "Content-Type": "application/json",
         }
 
-    def _get_request_payload(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _get_request_payload(
+        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Get request payload for Ollama API."""
         return {
             "model": self.model,
@@ -39,10 +41,12 @@ class OllamaClient(LLMClient):
         """Get Ollama API endpoint."""
         return f"{self.base_url}/api/chat"
 
-    def _process_response(self, response_data: Dict[str, Any], start_time: float) -> None:
+    def _process_response(
+        self, response_data: Dict[str, Any], start_time: float
+    ) -> None:
         """Process and log Ollama response details."""
         import time
-        
+
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
 
@@ -88,21 +92,25 @@ class OllamaClient(LLMClient):
         """Extract tool calls from API response."""
         # Check for provider errors first
         if response.get("error", False):
-            self.logger.warning(f"Cannot extract tool calls from error response: {response.get('error_type')}")
+            self.logger.warning(
+                f"Cannot extract tool calls from error response: {response.get('error_type')}"
+            )
             return []
-            
+
         tool_calls = []
 
         # Ollama response format is different from OpenRouter
         if "message" in response and "tool_calls" in response["message"]:
             raw_tool_calls = response["message"]["tool_calls"]
-            
+
             # Validate each tool call using common validation
             for i, tool_call in enumerate(raw_tool_calls):
                 if self._validate_tool_call(tool_call, i):
                     tool_calls.append(tool_call)
-            
-            self.logger.debug(f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total")
+
+            self.logger.debug(
+                f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total"
+            )
             for i, tool_call in enumerate(tool_calls):
                 tool_name = tool_call.get("function", {}).get("name", "unknown")
                 tool_call_id = tool_call.get("id", "unknown")
@@ -118,9 +126,11 @@ class OllamaClient(LLMClient):
         """Extract content from API response."""
         # Check for provider errors first
         if response.get("error", False):
-            self.logger.warning(f"Cannot extract content from error response: {response.get('error_type')}")
+            self.logger.warning(
+                f"Cannot extract content from error response: {response.get('error_type')}"
+            )
             return ""
-            
+
         if "message" in response and "content" in response["message"]:
             content = response["message"]["content"]
             return content if isinstance(content, str) else str(content)
@@ -147,9 +157,9 @@ class OllamaClient(LLMClient):
     def get_request_timeout(self) -> int:
         """
         Get the request timeout in seconds for Ollama.
-        
+
         Ollama can be slower than cloud providers, so we use a 2-minute timeout.
-        
+
         Returns:
             Timeout value in seconds (120)
         """

@@ -21,9 +21,7 @@ class TestOpenRouterClient:
     def setup_method(self):
         """Set up test fixtures."""
         # Patch the dependencies that are now initialized in the parent class
-        with patch(
-            "todo_agent.infrastructure.llm_client.Logger"
-        ) as mock_logger, patch(
+        with patch("todo_agent.infrastructure.llm_client.Logger") as mock_logger, patch(
             "todo_agent.infrastructure.llm_client.get_token_counter"
         ) as mock_token_counter:
             mock_logger.return_value = Mock()
@@ -62,7 +60,7 @@ class TestOpenRouterClient:
         """Test request payload generation."""
         messages = [{"role": "user", "content": "Hello"}]
         tools = [{"name": "test_tool", "description": "A test tool"}]
-        
+
         payload = self.client._get_request_payload(messages, tools)
         expected = {
             "model": "test-model",
@@ -77,7 +75,9 @@ class TestOpenRouterClient:
         endpoint = self.client._get_api_endpoint()
         assert endpoint == "https://openrouter.ai/api/v1/chat/completions"
 
-    @patch("todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request")
+    @patch(
+        "todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request"
+    )
     def test_chat_with_tools_success(self, mock_make_request):
         """Test successful chat with tools."""
         messages = [{"role": "user", "content": "Hello"}]
@@ -104,7 +104,9 @@ class TestOpenRouterClient:
         assert result == expected_response
         mock_make_request.assert_called_once_with(messages, tools)
 
-    @patch("todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request")
+    @patch(
+        "todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request"
+    )
     def test_chat_with_tools_api_error(self, mock_make_request):
         """Test API error handling."""
         messages = [{"role": "user", "content": "Hello"}]
@@ -115,7 +117,7 @@ class TestOpenRouterClient:
             "error_type": "auth_error",
             "provider": "openrouter",
             "status_code": 401,
-            "raw_error": "Unauthorized"
+            "raw_error": "Unauthorized",
         }
         mock_make_request.return_value = error_response
 
@@ -179,7 +181,7 @@ class TestOpenRouterClient:
         error_response = {
             "error": True,
             "error_type": "timeout",
-            "provider": "openrouter"
+            "provider": "openrouter",
         }
 
         tool_calls = self.client.extract_tool_calls(error_response)
@@ -202,13 +204,7 @@ class TestOpenRouterClient:
 
     def test_extract_content_no_content(self):
         """Test extracting content from response without content."""
-        response = {
-            "choices": [
-                {
-                    "message": {}
-                }
-            ]
-        }
+        response = {"choices": [{"message": {}}]}
 
         content = self.client.extract_content(response)
         assert content == ""
@@ -232,7 +228,7 @@ class TestOpenRouterClient:
         error_response = {
             "error": True,
             "error_type": "timeout",
-            "provider": "openrouter"
+            "provider": "openrouter",
         }
 
         content = self.client.extract_content(error_response)
@@ -253,21 +249,18 @@ class TestOpenRouterClient:
                         "content": "Hello",
                         "tool_calls": [
                             {"id": "call_1", "function": {"name": "test_tool"}}
-                        ]
+                        ],
                     }
                 }
             ],
-            "usage": {
-                "prompt_tokens": 10,
-                "completion_tokens": 5,
-                "total_tokens": 15
-            }
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
 
-        with patch.object(self.client.logger, "info") as mock_info, \
-             patch.object(self.client.logger, "debug") as mock_debug:
+        with patch.object(self.client.logger, "info") as mock_info, patch.object(
+            self.client.logger, "debug"
+        ) as mock_debug:
             self.client._process_response(response_data, 0.0)
-            
+
             # Should log response details
             assert mock_info.call_count >= 2  # Latency and token usage
             assert mock_debug.call_count >= 1  # Raw response

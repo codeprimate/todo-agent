@@ -2,8 +2,9 @@
 Command-line interface for todo.sh LLM agent.
 """
 
-from typing import Optional
 import readline
+from typing import Optional
+
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
@@ -23,8 +24,8 @@ try:
         TableFormatter,
         TaskFormatter,
     )
-    from todo_agent.interface.tools import ToolCallHandler
     from todo_agent.interface.progress import ToolCallProgress
+    from todo_agent.interface.tools import ToolCallHandler
 except ImportError:
     from core.todo_manager import TodoManager  # type: ignore[no-redef]
     from infrastructure.config import Config  # type: ignore[no-redef]
@@ -38,8 +39,8 @@ except ImportError:
         TableFormatter,
         TaskFormatter,
     )
-    from interface.tools import ToolCallHandler  # type: ignore[no-redef]
     from interface.progress import ToolCallProgress  # type: ignore[no-redef]
+    from interface.tools import ToolCallHandler  # type: ignore[no-redef]
 
 
 class CLI:
@@ -100,22 +101,23 @@ class CLI:
         initial_spinner = self._create_thinking_spinner("Thinking...")
         return Live(initial_spinner, console=self.console, refresh_per_second=10)
 
-    def _create_tool_call_spinner(self, progress_description: str, 
-                                 sequence: int = 0, total_sequences: int = 0) -> Group:
+    def _create_tool_call_spinner(
+        self, progress_description: str, sequence: int = 0, total_sequences: int = 0
+    ) -> Group:
         """
         Create a multi-line spinner showing tool call progress.
-        
+
         Args:
             progress_description: User-friendly description of what the tool is doing
             sequence: Current sequence number
             total_sequences: Total number of sequences
-            
+
         Returns:
             Group object with spinner and optional sequence info
         """
         # Line 1: Main progress with spinner
         main_line = Spinner("dots", text=Text(progress_description, style="cyan"))
-        
+
         # Line 2: Sequence progress (show current sequence even if we don't know total)
         # if sequence > 0:
         #     if total_sequences > 0:
@@ -123,75 +125,87 @@ class CLI:
         #     else:
         #         sequence_text = Text(f"Sequence {sequence}", style="dim")
         #     return Group(main_line, sequence_text)
-        
-        return main_line
+
+        return Group(main_line)
 
     def _create_completion_spinner(self, thinking_time: float) -> Spinner:
         """
         Create completion spinner with timing.
-        
+
         Args:
             thinking_time: Total thinking time in seconds
-            
+
         Returns:
             Spinner object showing completion
         """
-        return Spinner("dots", text=Text(f"✅ Complete ({thinking_time:.1f}s)", style="green"))
+        return Spinner(
+            "dots", text=Text(f"✅ Complete ({thinking_time:.1f}s)", style="green")
+        )
 
     def _create_cli_progress_callback(self, live_display: Live) -> ToolCallProgress:
         """
         Create a CLI-specific progress callback for tool call tracking.
-        
+
         Args:
             live_display: The live display to update
-            
+
         Returns:
             ToolCallProgress implementation for CLI
         """
+
         class CLIProgressCallback(ToolCallProgress):
             def __init__(self, cli: CLI, live: Live):
                 self.cli = cli
                 self.live = live
                 self.current_sequence = 0
                 self.total_sequences = 0
-            
+
             def on_thinking_start(self) -> None:
                 """Show initial thinking spinner."""
-                spinner = self.cli._create_thinking_spinner("🤔 Analyzing your request...")
+                spinner = self.cli._create_thinking_spinner(
+                    "🤔 Analyzing your request..."
+                )
                 self.live.update(spinner)
-            
-            def on_tool_call_start(self, tool_name: str, progress_description: str,
-                                 sequence: int, total_sequences: int) -> None:
+
+            def on_tool_call_start(
+                self,
+                tool_name: str,
+                progress_description: str,
+                sequence: int,
+                total_sequences: int,
+            ) -> None:
                 """Show tool execution progress."""
                 self.current_sequence = sequence
                 self.total_sequences = total_sequences
-                
+
                 # Create multi-line spinner
                 spinner = self.cli._create_tool_call_spinner(
                     progress_description=progress_description,
                     sequence=sequence,
-                    total_sequences=total_sequences
+                    total_sequences=total_sequences,
                 )
                 self.live.update(spinner)
-            
-            def on_tool_call_complete(self, tool_name: str, success: bool, duration: float) -> None:
+
+            def on_tool_call_complete(
+                self, tool_name: str, success: bool, duration: float
+            ) -> None:
                 """Tool completion - no action needed."""
                 pass
-            
+
             def on_sequence_complete(self, sequence: int, total_sequences: int) -> None:
                 """Show sequence completion."""
                 spinner = self.cli._create_tool_call_spinner(
                     progress_description=f"🔄 Sequence {sequence} complete",
                     sequence=sequence,
-                    total_sequences=total_sequences
+                    total_sequences=total_sequences,
                 )
                 self.live.update(spinner)
-            
+
             def on_thinking_complete(self, total_time: float) -> None:
                 """Show completion spinner."""
                 spinner = self.cli._create_completion_spinner(total_time)
                 self.live.update(spinner)
-        
+
         return CLIProgressCallback(self, live_display)
 
     def _print_header(self) -> None:
@@ -338,7 +352,7 @@ class CLI:
                 # Get memory usage
                 # DISABLED FOR NOW
                 memory_usage = self._get_memory_usage()
-                #memory_usage = None
+                # memory_usage = None
 
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
@@ -370,9 +384,11 @@ class CLI:
             try:
                 # Create progress callback for tool call tracking
                 progress_callback = self._create_cli_progress_callback(live)
-                
+
                 # Process request through inference engine with progress tracking
-                response, thinking_time = self.inference.process_request(user_input, progress_callback)
+                response, thinking_time = self.inference.process_request(
+                    user_input, progress_callback
+                )
 
                 # Update spinner with completion message and thinking time
                 live.update(

@@ -2,7 +2,6 @@
 Abstract LLM client interface for todo.sh agent.
 """
 
-import json
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
@@ -93,7 +92,9 @@ class LLMClient(ABC):
         pass
 
     @abstractmethod
-    def _get_request_payload(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _get_request_payload(
+        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Get request payload for the API call.
 
@@ -117,7 +118,9 @@ class LLMClient(ABC):
         pass
 
     @abstractmethod
-    def _process_response(self, response_data: Dict[str, Any], start_time: float) -> None:
+    def _process_response(
+        self, response_data: Dict[str, Any], start_time: float
+    ) -> None:
         """
         Process and log response details.
 
@@ -135,7 +138,9 @@ class LLMClient(ABC):
         total_tokens = self.token_counter.count_request_tokens(messages, tools)
         self.logger.info(f"Request sent - Token count: {total_tokens}")
 
-    def _make_http_request(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _make_http_request(
+        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Make HTTP request to the LLM API with common error handling.
 
@@ -155,7 +160,10 @@ class LLMClient(ABC):
 
         try:
             response = requests.post(  # nosec B113
-                endpoint, headers=headers, json=payload, timeout=self.get_request_timeout()
+                endpoint,
+                headers=headers,
+                json=payload,
+                timeout=self.get_request_timeout(),
             )
         except requests.exceptions.Timeout:
             self.logger.error(f"{self.get_provider_name()} API request timed out")
@@ -169,19 +177,29 @@ class LLMClient(ABC):
 
         if response.status_code != 200:
             self.logger.error(f"{self.get_provider_name()} API error: {response.text}")
-            error_type = self.classify_error(Exception(response.text), self.get_provider_name())
-            return self._create_error_response(error_type, response.text, response.status_code)
+            error_type = self.classify_error(
+                Exception(response.text), self.get_provider_name()
+            )
+            return self._create_error_response(
+                error_type, response.text, response.status_code
+            )
 
         try:
             response_data: Dict[str, Any] = response.json()
         except Exception as e:
-            self.logger.error(f"Failed to parse {self.get_provider_name()} response JSON: {e}")
-            return self._create_error_response("malformed_response", f"JSON parsing failed: {e}", response.status_code)
+            self.logger.error(
+                f"Failed to parse {self.get_provider_name()} response JSON: {e}"
+            )
+            return self._create_error_response(
+                "malformed_response", f"JSON parsing failed: {e}", response.status_code
+            )
 
         self._process_response(response_data, start_time)
         return response_data
 
-    def _create_error_response(self, error_type: str, raw_error: str, status_code: int = 0) -> Dict[str, Any]:
+    def _create_error_response(
+        self, error_type: str, raw_error: str, status_code: int = 0
+    ) -> Dict[str, Any]:
         """
         Create standardized error response.
 
@@ -198,7 +216,7 @@ class LLMClient(ABC):
             "error_type": error_type,
             "provider": self.get_provider_name(),
             "status_code": status_code,
-            "raw_error": raw_error
+            "raw_error": raw_error,
         }
 
     def _validate_tool_call(self, tool_call: Any, index: int) -> bool:
@@ -214,47 +232,63 @@ class LLMClient(ABC):
         """
         try:
             if not isinstance(tool_call, dict):
-                self.logger.warning(f"Tool call {index+1} is not a dictionary: {tool_call}")
+                self.logger.warning(
+                    f"Tool call {index + 1} is not a dictionary: {tool_call}"
+                )
                 return False
 
             function = tool_call.get("function", {})
             if not isinstance(function, dict):
-                self.logger.warning(f"Tool call {index+1} function is not a dictionary: {function}")
+                self.logger.warning(
+                    f"Tool call {index + 1} function is not a dictionary: {function}"
+                )
                 return False
 
             tool_name = function.get("name")
             if not tool_name:
-                self.logger.warning(f"Tool call {index+1} missing function name: {tool_call}")
+                self.logger.warning(
+                    f"Tool call {index + 1} missing function name: {tool_call}"
+                )
                 return False
 
             arguments = function.get("arguments", "{}")
             if arguments and not isinstance(arguments, str):
-                self.logger.warning(f"Tool call {index+1} arguments not a string: {arguments}")
+                self.logger.warning(
+                    f"Tool call {index + 1} arguments not a string: {arguments}"
+                )
                 return False
 
             return True
         except Exception as e:
-            self.logger.warning(f"Error validating tool call {index+1}: {e}")
+            self.logger.warning(f"Error validating tool call {index + 1}: {e}")
             return False
 
     def classify_error(self, error: Exception, provider: str) -> str:
         """
         Classify provider errors using simple string matching.
-        
+
         Args:
             error: The exception that occurred
             provider: The provider name (e.g., 'openrouter', 'ollama')
-            
+
         Returns:
             Error type string for message lookup
         """
         error_str = str(error).lower()
-        
+
         if "malformed" in error_str or "invalid" in error_str or "parse" in error_str:
             return "malformed_response"
-        elif "rate limit" in error_str or "429" in error_str or "too many requests" in error_str:
+        elif (
+            "rate limit" in error_str
+            or "429" in error_str
+            or "too many requests" in error_str
+        ):
             return "rate_limit"
-        elif "unauthorized" in error_str or "401" in error_str or "authentication" in error_str:
+        elif (
+            "unauthorized" in error_str
+            or "401" in error_str
+            or "authentication" in error_str
+        ):
             return "auth_error"
         elif "timeout" in error_str or "timed out" in error_str:
             return "timeout"
@@ -278,7 +312,7 @@ class LLMClient(ABC):
     def get_request_timeout(self) -> int:
         """
         Get the request timeout in seconds for this provider.
-        
+
         Returns:
             Timeout value in seconds (default: 30)
         """

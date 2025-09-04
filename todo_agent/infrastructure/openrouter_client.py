@@ -10,7 +10,7 @@ from todo_agent.infrastructure.llm_client import LLMClient
 class OpenRouterClient(LLMClient):
     """LLM API communication and response handling."""
 
-    def __init__(self, config):
+    def __init__(self, config: Any) -> None:
         """
         Initialize OpenRouter client.
 
@@ -28,7 +28,9 @@ class OpenRouterClient(LLMClient):
             "Content-Type": "application/json",
         }
 
-    def _get_request_payload(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _get_request_payload(
+        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Get request payload for OpenRouter API."""
         return {
             "model": self.model,
@@ -41,10 +43,12 @@ class OpenRouterClient(LLMClient):
         """Get OpenRouter API endpoint."""
         return f"{self.base_url}/chat/completions"
 
-    def _process_response(self, response_data: Dict[str, Any], start_time: float) -> None:
+    def _process_response(
+        self, response_data: Dict[str, Any], start_time: float
+    ) -> None:
         """Process and log OpenRouter response details."""
         import time
-        
+
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
 
@@ -120,20 +124,22 @@ class OpenRouterClient(LLMClient):
         """Extract tool calls from API response."""
         # Check for provider errors first
         if response.get("error", False):
-            self.logger.warning(f"Cannot extract tool calls from error response: {response.get('error_type')}")
+            self.logger.warning(
+                f"Cannot extract tool calls from error response: {response.get('error_type')}"
+            )
             return []
-            
+
         tool_calls = []
         if response.get("choices"):
             choice = response["choices"][0]
             if "message" in choice and "tool_calls" in choice["message"]:
                 raw_tool_calls = choice["message"]["tool_calls"]
-                
+
                 # Validate each tool call using common validation
                 for i, tool_call in enumerate(raw_tool_calls):
                     if self._validate_tool_call(tool_call, i):
                         tool_calls.append(tool_call)
-                
+
                 self.logger.debug(
                     f"Extracted {len(tool_calls)} valid tool calls from {len(raw_tool_calls)} total"
                 )
@@ -153,9 +159,11 @@ class OpenRouterClient(LLMClient):
         """Extract content from API response."""
         # Check for provider errors first
         if response.get("error", False):
-            self.logger.warning(f"Cannot extract content from error response: {response.get('error_type')}")
+            self.logger.warning(
+                f"Cannot extract content from error response: {response.get('error_type')}"
+            )
             return ""
-            
+
         if response.get("choices"):
             choice = response["choices"][0]
             if "message" in choice and "content" in choice["message"]:
@@ -184,9 +192,9 @@ class OpenRouterClient(LLMClient):
     def get_request_timeout(self) -> int:
         """
         Get the request timeout in seconds for OpenRouter.
-        
+
         Cloud APIs typically respond quickly, so we use a 30-second timeout.
-        
+
         Returns:
             Timeout value in seconds (30)
         """

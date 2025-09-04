@@ -111,7 +111,9 @@ class TestTodoShell:
             result = self.todo_shell.list_tasks("+work")
 
             # Verify filter was appended to command
-            mock_execute.assert_called_once_with(["todo.sh", "ls", "+work"], suppress_color=True)
+            mock_execute.assert_called_once_with(
+                ["todo.sh", "ls", "+work"], suppress_color=True
+            )
             assert result == "1. Work task"
 
     def test_complete_task_uses_do_command_with_task_number(self):
@@ -500,7 +502,9 @@ class TestTodoShell:
             result = self.todo_shell.list_projects()
 
             # Verify lsp command
-            mock_execute.assert_called_once_with(["todo.sh", "lsp"], suppress_color=True)
+            mock_execute.assert_called_once_with(
+                ["todo.sh", "lsp"], suppress_color=True
+            )
             assert result == "+work\n+home\n+shopping"
 
     def test_list_contexts_uses_lsc_command(self):
@@ -511,7 +515,9 @@ class TestTodoShell:
             result = self.todo_shell.list_contexts()
 
             # Verify lsc command
-            mock_execute.assert_called_once_with(["todo.sh", "lsc"], suppress_color=True)
+            mock_execute.assert_called_once_with(
+                ["todo.sh", "lsc"], suppress_color=True
+            )
             assert result == "@work\n@home\n@shopping"
 
     def test_list_completed_uses_listfile_command(self):
@@ -522,7 +528,9 @@ class TestTodoShell:
             result = self.todo_shell.list_completed()
 
             # Verify listfile command with done.txt
-            mock_execute.assert_called_once_with(["todo.sh", "listfile", "done.txt"], suppress_color=True)
+            mock_execute.assert_called_once_with(
+                ["todo.sh", "listfile", "done.txt"], suppress_color=True
+            )
             assert result == "1. Completed task"
 
     def test_list_completed_with_filter_appends_filter(self):
@@ -587,26 +595,37 @@ class TestTodoShell:
     def test_execute_suppresses_color_codes_when_requested(self):
         """Test that execute method strips ANSI color codes when suppress_color=True."""
         # Mock subprocess to return output with ANSI color codes
-        mock_result = type('MockResult', (), {
-            'stdout': '\033[1;33m1\033[0m (A) \033[1;32m2025-08-29\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m \033[1;31mdue:2025-08-29\033[0m',
-            'stderr': '',
-            'returncode': 0
-        })()
-        
+        mock_result = type(
+            "MockResult",
+            (),
+            {
+                "stdout": "\033[1;33m1\033[0m (A) \033[1;32m2025-08-29\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m \033[1;31mdue:2025-08-29\033[0m",
+                "stderr": "",
+                "returncode": 0,
+            },
+        )()
+
         with patch("subprocess.run", return_value=mock_result):
             # Test with suppress_color=True (default for LLM consumption)
             result = self.todo_shell.execute(["todo.sh", "ls"], suppress_color=True)
-            
+
             # Should return clean text without ANSI codes
-            assert result == "1 (A) 2025-08-29 Clean cat box @home +chores due:2025-08-29"
+            assert (
+                result == "1 (A) 2025-08-29 Clean cat box @home +chores due:2025-08-29"
+            )
             assert "\033[" not in result  # No ANSI escape sequences
-            
+
             # Test with suppress_color=False (for interactive display)
-            result_with_color = self.todo_shell.execute(["todo.sh", "ls"], suppress_color=False)
-            
+            result_with_color = self.todo_shell.execute(
+                ["todo.sh", "ls"], suppress_color=False
+            )
+
             # Should preserve ANSI codes
             assert "\033[" in result_with_color  # ANSI escape sequences preserved
-            assert result_with_color == '\033[1;33m1\033[0m (A) \033[1;32m2025-08-29\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m \033[1;31mdue:2025-08-29\033[0m'
+            assert (
+                result_with_color
+                == "\033[1;33m1\033[0m (A) \033[1;32m2025-08-29\033[0m Clean cat box \033[1;34m@home\033[0m \033[1;35m+chores\033[0m \033[1;31mdue:2025-08-29\033[0m"
+            )
 
     def test_set_project_adds_projects_to_task_without_projects(self):
         """Test that set_project adds projects to task that doesn't have any."""

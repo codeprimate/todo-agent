@@ -32,7 +32,12 @@ class TodoShell:
         self.todo_dir = os.path.dirname(todo_file_path) or os.getcwd()
         self.logger = logger
 
-    def execute(self, command: List[str], cwd: Optional[str] = None, suppress_color: bool = False) -> str:
+    def execute(
+        self,
+        command: List[str],
+        cwd: Optional[str] = None,
+        suppress_color: bool = False,
+    ) -> str:
         """
         Execute a todo.sh command and return the output.
 
@@ -70,14 +75,17 @@ class TodoShell:
                 self.logger.debug(f"Return code: {result.returncode}")
 
             output = result.stdout.strip()
-            
+
             # Strip ANSI color codes if requested (for LLM consumption)
             if suppress_color:
                 from rich.text import Text
+
                 # Use Rich's Text.from_ansi to parse and then get plain text
                 output = Text.from_ansi(output).plain
                 if self.logger:
-                    self.logger.debug(f"Stripped ANSI codes from output for LLM consumption")
+                    self.logger.debug(
+                        f"Stripped ANSI codes from output for LLM consumption"
+                    )
 
             return output
         except subprocess.CalledProcessError as e:
@@ -100,7 +108,9 @@ class TodoShell:
         """Add new task."""
         return self.execute(["todo.sh", "add", description])
 
-    def list_tasks(self, filter_str: Optional[str] = None, suppress_color: bool = True) -> str:
+    def list_tasks(
+        self, filter_str: Optional[str] = None, suppress_color: bool = True
+    ) -> str:
         """List tasks with optional filtering."""
         command = ["todo.sh", "ls"]
         if filter_str:
@@ -155,7 +165,9 @@ class TodoShell:
         """List contexts."""
         return self.execute(["todo.sh", "lsc"], suppress_color=suppress_color)
 
-    def list_completed(self, filter_str: Optional[str] = None, suppress_color: bool = True) -> str:
+    def list_completed(
+        self, filter_str: Optional[str] = None, suppress_color: bool = True
+    ) -> str:
         """List completed tasks with optional filtering."""
         command = ["todo.sh", "listfile", "done.txt"]
         if filter_str:

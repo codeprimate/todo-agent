@@ -180,7 +180,7 @@ class ToolCallHandler:
                         "required": ["description"],
                     },
                 },
-                "progress_description": "➕ Creating new task...",
+                "progress_description": "+ Creating new task...",
             },
             {
                 "type": "function",
@@ -805,16 +805,16 @@ class ToolCallHandler:
         """Execute a tool call and return the result."""
         # Validate tool call structure
         if not isinstance(tool_call, dict):
-            return {
+            return {  # type: ignore[unreachable]
                 "tool_call_id": "unknown",
                 "name": "unknown",
                 "output": "ERROR: Invalid tool call format",
                 "error": True,
                 "error_type": "malformed_tool_call",
                 "error_details": "Tool call is not a dictionary",
-                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation.",
             }
-            
+
         if "function" not in tool_call:
             return {
                 "tool_call_id": tool_call.get("id", "unknown"),
@@ -823,9 +823,9 @@ class ToolCallHandler:
                 "error": True,
                 "error_type": "malformed_tool_call",
                 "error_details": "Tool call missing function field",
-                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation.",
             }
-            
+
         function = tool_call["function"]
         if not isinstance(function, dict):
             return {
@@ -835,9 +835,9 @@ class ToolCallHandler:
                 "error": True,
                 "error_type": "malformed_tool_call",
                 "error_details": "Function field is not a dictionary",
-                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation.",
             }
-            
+
         tool_name = function.get("name")
         if not tool_name:
             return {
@@ -847,9 +847,9 @@ class ToolCallHandler:
                 "error": True,
                 "error_type": "malformed_tool_call",
                 "error_details": "Function missing name field",
-                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation."
+                "user_message": "I received a malformed request. Please try again, or type 'clear' to reset our conversation.",
             }
-            
+
         arguments = function.get("arguments", {})
         tool_call_id = tool_call.get("id", "unknown")
 

@@ -21,20 +21,23 @@ PROVIDER_ERROR_MESSAGES = {
     "rate_limit": "I'm a bit overwhelmed right now. Please wait a moment and try again, or type 'clear' to start fresh.",
     "auth_error": "I can't connect to my AI service. Please check your configuration, or type 'clear' to reset.",
     "timeout": "The request took too long. Please try again, or type 'clear' to reset our conversation.",
-    "general_error": "Something went wrong with my AI service. Please try again, or type 'clear' to reset our conversation."
+    "general_error": "Something went wrong with my AI service. Please try again, or type 'clear' to reset our conversation.",
 }
+
 
 def get_provider_error_message(error_type: str) -> str:
     """
     Get user-friendly error message for provider errors.
-    
+
     Args:
         error_type: The type of provider error
-        
+
     Returns:
         User-friendly error message with recovery suggestion
     """
-    return PROVIDER_ERROR_MESSAGES.get(error_type, PROVIDER_ERROR_MESSAGES["general_error"])
+    return PROVIDER_ERROR_MESSAGES.get(
+        error_type, PROVIDER_ERROR_MESSAGES["general_error"]
+    )
 
 
 class TaskFormatter:

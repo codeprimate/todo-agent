@@ -12,8 +12,11 @@ try:
     from todo_agent.infrastructure.config import Config
     from todo_agent.infrastructure.llm_client_factory import LLMClientFactory
     from todo_agent.infrastructure.logger import Logger
+    from todo_agent.interface.formatters import (
+        get_provider_error_message as _get_error_msg,
+    )
+    from todo_agent.interface.progress import NoOpProgress, ToolCallProgress
     from todo_agent.interface.tools import ToolCallHandler
-    from todo_agent.interface.progress import ToolCallProgress, NoOpProgress
 except ImportError:
     from core.conversation_manager import (  # type: ignore[no-redef]
         ConversationManager,
@@ -24,8 +27,14 @@ except ImportError:
         LLMClientFactory,
     )
     from infrastructure.logger import Logger  # type: ignore[no-redef]
+    from interface.formatters import (  # type: ignore[no-redef]
+        get_provider_error_message as _get_error_msg,
+    )
+    from interface.progress import (  # type: ignore[no-redef]
+        NoOpProgress,
+        ToolCallProgress,
+    )
     from interface.tools import ToolCallHandler  # type: ignore[no-redef]
-    from interface.progress import ToolCallProgress, NoOpProgress  # type: ignore[no-redef]
 
 
 class Inference:
@@ -106,9 +115,9 @@ class Inference:
             self.logger.error(f"Error loading system prompt: {e!s}")
             raise
 
-
-
-    def process_request(self, user_input: str, progress_callback: Optional[ToolCallProgress] = None) -> tuple[str, float]:
+    def process_request(
+        self, user_input: str, progress_callback: Optional[ToolCallProgress] = None
+    ) -> tuple[str, float]:
         """
         Process a user request through the LLM with tool orchestration.
 
@@ -121,11 +130,11 @@ class Inference:
         """
         # Start timing the request
         start_time = time.time()
-        
+
         # Initialize progress callback if not provided
         if progress_callback is None:
             progress_callback = NoOpProgress()
-        
+
         # Notify progress callback that thinking has started
         progress_callback.on_thinking_start()
 
@@ -155,23 +164,19 @@ class Inference:
                 error_type = response.get("error_type", "general_error")
                 provider = response.get("provider", "unknown")
                 self.logger.error(f"Provider error from {provider}: {error_type}")
-                
-                # Import here to avoid circular imports
-                try:
-                    from todo_agent.interface.formatters import get_provider_error_message
-                    error_message = get_provider_error_message(error_type)
-                except ImportError:
-                    from interface.formatters import get_provider_error_message
-                    error_message = get_provider_error_message(error_type)
-                
+
+                error_message = _get_error_msg(error_type)
+
                 # Add error message to conversation
-                self.conversation_manager.add_message(MessageRole.ASSISTANT, error_message)
-                
+                self.conversation_manager.add_message(
+                    MessageRole.ASSISTANT, error_message
+                )
+
                 # Calculate thinking time and return
                 end_time = time.time()
                 thinking_time = end_time - start_time
                 progress_callback.on_thinking_complete(thinking_time)
-                
+
                 return error_message, thinking_time
 
             # Extract actual token usage from API response
@@ -188,8 +193,7 @@ class Inference:
 
             # Handle multiple tool calls in sequence
             tool_call_count = 0
-            total_sequences = 0  # We'll track this as we go
-            
+
             while True:
                 tool_calls = self.llm_client.extract_tool_calls(response)
 
@@ -200,9 +204,11 @@ class Inference:
                 self.logger.debug(
                     f"Executing tool call sequence #{tool_call_count} with {len(tool_calls)} tools"
                 )
-                
+
                 # Notify progress callback of sequence start
-                progress_callback.on_sequence_complete(tool_call_count, 0)  # We don't know total yet
+                progress_callback.on_sequence_complete(
+                    tool_call_count, 0
+                )  # We don't know total yet
 
                 # Execute all tool calls and collect results
                 tool_results = []
@@ -217,13 +223,18 @@ class Inference:
                     self.logger.debug(f"Raw tool call: {tool_call}")
 
                     # Get progress description for the tool
-                    progress_description = self._get_tool_progress_description(tool_name)
-                    
+                    progress_description = self._get_tool_progress_description(
+                        tool_name
+                    )
+
                     # Notify progress callback of tool call start
                     progress_callback.on_tool_call_start(
-                        tool_name, progress_description, tool_call_count, 0  # We don't know total yet
+                        tool_name,
+                        progress_description,
+                        tool_call_count,
+                        0,  # We don't know total yet
                     )
-                    
+
                     result = self.tool_handler.execute_tool(tool_call)
 
                     # Log tool execution result (success or error)
@@ -253,24 +264,22 @@ class Inference:
                 if response.get("error", False):
                     error_type = response.get("error_type", "general_error")
                     provider = response.get("provider", "unknown")
-                    self.logger.error(f"Provider error in continuation from {provider}: {error_type}")
-                    
-                    # Import here to avoid circular imports
-                    try:
-                        from todo_agent.interface.formatters import get_provider_error_message
-                        error_message = get_provider_error_message(error_type)
-                    except ImportError:
-                        from interface.formatters import get_provider_error_message
-                        error_message = get_provider_error_message(error_type)
-                    
+                    self.logger.error(
+                        f"Provider error in continuation from {provider}: {error_type}"
+                    )
+
+                    error_message = _get_error_msg(error_type)
+
                     # Add error message to conversation
-                    self.conversation_manager.add_message(MessageRole.ASSISTANT, error_message)
-                    
+                    self.conversation_manager.add_message(
+                        MessageRole.ASSISTANT, error_message
+                    )
+
                     # Calculate thinking time and return
                     end_time = time.time()
                     thinking_time = end_time - start_time
                     progress_callback.on_thinking_complete(thinking_time)
-                    
+
                     return error_message, thinking_time
 
                 # Update with actual tokens from subsequent API calls
@@ -284,7 +293,7 @@ class Inference:
             # Calculate and log total thinking time
             end_time = time.time()
             thinking_time = end_time - start_time
-            
+
             # Notify progress callback that thinking is complete
             progress_callback.on_thinking_complete(thinking_time)
 
@@ -324,19 +333,25 @@ class Inference:
     def _get_tool_progress_description(self, tool_name: str) -> str:
         """
         Get user-friendly progress description for a tool.
-        
+
         Args:
             tool_name: Name of the tool
-            
+
         Returns:
             Progress description string
         """
-        tool_def = next((t for t in self.tool_handler.tools 
-                         if t.get("function", {}).get("name") == tool_name), None)
-        
+        tool_def = next(
+            (
+                t
+                for t in self.tool_handler.tools
+                if t.get("function", {}).get("name") == tool_name
+            ),
+            None,
+        )
+
         if tool_def and "progress_description" in tool_def:
             return tool_def["progress_description"]
-        
+
         # Fallback to generic description
         return f"🔧 Executing {tool_name}..."
 

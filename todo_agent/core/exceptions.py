@@ -35,7 +35,7 @@ class TodoShellError(TodoError):
 
 class ProviderError(Exception):
     """Base exception for LLM provider errors."""
-    
+
     def __init__(self, message: str, error_type: str, provider: str):
         super().__init__(message)
         self.message = message
@@ -45,34 +45,34 @@ class ProviderError(Exception):
 
 class MalformedResponseError(ProviderError):
     """Provider returned malformed or invalid response."""
-    
+
     def __init__(self, message: str, provider: str):
         super().__init__(message, "malformed_response", provider)
 
 
 class RateLimitError(ProviderError):
     """Provider rate limit exceeded."""
-    
+
     def __init__(self, message: str, provider: str):
         super().__init__(message, "rate_limit", provider)
 
 
 class AuthenticationError(ProviderError):
     """Provider authentication failed."""
-    
+
     def __init__(self, message: str, provider: str):
         super().__init__(message, "auth_error", provider)
 
 
 class TimeoutError(ProviderError):
     """Provider request timed out."""
-    
+
     def __init__(self, message: str, provider: str):
         super().__init__(message, "timeout", provider)
 
 
 class GeneralProviderError(ProviderError):
     """General provider error."""
-    
+
     def __init__(self, message: str, provider: str):
         super().__init__(message, "general_error", provider)
