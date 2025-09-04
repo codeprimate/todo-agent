@@ -102,9 +102,9 @@ class TodoManager:
         self.todo_shell.add(full_description)
         return f"Added task: {full_description}"
 
-    def list_tasks(self, filter: Optional[str] = None) -> str:
+    def list_tasks(self, filter: Optional[str] = None, suppress_color: bool = True) -> str:
         """List tasks with optional filtering."""
-        result = self.todo_shell.list_tasks(filter)
+        result = self.todo_shell.list_tasks(filter, suppress_color=suppress_color)
         if not result.strip():
             return "No tasks found."
 
@@ -258,16 +258,16 @@ class TodoManager:
                 operation_desc = ", ".join(operations)
                 return f"Updated projects for task {task_number} ({operation_desc}): {result}"
 
-    def list_projects(self, **kwargs: Any) -> str:
+    def list_projects(self, suppress_color: bool = True, **kwargs: Any) -> str:
         """List all available projects in todo.txt."""
-        result = self.todo_shell.list_projects()
+        result = self.todo_shell.list_projects(suppress_color=suppress_color)
         if not result.strip():
             return "No projects found."
         return result
 
-    def list_contexts(self, **kwargs: Any) -> str:
+    def list_contexts(self, suppress_color: bool = True, **kwargs: Any) -> str:
         """List all available contexts in todo.txt."""
-        result = self.todo_shell.list_contexts()
+        result = self.todo_shell.list_contexts(suppress_color=suppress_color)
         if not result.strip():
             return "No contexts found."
         return result
@@ -280,6 +280,7 @@ class TodoManager:
         text_search: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
+        suppress_color: bool = True,
         **kwargs: Any,
     ) -> str:
         """List completed tasks with optional filtering.
@@ -329,7 +330,7 @@ class TodoManager:
         # Combine all filters
         combined_filter = " ".join(filter_parts) if filter_parts else None
 
-        result = self.todo_shell.list_completed(combined_filter)
+        result = self.todo_shell.list_completed(combined_filter, suppress_color=suppress_color)
         if not result.strip():
             return "No completed tasks found matching the criteria."
         return result

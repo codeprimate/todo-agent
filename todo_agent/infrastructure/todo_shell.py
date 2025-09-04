@@ -32,13 +32,14 @@ class TodoShell:
         self.todo_dir = os.path.dirname(todo_file_path) or os.getcwd()
         self.logger = logger
 
-    def execute(self, command: List[str], cwd: Optional[str] = None) -> str:
+    def execute(self, command: List[str], cwd: Optional[str] = None, suppress_color: bool = False) -> str:
         """
-        Execute todo.sh command.
+        Execute a todo.sh command and return the output.
 
         Args:
             command: List of command arguments
             cwd: Working directory (defaults to todo.sh directory)
+            suppress_color: If True, strip ANSI color codes from output (for LLM consumption)
 
         Returns:
             Command output as string
@@ -52,6 +53,7 @@ class TodoShell:
             self.logger.debug(f"=== RAW COMMAND EXECUTION ===")
             self.logger.debug(f"Raw command: {raw_command}")
             self.logger.debug(f"Working directory: {cwd or self.todo_dir}")
+            self.logger.debug(f"Suppress color: {suppress_color}")
 
         try:
             working_dir = cwd or self.todo_dir
@@ -67,7 +69,17 @@ class TodoShell:
                 self.logger.debug(f"Raw stderr: {result.stderr}")
                 self.logger.debug(f"Return code: {result.returncode}")
 
-            return result.stdout.strip()
+            output = result.stdout.strip()
+            
+            # Strip ANSI color codes if requested (for LLM consumption)
+            if suppress_color:
+                from rich.text import Text
+                # Use Rich's Text.from_ansi to parse and then get plain text
+                output = Text.from_ansi(output).plain
+                if self.logger:
+                    self.logger.debug(f"Stripped ANSI codes from output for LLM consumption")
+
+            return output
         except subprocess.CalledProcessError as e:
             # Log error details
             if self.logger:
@@ -88,12 +100,12 @@ class TodoShell:
         """Add new task."""
         return self.execute(["todo.sh", "add", description])
 
-    def list_tasks(self, filter_str: Optional[str] = None) -> str:
+    def list_tasks(self, filter_str: Optional[str] = None, suppress_color: bool = True) -> str:
         """List tasks with optional filtering."""
         command = ["todo.sh", "ls"]
         if filter_str:
             command.append(filter_str)
-        return self.execute(command)
+        return self.execute(command, suppress_color=suppress_color)
 
     def complete(self, task_number: int) -> str:
         """Mark task complete."""
@@ -135,20 +147,20 @@ class TodoShell:
         """Remove task priority."""
         return self.execute(["todo.sh", "depri", str(task_number)])
 
-    def list_projects(self) -> str:
+    def list_projects(self, suppress_color: bool = True) -> str:
         """List projects."""
-        return self.execute(["todo.sh", "lsp"])
+        return self.execute(["todo.sh", "lsp"], suppress_color=suppress_color)
 
-    def list_contexts(self) -> str:
+    def list_contexts(self, suppress_color: bool = True) -> str:
         """List contexts."""
-        return self.execute(["todo.sh", "lsc"])
+        return self.execute(["todo.sh", "lsc"], suppress_color=suppress_color)
 
-    def list_completed(self, filter_str: Optional[str] = None) -> str:
+    def list_completed(self, filter_str: Optional[str] = None, suppress_color: bool = True) -> str:
         """List completed tasks with optional filtering."""
         command = ["todo.sh", "listfile", "done.txt"]
         if filter_str:
             command.append(filter_str)
-        return self.execute(command)
+        return self.execute(command, suppress_color=suppress_color)
 
     def archive(self) -> str:
         """Archive completed tasks."""

@@ -296,7 +296,8 @@ class CLI:
                 if user_input.lower() == "list":
                     self.logger.debug("User requested task list")
                     try:
-                        output = self.todo_shell.list_tasks()
+                        # Use suppress_color=False for interactive display to preserve colors
+                        output = self.todo_shell.list_tasks(suppress_color=False)
                         formatted_output = TaskFormatter.format_task_list(output)
                         task_panel = PanelFormatter.create_task_panel(formatted_output)
                         self.console.print(task_panel)
@@ -311,7 +312,8 @@ class CLI:
                 if user_input.lower() == "done":
                     self.logger.debug("User requested completed task list")
                     try:
-                        output = self.todo_shell.list_completed()
+                        # Use suppress_color=False for interactive display to preserve colors
+                        output = self.todo_shell.list_completed(suppress_color=False)
                         formatted_output = TaskFormatter.format_completed_tasks(output)
                         task_panel = PanelFormatter.create_task_panel(
                             formatted_output, title="✅ Completed Tasks"
