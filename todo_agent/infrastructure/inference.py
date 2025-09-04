@@ -77,6 +77,27 @@ class Inference:
         self.conversation_manager.set_system_prompt(system_prompt)
         self.logger.debug("System prompt loaded and set")
 
+    def current_tasks(self) -> str:
+        """
+        Get current tasks from the todo manager.
+        
+        Returns:
+            Formatted string of current tasks or error message
+        """
+        try:
+            # Use the todo manager from the tool handler to get current tasks
+            tasks = self.tool_handler.todo_manager.list_tasks(suppress_color=True)
+            
+            # If no tasks found, return a clear message
+            if not tasks.strip() or tasks == "No tasks found.":
+                return "No current tasks found."
+                
+            return tasks
+            
+        except Exception as e:
+            self.logger.warning(f"Failed to get current tasks: {e!s}")
+            return f"Error retrieving current tasks: {e!s}"
+
     def _load_system_prompt(self) -> str:
         """Load and format the system prompt from file."""
         # Get current datetime for interpolation
@@ -93,6 +114,9 @@ class Inference:
             self.logger.warning(f"Failed to get calendar output: {e!s}")
             calendar_output = "Calendar unavailable"
 
+        # Get current tasks
+        current_tasks = self.current_tasks()
+
         # Load system prompt from file
         prompt_file_path = os.path.join(
             os.path.dirname(__file__), "prompts", "system_prompt.txt"
@@ -102,10 +126,11 @@ class Inference:
             with open(prompt_file_path, encoding="utf-8") as f:
                 system_prompt_template = f.read()
 
-            # Format the template with current datetime and calendar
+            # Format the template with current datetime, calendar, and current tasks
             return system_prompt_template.format(
                 current_datetime=current_datetime,
                 calendar_output=calendar_output,
+                current_tasks=current_tasks,
             )
 
         except FileNotFoundError:
