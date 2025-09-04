@@ -249,7 +249,7 @@ class Inference:
 
                     # Get progress description for the tool
                     progress_description = self._get_tool_progress_description(
-                        tool_name
+                        tool_name, tool_call
                     )
 
                     # Notify progress callback of tool call start
@@ -355,15 +355,16 @@ class Inference:
             self.tool_handler.tools
         )
 
-    def _get_tool_progress_description(self, tool_name: str) -> str:
+    def _get_tool_progress_description(self, tool_name: str, tool_call: Dict[str, Any]) -> str:
         """
-        Get user-friendly progress description for a tool.
+        Get user-friendly progress description for a tool with parameter interpolation.
 
         Args:
             tool_name: Name of the tool
+            tool_call: The tool call dictionary containing parameters
 
         Returns:
-            Progress description string
+            Progress description string with interpolated parameters
         """
         tool_def = next(
             (
@@ -375,7 +376,27 @@ class Inference:
         )
 
         if tool_def and "progress_description" in tool_def:
-            return tool_def["progress_description"]
+            template = tool_def["progress_description"]
+            
+            # Extract arguments from tool call
+            arguments = tool_call.get("function", {}).get("arguments", {})
+            if isinstance(arguments, str):
+                import json
+                try:
+                    arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    arguments = {}
+            
+            # Use .format() like the system prompt does
+            try:
+                return template.format(**arguments)
+            except KeyError as e:
+                # If a required parameter is missing, fall back to template
+                self.logger.warning(f"Missing parameter {e} for progress description of {tool_name}")
+                return template
+            except Exception as e:
+                self.logger.warning(f"Failed to interpolate progress description for {tool_name}: {e}")
+                return template
 
         # Fallback to generic description
         return f"🔧 Executing {tool_name}..."
