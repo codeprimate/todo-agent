@@ -176,6 +176,10 @@ class ToolCallHandler:
                                 "type": "string",
                                 "description": "Optional duration estimate in format: minutes (e.g., '30m'), hours (e.g., '2h'), or days (e.g., '1d'). Use for time planning and task prioritization.",
                             },
+                            "parent_number": {
+                                "type": "integer",
+                                "description": "Optional parent task number (required for subtasks)",
+                            },
                         },
                         "required": ["description"],
                     },
@@ -254,12 +258,12 @@ class ToolCallHandler:
                                 "type": "integer",
                                 "description": "The line number of the task to modify (required)",
                             },
-                            "text_to_append": {
+                            "text": {
                                 "type": "string",
                                 "description": "Text to add to the end of the task (required)",
                             },
                         },
-                        "required": ["task_number", "text_to_append"],
+                        "required": ["task_number", "text"],
                     },
                 },
                 "progress_description": "📝 Adding notes to task #{task_number}...",
@@ -614,6 +618,10 @@ class ToolCallHandler:
                             "context": {
                                 "type": "string",
                                 "description": "Optional context name (without the @ symbol) for new task creation",
+                            },
+                            "parent_number": {
+                                "type": "integer",
+                                "description": "Optional parent task number (required for subtasks)",
                             },
                         },
                         "required": ["description"],

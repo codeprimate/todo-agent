@@ -20,6 +20,7 @@ class TodoManager:
         context: Optional[str] = None,
         due: Optional[str] = None,
         duration: Optional[str] = None,
+        parent_number: Optional[int] = None,
     ) -> str:
         """Add new task with explicit project/context parameters."""
         # Validate and sanitize inputs
@@ -81,6 +82,13 @@ class TodoManager:
                     f"Invalid duration value '{value}'. Must be a positive number."
                 )
 
+        # Validate parent_number if provided
+        if parent_number is not None:
+            if not isinstance(parent_number, int) or parent_number <= 0:
+                raise ValueError(
+                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
+                )
+
         # Build the full task description with priority, project, and context
         full_description = description
 
@@ -98,6 +106,9 @@ class TodoManager:
 
         if duration:
             full_description = f"{full_description} duration:{duration}"
+
+        if parent_number:
+            full_description = f"{full_description} parent:{parent_number}"
 
         self.todo_shell.add(full_description)
         return f"Added task: {full_description}"
@@ -369,6 +380,7 @@ class TodoManager:
         completion_date: Optional[str] = None,
         project: Optional[str] = None,
         context: Optional[str] = None,
+        parent_number: Optional[int] = None,
     ) -> str:
         """
         Create a task and immediately mark it as completed.
@@ -381,6 +393,7 @@ class TodoManager:
             completion_date: Completion date in YYYY-MM-DD format (defaults to today)
             project: Optional project name (without the + symbol)
             context: Optional context name (without the @ symbol)
+            parent_number: Optional parent task number (required for subtasks)
 
         Returns:
             Confirmation message with the completed task details
@@ -396,6 +409,13 @@ class TodoManager:
             raise ValueError(
                 f"Invalid completion date format '{completion_date}'. Must be YYYY-MM-DD."
             )
+
+        # Validate parent_number if provided
+        if parent_number is not None:
+            if not isinstance(parent_number, int) or parent_number <= 0:
+                raise ValueError(
+                    f"Invalid parent_number '{parent_number}'. Must be a positive integer."
+                )
 
         # Build the task description with project and context
         full_description = description
@@ -417,6 +437,9 @@ class TodoManager:
                     "Context name cannot be empty after removing @ symbol."
                 )
             full_description = f"{full_description} @{clean_context}"
+
+        if parent_number:
+            full_description = f"{full_description} parent:{parent_number}"
 
         # Add the task first
         self.todo_shell.add(full_description)
