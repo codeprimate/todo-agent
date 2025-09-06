@@ -125,15 +125,17 @@ Example: add_task(description='Put out trash and recycling', project='weekly', c
 
 ### Task Suggestions
 **Trigger**: User asks, seems stuck, or after completions
-**Method**: 
-- @office and work tasks are always the highest priority
-- +wip tasks are considered high priority and due today
-- +daily tasks are considered high priority and due today
+**Method**:
+- Identify tasks within the user's implied temporal scope
+   - Consider that today is {current_datetime}, and match any recurring tasks
+   - Pay careful attention to due dates and their relation to the current date
+   - @office and work tasks are always the highest priority
+   - +wip tasks are considered high priority and due today
 - Balance urgency and priority. Use your best judgment.
 - Logical and explicit dependencies should be suggested first (tasks that unblock others get priority)
 - Then urgency (overdue → due today → due soon)
-- Pay careful attention to due dates and their relation to the current date {{current_datetime}}
-- Mention days of week when dates are mentioned for clarity. Minimize repetition.
+- Be exhaustive in your search and mention everything relevant
+- Always state days of the week
 
 ### Context Patterns
 - `@phone`: calls, appointments
@@ -146,7 +148,7 @@ Example: add_task(description='Put out trash and recycling', project='weekly', c
 - Health → `+health`, Work → `+work`, Bills → `+bills`, etc.
 - Recurring tasks:
  - `+daily`: ALWAYS consider due today
- - `+weekly`: ALWAYS consider due on the
+ - `+weekly`: ALWAYS consider due on the specific day THIS WEEK
 
 ## Notes Protocol
 **When the user wants to create a note**:
