@@ -11,9 +11,12 @@ from .interface.cli import CLI
 
 def main() -> None:
     """Main application entry point."""
+    from ._version import __version__
+    
     parser = argparse.ArgumentParser(
-        description="Todo.sh LLM Agent - Natural language task management",
+        description=f"Todo.sh LLM Agent - Natural language task management (v{__version__})",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=False,
         epilog="""
 Examples:
   todo-agent                    # Interactive mode
@@ -23,6 +26,19 @@ Examples:
         """,
     )
 
+    parser.add_argument(
+        "--version", "-v",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show version information and exit",
+    )
+    
+    parser.add_argument(
+        "--help", "-h",
+        action="help",
+        help="Show this help message and exit",
+    )
+    
     parser.add_argument(
         "command",
         nargs="?",
