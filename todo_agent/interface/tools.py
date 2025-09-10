@@ -626,13 +626,14 @@ class ToolCallHandler:
                     "name": "create_completed_task",
                     "description": (
                         "Create a task and immediately mark it as completed. "
-                        "USE CASE: Call this when user says they completed something on a specific date (e.g., 'I did the laundry today', 'I finished the report yesterday', 'I cleaned the garage last week') "
+                        "USE CASE: WHEN NO MATCH IS FOUND! Call this when user says they completed something on a specific date (e.g., 'I did the laundry today', 'I finished the report yesterday', 'I cleaned the garage last week') "
                         "and you have already researched existing tasks to determine no match exists. "
-                        "WORKFLOW: 1) Use list_tasks() to search for existing tasks, 2) Use list_completed_tasks() to verify it's not already done, "
-                        "3) If no match found, call this tool to create and complete the task in one operation. "
+                        "WORKFLOW: 1) Use list_tasks() to search for existing tasks, "
+                        "2) Use list_completed_tasks() to verify it's not already done, "
+                        "3) If a match is found, use complete_task() to mark it complete, "
+                        "4) If no match found, call this tool to create and complete the task in one operation. "
                         "STRATEGIC CONTEXT: This is a convenience tool for the common pattern of 'I did X on [date]' - "
-                        "it creates a task with the specified completion date and immediately marks it complete. "
-                        "The LLM should handle the research and decision-making about whether to use this tool."
+                        "when no task match is found, it creates a task with the specified completion date and immediately marks it complete. "
                     ),
                     "parameters": {
                         "type": "object",

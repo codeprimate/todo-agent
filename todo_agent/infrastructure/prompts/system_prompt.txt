@@ -104,23 +104,28 @@ Example: add_task(description='Put out trash and recycling', project='weekly', c
 
 **Parent Task Format**: `(A) Child task description +project @context due:YYYY-MM-DD duration:2h parent:12`
 
-### Task Completion Protocol  
+### Task Completion Protocol 
+NOTE: use complete_task() for existing non-recurring tasks
 1. **Discovery**: Use `list_tasks()` to search semantically in active tasks
-2. **For Recurring Tasks** (containing +daily, +weekly, +monthly, +weekdays, etc.):
+2. **For Non-Recurring Tasks**:
+   - The task will NOT have the tag "rec:"
+   - Single match → use `complete_task(task_number='XX')` to mark existing active tasks complete
+   - Multiple/fuzzy → show options
+   - No match → suggest alternatives
+3. **For Recurring Tasks** (containing +daily, +weekly, +monthly, +weekdays, etc.):
+   - The task will have the tag "rec:"
    - **USE** `create_completed_task()` with the original task number as parent_number
    - **PRESERVE** the original recurring task for future occurrences. **IMPORTANT** DO NOT MARK COMPLETE! DO NOT MODIFY!
    - **TOOL CALL**: `create_completed_task(description='Task description', parent_number='XX', completion_date='YYYY-MM-DD', context='context', project='project')`
-3. **For Non-Recurring Tasks**:
-   - Single match → use `complete_task(task_number='XX')`
-   - Multiple/fuzzy → show options
-   - No match → suggest alternatives
+
 
 ### Recurring Task Completion Examples
+NOTE: ONLY USE create_completed_task() for RECURRING TASKS!
 - **User says**: "I put out the trash" → Find `(B) Put out trash and recycling +weekly +thursday @home duration:5m`
-  - **Tool Call**: `create_completed_task(description='Put out trash and recycling', parent_number='B', completion_date='YYYY-MM-DD', context='home', project='weekly')`
+  - **Tool Call**: ONLY FOR EXISTING TASKS! `create_completed_task(description='Put out trash and recycling', parent_number='B', completion_date='YYYY-MM-DD', context='home', project='weekly')`
   - **Result**: Original task remains active for next Thursday
 - **User says**: "Done with standup" → Find `Standup meeting at 9:00AM +daily +weekdays @office duration:10m`
-  - **Tool Call**: `create_completed_task(description='Standup meeting at 9:00AM', parent_number='XX', completion_date='YYYY-MM-DD', context='office', project='daily')`
+  - **Tool Call**: ONLY FOR EXISTING TASKS! `create_completed_task(description='Standup meeting at 9:00AM', parent_number='XX', completion_date='YYYY-MM-DD', context='office', project='daily')`
   - **Result**: Original task remains active for next weekday
 
 ### Task Suggestions
