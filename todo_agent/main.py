@@ -12,7 +12,7 @@ from .interface.cli import CLI
 def main() -> None:
     """Main application entry point."""
     from ._version import __version__
-    
+
     parser = argparse.ArgumentParser(
         description=f"Todo.sh LLM Agent - Natural language task management (v{__version__})",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -27,18 +27,20 @@ Examples:
     )
 
     parser.add_argument(
-        "--version", "-v",
+        "--version",
+        "-v",
         action="version",
         version=f"%(prog)s {__version__}",
         help="Show version information and exit",
     )
-    
+
     parser.add_argument(
-        "--help", "-h",
+        "--help",
+        "-h",
         action="help",
         help="Show this help message and exit",
     )
-    
+
     parser.add_argument(
         "command",
         nargs="?",
@@ -53,11 +55,28 @@ Examples:
         if args.command:
             # Single command mode
             # Handle special commands that don't need LLM processing
-            if args.command.lower() in ["help", "about"]:
+            if args.command.lower() in ["help", "about", "todo-help"]:
                 if args.command.lower() == "help":
                     cli._print_help()
                 elif args.command.lower() == "about":
                     cli._print_about()
+                elif args.command.lower() == "todo-help":
+                    cli._print_todo_help()
+            elif args.command.startswith("/"):
+                # Handle todo.sh passthrough commands
+                try:
+                    # Remove the leading / and execute as todo.sh command
+                    todo_command = args.command[1:].strip()
+                    if not todo_command:
+                        print("Error: Empty todo.sh command")
+                        sys.exit(1)
+
+                    # Execute the todo.sh command directly
+                    output = cli.todo_shell.execute(["todo.sh", *todo_command.split()])
+                    print(output)
+                except Exception as e:
+                    print(f"Error: Todo.sh command failed: {e}")
+                    sys.exit(1)
             else:
                 # Process through LLM
                 response = cli.run_single_request(args.command)

@@ -182,6 +182,10 @@ class TodoShell:
         """Archive completed tasks."""
         return self.execute(["todo.sh", "-f", "archive"])
 
+    def get_help(self) -> str:
+        """Get todo.sh help output."""
+        return self.execute(["todo.sh", "help"], suppress_color=False)
+
     def set_due_date(self, task_number: int, due_date: str) -> str:
         """
         Set or update due date for a task by intelligently rewriting it.

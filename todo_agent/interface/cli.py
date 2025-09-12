@@ -225,6 +225,23 @@ class CLI:
         self.console.print(table)
         self.console.print("Or just type your request naturally!", style="italic green")
 
+    def _print_todo_help(self) -> None:
+        """Print todo.sh help information."""
+        try:
+            # Get todo.sh help output
+            help_output = self.todo_shell.get_help()
+            formatted_output = TaskFormatter.format_task_list(help_output)
+            help_panel = PanelFormatter.create_task_panel(
+                formatted_output, title="📋 Todo.sh Help"
+            )
+            self.console.print(help_panel)
+        except Exception as e:
+            self.logger.error(f"Error getting todo.sh help: {e!s}")
+            error_msg = ResponseFormatter.format_error(
+                f"Failed to get todo.sh help: {e!s}"
+            )
+            self.console.print(error_msg)
+
     def _print_about(self) -> None:
         """Print about information in a formatted panel."""
         about_panel = PanelFormatter.create_about_panel()
@@ -280,6 +297,37 @@ class CLI:
                 if not user_input:
                     continue
 
+                # Handle todo.sh passthrough commands (starting with /)
+                if user_input.startswith("/"):
+                    self.logger.debug(
+                        f"Processing todo.sh passthrough command: {user_input}"
+                    )
+                    try:
+                        # Remove the leading / and execute as todo.sh command
+                        todo_command = user_input[1:].strip()
+                        if not todo_command:
+                            self.console.print(
+                                ResponseFormatter.format_error("Empty todo.sh command")
+                            )
+                            continue
+
+                        # Execute the todo.sh command directly
+                        output = self.todo_shell.execute(
+                            ["todo.sh", *todo_command.split()]
+                        )
+                        formatted_output = TaskFormatter.format_task_list(output)
+                        task_panel = PanelFormatter.create_task_panel(
+                            formatted_output, title="📋 Todo.sh Output"
+                        )
+                        self.console.print(task_panel)
+                    except Exception as e:
+                        self.logger.error(f"Error executing todo.sh command: {e!s}")
+                        error_msg = ResponseFormatter.format_error(
+                            f"Todo.sh command failed: {e!s}"
+                        )
+                        self.console.print(error_msg)
+                    continue
+
                 # Handle special commands
                 if user_input.lower() == "clear":
                     self.logger.info("User requested conversation clear")
@@ -300,6 +348,11 @@ class CLI:
                 if user_input.lower() == "help":
                     self.logger.debug("User requested help")
                     self._print_help()
+                    continue
+
+                if user_input.lower() == "todo-help":
+                    self.logger.debug("User requested todo.sh help")
+                    self._print_todo_help()
                     continue
 
                 if user_input.lower() == "about":

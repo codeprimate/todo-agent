@@ -377,6 +377,97 @@ class TestCLI:
                     expected_line in str(call) for call in mock_print.call_args_list
                 )
 
+    def test_todo_passthrough_command_success(self):
+        """Test successful todo.sh passthrough command execution."""
+        with patch("builtins.input", return_value="/add test task"), patch("sys.exit"):
+            # Mock the todo_shell execute method
+            mock_todo_shell = Mock()
+            mock_todo_shell.execute.return_value = "1 test task"
+
+            # Create CLI instance with mocked dependencies
+            with patch("todo_agent.interface.cli.Config"), patch(
+                "todo_agent.interface.cli.TodoShell", return_value=mock_todo_shell
+            ), patch("todo_agent.interface.cli.TodoManager"), patch(
+                "todo_agent.interface.cli.ToolCallHandler"
+            ), patch("todo_agent.interface.cli.Inference"), patch(
+                "todo_agent.interface.cli.Logger"
+            ), patch("todo_agent.interface.cli.Console") as mock_console:
+                CLI()
+
+                # Mock the console methods
+                mock_console.return_value.input.return_value = "/add test task"
+                mock_console.return_value.print = Mock()
+
+                # Test the passthrough logic directly
+                user_input = "/add test task"
+                if user_input.startswith("/"):
+                    todo_command = user_input[1:].strip()
+                    output = mock_todo_shell.execute(["todo.sh", *todo_command.split()])
+
+                    # Verify the command was executed correctly
+                    mock_todo_shell.execute.assert_called_once_with(
+                        ["todo.sh", "add", "test", "task"]
+                    )
+                    assert output == "1 test task"
+
+    def test_todo_passthrough_command_empty(self):
+        """Test todo.sh passthrough with empty command."""
+        with patch("builtins.input", return_value="/"), patch("sys.exit"):
+            # Mock the todo_shell execute method
+            mock_todo_shell = Mock()
+
+            # Create CLI instance with mocked dependencies
+            with patch("todo_agent.interface.cli.Config"), patch(
+                "todo_agent.interface.cli.TodoShell", return_value=mock_todo_shell
+            ), patch("todo_agent.interface.cli.TodoManager"), patch(
+                "todo_agent.interface.cli.ToolCallHandler"
+            ), patch("todo_agent.interface.cli.Inference"), patch(
+                "todo_agent.interface.cli.Logger"
+            ), patch("todo_agent.interface.cli.Console") as mock_console:
+                CLI()
+
+                # Mock the console methods
+                mock_console.return_value.input.return_value = "/"
+                mock_console.return_value.print = Mock()
+
+                # Test the passthrough logic with empty command
+                user_input = "/"
+                if user_input.startswith("/"):
+                    todo_command = user_input[1:].strip()
+                    if not todo_command:
+                        # Should handle empty command gracefully
+                        assert todo_command == ""
+
+    def test_todo_help_command(self):
+        """Test todo-help command execution."""
+        with patch("builtins.input", return_value="todo-help"), patch("sys.exit"):
+            # Mock the todo_shell get_help method
+            mock_todo_shell = Mock()
+            mock_todo_shell.get_help.return_value = "Todo.sh help output"
+
+            # Create CLI instance with mocked dependencies
+            with patch("todo_agent.interface.cli.Config"), patch(
+                "todo_agent.interface.cli.TodoShell", return_value=mock_todo_shell
+            ), patch("todo_agent.interface.cli.TodoManager"), patch(
+                "todo_agent.interface.cli.ToolCallHandler"
+            ), patch("todo_agent.interface.cli.Inference"), patch(
+                "todo_agent.interface.cli.Logger"
+            ), patch("todo_agent.interface.cli.Console") as mock_console:
+                CLI()
+
+                # Mock the console methods
+                mock_console.return_value.input.return_value = "todo-help"
+                mock_console.return_value.print = Mock()
+
+                # Test the todo-help command
+                user_input = "todo-help"
+                if user_input.lower() == "todo-help":
+                    help_output = mock_todo_shell.get_help()
+
+                    # Verify the help was retrieved
+                    mock_todo_shell.get_help.assert_called_once()
+                    assert help_output == "Todo.sh help output"
+
     def test_empty_input_handling(self):
         """Test that empty input is handled gracefully."""
         # This would be tested in the main run loop

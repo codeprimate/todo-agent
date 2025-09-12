@@ -810,3 +810,16 @@ class TestTodoShell:
             # Should not duplicate +work, only add +new
             mock_replace.assert_called_once_with(1, "Test task +work +new @context")
             assert result == "Task updated"
+
+    def test_get_help_constructs_correct_command(self):
+        """Test getting help constructs the correct todo.sh command."""
+        with patch.object(
+            self.todo_shell, "execute", return_value="Todo.sh help output"
+        ) as mock_execute:
+            result = self.todo_shell.get_help()
+
+            # Verify the correct command was constructed
+            mock_execute.assert_called_once_with(
+                ["todo.sh", "help"], suppress_color=False
+            )
+            assert result == "Todo.sh help output"

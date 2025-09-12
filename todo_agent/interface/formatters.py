@@ -357,6 +357,7 @@ class TableFormatter:
             ("clear", "Clear conversation history"),
             ("stats", "Show conversation statistics"),
             ("help", "Show this help message"),
+            ("todo-help", "Show todo.sh help"),
             ("about", "Show application information"),
             ("list", "List all tasks (no LLM interaction)"),
             ("done", "List completed tasks (no LLM interaction)"),
