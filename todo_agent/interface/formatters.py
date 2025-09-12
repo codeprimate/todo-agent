@@ -354,14 +354,13 @@ class TableFormatter:
         table.add_column("Description", style="white")
 
         commands = [
-            ("clear", "Clear conversation history"),
-            ("stats", "Show conversation statistics"),
             ("help", "Show this help message"),
-            ("todo-help", "Show todo.sh help"),
-            ("about", "Show application information"),
-            ("list", "List all tasks (no LLM interaction)"),
-            ("done", "List completed tasks (no LLM interaction)"),
             ("quit", "Exit the application"),
+            ("list", "List all tasks"),
+            ("done", "List completed tasks"),
+            ("clear", "Clear conversation history"),
+            ("todo-help", "Show todo.sh help"),
+            ("about", "Show application information")
         ]
 
         for cmd, desc in commands:
@@ -369,41 +368,6 @@ class TableFormatter:
 
         return table
 
-    @staticmethod
-    def create_stats_table(summary: Dict[str, Any]) -> Table:
-        """Create a table for displaying conversation statistics."""
-        table = Table(
-            title="Conversation Statistics",
-            box=ROUNDED,
-            show_header=True,
-            header_style="bold magenta",
-            width=PANEL_WIDTH,
-        )
-
-        table.add_column("Metric", style="cyan", width=20)
-        table.add_column("Value", style="white")
-
-        # Basic stats
-        table.add_row("Total Messages", str(summary["total_messages"]))
-        table.add_row("User Messages", str(summary["user_messages"]))
-        table.add_row("Assistant Messages", str(summary["assistant_messages"]))
-        table.add_row("Tool Messages", str(summary["tool_messages"]))
-        table.add_row("Estimated Tokens", str(summary["estimated_tokens"]))
-
-        # Thinking time stats if available
-        if "thinking_time_count" in summary and summary["thinking_time_count"] > 0:
-            table.add_row("", "")  # Empty row for spacing
-            table.add_row(
-                "Total Thinking Time", f"{summary['total_thinking_time']:.2f}s"
-            )
-            table.add_row(
-                "Average Thinking Time", f"{summary['average_thinking_time']:.2f}s"
-            )
-            table.add_row("Min Thinking Time", f"{summary['min_thinking_time']:.2f}s")
-            table.add_row("Max Thinking Time", f"{summary['max_thinking_time']:.2f}s")
-            table.add_row("Requests with Timing", str(summary["thinking_time_count"]))
-
-        return table
 
 
 class PanelFormatter:

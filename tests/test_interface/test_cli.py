@@ -199,69 +199,6 @@ class TestCLI:
                 # Verify success message was printed
                 mock_print.assert_called_once_with("Conversation history cleared.")
 
-    def test_history_command_functionality(self):
-        """Test that the history command displays conversation statistics."""
-        # Mock the conversation summary
-        summary = {
-            "total_messages": 10,
-            "user_messages": 4,
-            "assistant_messages": 4,
-            "tool_messages": 2,
-            "estimated_tokens": 250,
-            "thinking_time_count": 5,
-            "total_thinking_time": 8.5,
-            "average_thinking_time": 1.7,
-            "min_thinking_time": 0.5,
-            "max_thinking_time": 3.2,
-        }
-
-        self.cli.inference.get_conversation_summary.return_value = summary
-
-        with patch("builtins.print") as mock_print:
-            # Simulate the history command logic
-            summary_output = self.cli.inference.get_conversation_summary()
-            print("Conversation Stats:")
-            print(f"  Total messages: {summary_output['total_messages']}")
-            print(f"  User messages: {summary_output['user_messages']}")
-            print(f"  Assistant messages: {summary_output['assistant_messages']}")
-            print(f"  Tool messages: {summary_output['tool_messages']}")
-            print(f"  Estimated tokens: {summary_output['estimated_tokens']}")
-            print("  Thinking time stats:")
-            print(
-                f"    Total thinking time: {summary_output['total_thinking_time']:.2f}s"
-            )
-            print(
-                f"    Average thinking time: {summary_output['average_thinking_time']:.2f}s"
-            )
-            print(f"    Min thinking time: {summary_output['min_thinking_time']:.2f}s")
-            print(f"    Max thinking time: {summary_output['max_thinking_time']:.2f}s")
-            print(f"    Requests with timing: {summary_output['thinking_time_count']}")
-
-            # Verify get_conversation_summary was called
-            self.cli.inference.get_conversation_summary.assert_called_once()
-
-            # Verify all expected print calls
-            expected_calls = [
-                "Conversation Stats:",
-                "  Total messages: 10",
-                "  User messages: 4",
-                "  Assistant messages: 4",
-                "  Tool messages: 2",
-                "  Estimated tokens: 250",
-                "  Thinking time stats:",
-                "    Total thinking time: 8.50s",
-                "    Average thinking time: 1.70s",
-                "    Min thinking time: 0.50s",
-                "    Max thinking time: 3.20s",
-                "    Requests with timing: 5",
-            ]
-
-            # Check that all expected calls were made
-            for expected_call in expected_calls:
-                assert any(
-                    expected_call in str(call) for call in mock_print.call_args_list
-                )
-
     def test_list_command_success(self):
         """Test successful list command execution."""
         expected_output = "1 Buy groceries\n2 Call mom\n3 Review project"
@@ -352,10 +289,9 @@ class TestCLI:
             # Simulate the help command logic
             print("Available commands:")
             print("  clear    - Clear conversation history")
-            print("  history  - Show conversation statistics")
             print("  help     - Show this help message")
-            print("  list     - List all tasks (no LLM interaction)")
-            print("  done     - List completed tasks (no LLM interaction)")
+            print("  list     - List all tasks")
+            print("  done     - List completed tasks")
             print("  quit     - Exit the application")
             print("  Or just type your request naturally!")
 
@@ -363,10 +299,9 @@ class TestCLI:
             expected_help_lines = [
                 "Available commands:",
                 "  clear    - Clear conversation history",
-                "  history  - Show conversation statistics",
                 "  help     - Show this help message",
-                "  list     - List all tasks (no LLM interaction)",
-                "  done     - List completed tasks (no LLM interaction)",
+                "  list     - List all tasks",
+                "  done     - List completed tasks",
                 "  quit     - Exit the application",
                 "  Or just type your request naturally!",
             ]

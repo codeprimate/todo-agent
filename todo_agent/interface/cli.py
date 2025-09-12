@@ -247,11 +247,6 @@ class CLI:
         about_panel = PanelFormatter.create_about_panel()
         self.console.print(about_panel)
 
-    def _print_stats(self, summary: dict) -> None:
-        """Print conversation statistics in a formatted table."""
-        table = TableFormatter.create_stats_table(summary)
-        self.console.print(table)
-
     def _get_memory_usage(self) -> Optional[Text]:
         """Get session memory usage as a progress bar."""
         # Get conversation manager to access memory limits and current usage
@@ -337,12 +332,6 @@ class CLI:
                             "Conversation history cleared."
                         )
                     )
-                    continue
-
-                if user_input.lower() == "stats":
-                    self.logger.debug("User requested conversation stats")
-                    summary = self.inference.get_conversation_summary()
-                    self._print_stats(summary)
                     continue
 
                 if user_input.lower() == "help":
