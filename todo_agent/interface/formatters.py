@@ -244,38 +244,15 @@ class ResponseFormatter:
     @staticmethod
     def format_response(response: str) -> str:
         """
-        Format an LLM response with consistent styling.
+        Format am LLM response.
 
         Args:
             response: Raw response text
-            title: Title for the response panel
 
         Returns:
             Formatted response string
         """
-        # If response contains task lists, format them nicely
-        if "No tasks found" in response or "1." in response:
-            # This might be a task list response, try to format it
-            lines = response.split("\n")
-            formatted_lines = []
-
-            for line in lines:
-                if line.strip().startswith(
-                    ("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.")
-                ):
-                    # This looks like a numbered task list, format it
-                    parts = line.split(".", 1)
-                    if len(parts) == 2:
-                        number = parts[0].strip()
-                        content = parts[1].strip()
-                        formatted_lines.append(f"  {number:>2} │ {content}")
-                    else:
-                        formatted_lines.append(line)
-                else:
-                    formatted_lines.append(line)
-
-            return "\n".join(formatted_lines)
-
+        
         return response
 
     @staticmethod

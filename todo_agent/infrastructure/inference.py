@@ -413,6 +413,24 @@ class Inference:
         self.conversation_manager.clear_conversation()
         self.logger.info("Conversation history cleared")
 
+    def add_system_message(self, content: str) -> None:
+        """
+        Add a system message to the conversation.
+
+        Args:
+            content: The system message content
+        """
+        self.conversation_manager.add_message(MessageRole.SYSTEM, content)
+
+    def add_user_message(self, content: str) -> None:
+        """
+        Add a user message to the conversation.
+
+        Args:
+            content: The user message content
+        """
+        self.conversation_manager.add_message(MessageRole.USER, content)
+
     def get_conversation_manager(self) -> ConversationManager:
         """
         Get the conversation manager instance.

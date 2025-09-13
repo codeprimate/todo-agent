@@ -3,6 +3,7 @@ Command-line interface for todo.sh LLM agent.
 """
 
 import readline
+from datetime import datetime
 from typing import Optional
 
 from rich.align import Align
@@ -277,6 +278,12 @@ class CLI:
 
         # Print separator
         self.console.print("─" * CLI_WIDTH, style="dim")
+
+        # Prime conversation with today's date
+        today = datetime.now()
+        self.inference.add_user_message(
+            f"Today is {today.strftime('%A, %Y-%m-%d')}."
+        )
 
         while True:
             try:
