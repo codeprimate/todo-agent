@@ -9,7 +9,6 @@ from .formatters import (
     PanelFormatter,
     ResponseFormatter,
     StatsFormatter,
-    TableFormatter,
     TaskFormatter,
 )
 from .tools import ToolCallHandler
@@ -19,7 +18,6 @@ __all__ = [
     "PanelFormatter",
     "ResponseFormatter",
     "StatsFormatter",
-    "TableFormatter",
     "TaskFormatter",
     "ToolCallHandler",
 ]

@@ -22,7 +22,6 @@ try:
         CLI_WIDTH,
         PanelFormatter,
         ResponseFormatter,
-        TableFormatter,
         TaskFormatter,
     )
     from todo_agent.interface.progress import ToolCallProgress
@@ -37,7 +36,6 @@ except ImportError:
         CLI_WIDTH,
         PanelFormatter,
         ResponseFormatter,
-        TableFormatter,
         TaskFormatter,
     )
     from interface.progress import ToolCallProgress  # type: ignore[no-redef]
@@ -221,10 +219,9 @@ class CLI:
         self.console.print(Align.center(subtitle), style="dim")
 
     def _print_help(self) -> None:
-        """Print help information in a formatted table."""
-        table = TableFormatter.create_command_table()
-        self.console.print(table)
-        self.console.print("Or just type your request naturally!", style="italic green")
+        """Print help information in a formatted panel."""
+        help_panel = PanelFormatter.create_help_panel()
+        self.console.print(help_panel)
 
     def _print_todo_help(self) -> None:
         """Print todo.sh help information."""

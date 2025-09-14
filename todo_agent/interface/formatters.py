@@ -2,12 +2,11 @@
 Formatters for CLI output with unicode characters and consistent styling.
 """
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from rich.align import Align
 from rich.box import ROUNDED
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 
 # CLI width configuration
@@ -313,37 +312,6 @@ class StatsFormatter:
         return overview
 
 
-class TableFormatter:
-    """Creates rich tables for various data displays."""
-
-    @staticmethod
-    def create_command_table() -> Table:
-        """Create a table for displaying available commands."""
-        table = Table(
-            title="Available Commands",
-            box=ROUNDED,
-            show_header=True,
-            header_style="bold magenta",
-            width=PANEL_WIDTH,
-        )
-
-        table.add_column("Command", style="cyan", width=12)
-        table.add_column("Description", style="white")
-
-        commands = [
-            ("help", "Show this help message"),
-            ("quit", "Exit the application"),
-            ("list", "List all tasks"),
-            ("done", "List completed tasks"),
-            ("clear", "Clear conversation history"),
-            ("todo-help", "Show todo.sh help"),
-            ("about", "Show application information")
-        ]
-
-        for cmd, desc in commands:
-            table.add_row(cmd, desc)
-
-        return table
 
 
 
@@ -438,6 +406,40 @@ class PanelFormatter:
         return Panel(
             Align.center(about_content),
             title="i  About",
+            border_style="dim",
+            box=ROUNDED,
+            width=PANEL_WIDTH + 2,
+        )
+
+    @staticmethod
+    def create_help_panel() -> Panel:
+        """Create a panel for displaying help information."""
+        help_content = Text()
+        help_content.append("Available Commands\n", style="bold blue")
+        help_content.append("\n")
+        
+        # Add commands in a formatted list
+        commands = [
+            ("help", "Show this help message"),
+            ("quit", "Exit the application"),
+            ("list", "List all tasks"),
+            ("done", "List completed tasks"),
+            ("clear", "Clear conversation history"),
+            ("/[cmd] [args]", "Direct todo.sh access: /add 'task'"),
+            ("todo-help", "Show todo.sh help"),
+            ("about", "Show application information")
+        ]
+        
+        for cmd, desc in commands:
+            help_content.append(f"{cmd:<12} ", style="cyan")
+            help_content.append(f"{desc}\n", style="white")
+        
+        help_content.append("\n")
+        help_content.append("Or just type your request naturally!", style="italic green")
+
+        return Panel(
+            Align.center(help_content),
+            title="?  Help",
             border_style="dim",
             box=ROUNDED,
             width=PANEL_WIDTH + 2,
