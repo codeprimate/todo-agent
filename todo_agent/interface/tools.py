@@ -33,6 +33,9 @@ Utility Tools:
 - archive_tasks() - Archive completed tasks from todo.txt to done.txt
 - get_calendar(month, year) - Get calendar for specific month and year
 - parse_date(date_expression) - Convert natural language date expressions to YYYY-MM-DD format
+
+Mathematical Reasoning Tools:
+- solve_math(expression, operation?) - Perform mathematical calculations and symbolic reasoning using SymPy
 """
 
 import subprocess
@@ -41,9 +44,11 @@ from typing import Any, Callable, Dict, List, Optional
 try:
     from todo_agent.core.todo_manager import TodoManager
     from todo_agent.infrastructure.logger import Logger
+    from todo_agent.infrastructure.math_solver import MathSolver
 except ImportError:
     from core.todo_manager import TodoManager  # type: ignore[no-redef]
     from infrastructure.logger import Logger  # type: ignore[no-redef]
+    from infrastructure.math_solver import MathSolver  # type: ignore[no-redef]
 
 
 class ToolCallHandler:
@@ -52,6 +57,7 @@ class ToolCallHandler:
     def __init__(self, todo_manager: TodoManager, logger: Optional[Logger] = None):
         self.todo_manager = todo_manager
         self.logger = logger
+        self.math_solver = MathSolver()
         self.tools = self._define_tools()
 
     def _define_tools(self) -> List[Dict[str, Any]]:
@@ -691,6 +697,43 @@ class ToolCallHandler:
                 },
                 "progress_description": "🔄 Restoring completed task #{task_number}...",
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "solve_math",
+                    "description": (
+                        "Perform mathematical calculations and symbolic reasoning using SymPy. "
+                        "USE CASE: Call this when user asks for mathematical calculations, equation solving, "
+                        "algebraic simplification, calculus operations, or any mathematical reasoning. "
+                        "CAPABILITIES: "
+                        "• Basic arithmetic: '2 + 3 * 4', 'sqrt(16)', '2^3' "
+                        "• Algebraic simplification: 'x^2 + 2*x + 1', 'sin(x)^2 + cos(x)^2' "
+                        "• Equation solving: 'x^2 - 4 = 0', '2*x + 3 = 7' "
+                        "• Calculus: 'derivative of x^2', 'integral of sin(x)', 'limit of 1/x as x approaches 0' "
+                        "• Matrix operations: 'inverse of [[1,2],[3,4]]' "
+                        "• Statistics: 'normal distribution probability', 'mean of [1,2,3,4,5]' "
+                        "• Units and constants: 'convert 100 km to miles', 'speed of light in m/s' "
+                        "The tool automatically detects the type of mathematical operation needed. "
+                        "For complex expressions, provide the mathematical expression as a string. "
+                        "The operation parameter is optional and can specify: 'simplify', 'solve', 'integrate', 'differentiate', 'evaluate', 'matrix', 'stats'."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "expression": {
+                                "type": "string",
+                                "description": "The mathematical expression to evaluate or manipulate (required)",
+                            },
+                            "operation": {
+                                "type": "string",
+                                "description": "Optional operation type: 'simplify', 'solve', 'integrate', 'differentiate', 'evaluate', 'matrix', 'stats' (auto-detected if not specified)",
+                            },
+                        },
+                        "required": ["expression"],
+                    },
+                },
+                "progress_description": "🧮 Solving mathematical expression: {expression}...",
+            },
         ]
 
     def _get_calendar(self, month: int, year: int) -> str:
@@ -828,6 +871,19 @@ class ToolCallHandler:
             # If we can't parse it, return today's date as fallback
             return today.strftime("%Y-%m-%d")
 
+    def _solve_math(self, expression: str, operation: Optional[str] = None) -> str:
+        """
+        Perform mathematical calculations and symbolic reasoning using SymPy.
+
+        Args:
+            expression: The mathematical expression to evaluate or manipulate
+            operation: Optional operation type (auto-detected if not specified)
+
+        Returns:
+            The result of the mathematical operation as a string
+        """
+        return self.math_solver.solve_math(expression, operation)
+
     def _format_tool_signature(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Format tool signature with parameters for logging."""
         if not arguments:
@@ -947,6 +1003,7 @@ class ToolCallHandler:
             "get_calendar": self._get_calendar,
             "create_completed_task": self.todo_manager.create_completed_task,
             "restore_completed_task": self.todo_manager.restore_completed_task,
+            "solve_math": self._solve_math,
         }
 
         if tool_name not in method_map:
