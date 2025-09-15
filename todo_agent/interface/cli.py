@@ -408,6 +408,8 @@ class CLI:
                     f"Processing user request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
                 )
 
+                # This is a natural language request
+
                 # Perform the first pass of the response
                 self.handle_request(user_input)
 
