@@ -414,8 +414,8 @@ class CLI:
                 response = self.handle_request(user_input)
 
                 # Second pass: provide the best possible response as if this is the first answer
-                # review_prompt = self._load_review_prompt()
-                # response = self.run_single_request(review_prompt, system_request=True)
+                review_prompt = self._load_review_prompt()
+                response = self.handle_request(review_prompt, system_request=True)
 
                 # Format the response and create a panel
                 formatted_response = ResponseFormatter.format_response(response)
