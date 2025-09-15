@@ -141,7 +141,7 @@ class Inference:
             raise
 
     def process_request(
-        self, user_input: str, progress_callback: Optional[ToolCallProgress] = None
+        self, user_input: str, progress_callback: Optional[ToolCallProgress] = None, system_request: bool = False
     ) -> tuple[str, float]:
         """
         Process a user request through the LLM with tool orchestration.
@@ -149,6 +149,7 @@ class Inference:
         Args:
             user_input: Natural language user request
             progress_callback: Optional progress callback for tool call tracking
+            system_request: If True, treat the input as a system message instead of user message
 
         Returns:
             Tuple of (formatted response for user, thinking time in seconds)
@@ -168,9 +169,10 @@ class Inference:
                 f"Starting request processing for: {user_input[:30]}{'...' if len(user_input) > 30 else ''}"
             )
 
-            # Add user message to conversation
-            self.conversation_manager.add_message(MessageRole.USER, user_input)
-            self.logger.debug("Added user message to conversation")
+            # Add message to conversation (user or system based on flag)
+            message_role = MessageRole.SYSTEM if system_request else MessageRole.USER
+            self.conversation_manager.add_message(message_role, user_input)
+            self.logger.debug(f"Added {message_role.value} message to conversation")
 
             # Get conversation history for LLM
             messages = self.conversation_manager.get_messages()

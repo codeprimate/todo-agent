@@ -2,6 +2,7 @@
 Command-line interface for todo.sh LLM agent.
 """
 
+import os
 import readline
 from datetime import datetime
 from typing import Optional
@@ -77,6 +78,22 @@ class CLI:
         self.console = Console(width=CLI_WIDTH, color_system="auto")
 
         self.logger.info("CLI initialization completed")
+
+    def _load_review_prompt(self) -> str:
+        """Load the review prompt from file."""
+        prompt_file_path = os.path.join(
+            os.path.dirname(__file__), "..", "infrastructure", "prompts", "review_prompt.txt"
+        )
+
+        try:
+            with open(prompt_file_path, encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            self.logger.error(f"Review prompt file not found: {prompt_file_path}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Error loading review prompt: {e!s}")
+            raise
 
     def _create_thinking_spinner(self, message: str = "Thinking...") -> Spinner:
         """
@@ -390,15 +407,19 @@ class CLI:
                 self.logger.info(
                     f"Processing user request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
                 )
-                response = self.handle_request(user_input)
+
+                # Perform the first pass of the response
+                self.handle_request(user_input)
+
+                # Second pass: provide the best possible response as if this is the first answer
+                review_prompt = self._load_review_prompt()
+                response = self.run_single_request(review_prompt, system_request=True)
 
                 # Format the response and create a panel
                 formatted_response = ResponseFormatter.format_response(response)
 
                 # Get memory usage
-                # DISABLED FOR NOW
                 memory_usage = self._get_memory_usage()
-                # memory_usage = None
 
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
@@ -415,12 +436,13 @@ class CLI:
                 error_msg = ResponseFormatter.format_error(str(e))
                 self.console.print(error_msg)
 
-    def handle_request(self, user_input: str) -> str:
+    def handle_request(self, user_input: str, system_request: bool = False) -> str:
         """
         Handle user request with LLM-driven tool orchestration and conversation memory.
 
         Args:
             user_input: Natural language user request
+            system_request: If True, treat the input as a system message instead of user message
 
         Returns:
             Formatted response for user
@@ -433,7 +455,7 @@ class CLI:
 
                 # Process request through inference engine with progress tracking
                 response, thinking_time = self.inference.process_request(
-                    user_input, progress_callback
+                    user_input, progress_callback, system_request
                 )
 
                 # Update spinner with completion message and thinking time
@@ -452,17 +474,18 @@ class CLI:
                 # Return error message
                 return ResponseFormatter.format_error(str(e))
 
-    def run_single_request(self, user_input: str) -> str:
+    def run_single_request(self, input_prompt: str, system_request: bool = False) -> str:
         """
         Run a single request without entering the interactive loop.
 
         Args:
             user_input: Natural language user request
+            system_request: If True, treat the input as a system message instead of user message
 
         Returns:
             Formatted response
         """
         self.logger.info(
-            f"Running single request: {user_input[:50]}{'...' if len(user_input) > 50 else ''}"
+            f"Running single request: {input_prompt[:50]}{'...' if len(input_prompt) > 50 else ''}"
         )
-        return self.handle_request(user_input)
+        return self.handle_request(input_prompt, system_request)
