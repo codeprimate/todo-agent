@@ -45,7 +45,6 @@ class Inference:
         config: Config,
         tool_handler: ToolCallHandler,
         logger: Optional[Logger] = None,
-        use_mini_prompt: bool = False,
     ):
         """
         Initialize the inference engine.
@@ -54,12 +53,11 @@ class Inference:
             config: Configuration object
             tool_handler: Tool call handler for executing tools
             logger: Optional logger instance
-            use_mini_prompt: Whether to use the simplified system prompt
         """
         self.config = config
         self.tool_handler = tool_handler
         self.logger = logger or Logger("inference")
-        self.use_mini_prompt = use_mini_prompt
+        self.use_mini_prompt = config.use_mini_prompt
 
         # Initialize LLM client using factory
         self.llm_client = LLMClientFactory.create_client(config, self.logger)

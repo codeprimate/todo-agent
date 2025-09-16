@@ -30,12 +30,19 @@ class OllamaClient(LLMClient):
         self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Get request payload for Ollama API."""
-        return {
+        payload = {
             "model": self.model,
             "messages": messages,
             "tools": tools,
             "stream": False,
         }
+        
+        # Add reasoning_effort parameter if configured
+        # Note: Not all Ollama models support this parameter
+        if hasattr(self.config, 'reasoning_effort') and self.config.reasoning_effort:
+            payload["reasoning_effort"] = self.config.reasoning_effort
+            
+        return payload
 
     def _get_api_endpoint(self) -> str:
         """Get Ollama API endpoint."""

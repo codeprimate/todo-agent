@@ -27,6 +27,12 @@ class Config:
         self.model = self._get_model_for_provider()
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
         self.todo_file_path = os.getenv("TODO_FILE", "todo.txt")
+        
+        # Model parameters
+        self.reasoning_effort = os.getenv("REASONING_EFFORT", "low")
+        
+        # UI/UX parameters
+        self.use_mini_prompt = False
 
     def _get_model_for_provider(self) -> str:
         """Get model name for current provider."""
@@ -49,6 +55,10 @@ class Config:
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
         return True
+
+    def set_mini_prompt(self, use_mini: bool) -> None:
+        """Set the use_mini_prompt flag programmatically (e.g., from command line args)."""
+        self.use_mini_prompt = use_mini
 
     @property
     def todo_dir(self) -> str:

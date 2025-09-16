@@ -57,7 +57,9 @@ Examples:
     args = parser.parse_args()
 
     try:
-        cli = CLI(use_mini_prompt=args.mini)
+        cli = CLI()
+        if args.mini:
+            cli.config.set_mini_prompt(True)
 
         if args.command:
             # Single command mode
