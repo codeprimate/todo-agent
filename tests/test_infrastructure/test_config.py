@@ -21,7 +21,7 @@ class TestConfig:
             assert config.provider == "openrouter"
             assert config.openrouter_model == "openai/gpt-4o-mini"
             assert config.ollama_base_url == "http://localhost:11434"
-            assert config.ollama_model == "mistral-small3.1"
+            assert config.ollama_model == "gpt-oss:20b"
             assert config.model == "openai/gpt-4o-mini"  # default for openrouter
             assert config.log_level == "INFO"
             assert config.todo_file_path == "todo.txt"

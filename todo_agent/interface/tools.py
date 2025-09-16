@@ -976,12 +976,26 @@ class ToolCallHandler:
 
         method = method_map[tool_name]
 
+        # Filter arguments to only include those accepted by the method
+        import inspect
+        try:
+            sig = inspect.signature(method)
+            valid_params = set(sig.parameters.keys())
+            filtered_arguments = {k: v for k, v in arguments.items() if k in valid_params}
+            
+            if self.logger and filtered_arguments != arguments:
+                self.logger.debug(f"Filtered arguments from {arguments} to {filtered_arguments}")
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Failed to filter arguments for {tool_name}: {e}")
+            filtered_arguments = arguments
+
         # Log method call details
         if self.logger:
             self.logger.debug(f"Calling method: {tool_name}")
 
         try:
-            result = method(**arguments)
+            result = method(**filtered_arguments)
 
             # Log successful output at DEBUG level
             if self.logger:

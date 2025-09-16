@@ -103,7 +103,7 @@ class OllamaClient(LLMClient):
         if "message" in response and "tool_calls" in response["message"]:
             raw_tool_calls = response["message"]["tool_calls"]
 
-            # Validate each tool call using common validation
+            # Process each tool call - validation now accepts both string and dict formats
             for i, tool_call in enumerate(raw_tool_calls):
                 if self._validate_tool_call(tool_call, i):
                     tool_calls.append(tool_call)

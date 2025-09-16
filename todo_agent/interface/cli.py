@@ -46,7 +46,7 @@ except ImportError:
 class CLI:
     """User interaction loop and input/output handling."""
 
-    def __init__(self) -> None:
+    def __init__(self, use_mini_prompt: bool = False) -> None:
         # Initialize readline for arrow key navigation
         readline.set_history_length(50)  # Match existing conversation cap
 
@@ -71,7 +71,7 @@ class CLI:
         self.logger.debug("Interface components initialized")
 
         # Initialize inference engine
-        self.inference = Inference(self.config, self.tool_handler, self.logger)
+        self.inference = Inference(self.config, self.tool_handler, self.logger, use_mini_prompt=use_mini_prompt)
         self.logger.debug("Inference engine initialized")
 
         # Initialize rich console for animations with consistent width and color support
@@ -431,6 +431,10 @@ class CLI:
 
             except KeyboardInterrupt:
                 self.logger.info("User interrupted with Ctrl+C")
+                self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
+                break
+            except EOFError:
+                self.logger.info("Input stream ended (EOF)")
                 self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
                 break
             except Exception as e:

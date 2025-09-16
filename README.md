@@ -64,11 +64,11 @@ export OPENROUTER_API_KEY="your-api-key-here"
 **Option B: Ollama (local)**
 ```bash
 # Install and start Ollama
-ollama pull mistral-small3.1
+ollama pull gpt-oss:20b
 
 # Configure environment
 export LLM_PROVIDER=ollama
-export OLLAMA_MODEL=mistral-small3.1
+export OLLAMA_MODEL=gpt-oss:20b
 ```
 
 ### 3. Use it
@@ -131,7 +131,7 @@ todo-agent "show me tasks I can do from home"
 | `LLM_PROVIDER`        | LLM provider: `openrouter` or `ollama`    | `openrouter`           | No (defaults to `openrouter`) |
 | `TODO_DIR`            | Path to your todo.txt repository          | —                      | **Yes**                       |
 | `OPENROUTER_API_KEY`  | Your OpenRouter API key                   | —                      | Yes (if using OpenRouter)     |
-| `OLLAMA_MODEL`        | Model name for Ollama                     | `mistral-small3.1`     | No                            |
+| `OLLAMA_MODEL`        | Model name for Ollama                     | `gpt-oss:20b`     | No                            |
 | `LOG_LEVEL`           | Logging verbosity (`INFO`, `DEBUG`, etc.) | `INFO`                 | No                            |
 
 **Note:**  

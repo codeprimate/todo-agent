@@ -48,6 +48,10 @@ class TokenCounter:
         if not text:
             return 0
 
+        # Defensive check: ensure text is a string
+        if not isinstance(text, str):
+            text = str(text)
+
         if self._encoder is None:
             raise RuntimeError("Encoder not initialized")
         return len(self._encoder.encode(text))
@@ -66,22 +70,24 @@ class TokenCounter:
 
         # Count role tokens (typically 1-2 tokens)
         role = message.get("role", "")
-        tokens += self.count_tokens(role)
+        if role:
+            tokens += self.count_tokens(str(role))
 
         # Count content tokens
         content = message.get("content", "")
         if content:
-            tokens += self.count_tokens(content)
+            tokens += self.count_tokens(str(content))
 
         # Count tool calls tokens
         tool_calls = message.get("tool_calls", [])
-        for tool_call in tool_calls:
-            tokens += self.count_tool_call_tokens(tool_call)
+        if tool_calls:
+            for tool_call in tool_calls:
+                tokens += self.count_tool_call_tokens(tool_call)
 
         # Count tool call ID if present
         tool_call_id = message.get("tool_call_id", "")
         if tool_call_id:
-            tokens += self.count_tokens(tool_call_id)
+            tokens += self.count_tokens(str(tool_call_id))
 
         return tokens
 
@@ -99,19 +105,25 @@ class TokenCounter:
 
         # Count tool call ID
         tool_call_id = tool_call.get("id", "")
-        tokens += self.count_tokens(tool_call_id)
+        if tool_call_id:
+            tokens += self.count_tokens(str(tool_call_id))
 
         # Count function call
         function = tool_call.get("function", {})
         if function:
             # Count function name
             function_name = function.get("name", "")
-            tokens += self.count_tokens(function_name)
+            if function_name:
+                tokens += self.count_tokens(str(function_name))
 
             # Count function arguments
             arguments = function.get("arguments", "")
             if arguments:
-                tokens += self.count_tokens(arguments)
+                # Arguments could be a string or dict, handle both
+                if isinstance(arguments, str):
+                    tokens += self.count_tokens(arguments)
+                else:
+                    tokens += self.count_tokens(str(arguments))
 
         return tokens
 
@@ -145,9 +157,17 @@ class TokenCounter:
         if not tools:
             return 0
 
-        # Convert tools to JSON string and count tokens
-        tools_json = json.dumps(tools, separators=(",", ":"))
-        return self.count_tokens(tools_json)
+        try:
+            # Convert tools to JSON string and count tokens
+            tools_json = json.dumps(tools, separators=(",", ":"))
+            return self.count_tokens(tools_json)
+        except (TypeError, ValueError) as e:
+            # If JSON serialization fails, fall back to a rough estimate
+            # This could happen if tools contain non-serializable objects
+            print(f"Warning: Failed to serialize tools for token counting: {e}")
+            # Return a rough estimate based on string representation
+            tools_str = str(tools)
+            return self.count_tokens(tools_str)
 
     def count_request_tokens(
         self,

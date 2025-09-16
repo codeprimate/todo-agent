@@ -45,6 +45,7 @@ class Inference:
         config: Config,
         tool_handler: ToolCallHandler,
         logger: Optional[Logger] = None,
+        use_mini_prompt: bool = False,
     ):
         """
         Initialize the inference engine.
@@ -53,10 +54,12 @@ class Inference:
             config: Configuration object
             tool_handler: Tool call handler for executing tools
             logger: Optional logger instance
+            use_mini_prompt: Whether to use the simplified system prompt
         """
         self.config = config
         self.tool_handler = tool_handler
         self.logger = logger or Logger("inference")
+        self.use_mini_prompt = use_mini_prompt
 
         # Initialize LLM client using factory
         self.llm_client = LLMClientFactory.create_client(config, self.logger)
@@ -118,8 +121,9 @@ class Inference:
         current_tasks = self.current_tasks()
 
         # Load system prompt from file
+        prompt_filename = "system_prompt_small.txt" if self.use_mini_prompt else "system_prompt.txt"
         prompt_file_path = os.path.join(
-            os.path.dirname(__file__), "prompts", "system_prompt.txt"
+            os.path.dirname(__file__), "prompts", prompt_filename
         )
 
         try:

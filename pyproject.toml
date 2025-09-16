@@ -7,7 +7,7 @@ name = "todo-agent"
 dynamic = ["version"]
 description = "A natural language interface for todo.sh task management"
 readme = "README.md"
-license = "GPL-3.0"
+license = {text = "GPL-3.0"}
 authors = [
     {name = "codeprimate"}
 ]

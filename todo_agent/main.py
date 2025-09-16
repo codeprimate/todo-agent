@@ -20,8 +20,9 @@ def main() -> None:
         epilog="""
 Examples:
   todo-agent                    # Interactive mode
+  todo-agent --mini            # Interactive mode with simplified prompt
   todo-agent "add buy groceries"  # Single command mode
-  todo-agent "list my tasks"    # List all tasks
+  todo-agent --mini "list my tasks"    # List all tasks with mini prompt
   todo-agent "complete task 3"  # Complete specific task
         """,
     )
@@ -42,6 +43,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--mini",
+        action="store_true",
+        help="Use the simplified system prompt for faster responses",
+    )
+
+    parser.add_argument(
         "command",
         nargs="?",
         help="Single command to execute (optional, defaults to interactive mode)",
@@ -50,7 +57,7 @@ Examples:
     args = parser.parse_args()
 
     try:
-        cli = CLI()
+        cli = CLI(use_mini_prompt=args.mini)
 
         if args.command:
             # Single command mode

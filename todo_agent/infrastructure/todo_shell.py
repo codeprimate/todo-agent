@@ -80,8 +80,25 @@ class TodoShell:
             if suppress_color:
                 from rich.text import Text
 
+                # Ensure output is a string before processing
+                if not isinstance(output, str):
+                    output = str(output)
+                
                 # Use Rich's Text.from_ansi to parse and then get plain text
-                output = Text.from_ansi(output).plain
+                try:
+                    plain_output = Text.from_ansi(output).plain
+                    # Defensive check: ensure we get a string back
+                    if not isinstance(plain_output, str):
+                        if self.logger:
+                            self.logger.warning(f"Rich Text.from_ansi().plain returned non-string: {type(plain_output)}")
+                        output = str(plain_output)
+                    else:
+                        output = plain_output
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning(f"Failed to strip ANSI codes using Rich: {e}, falling back to original output")
+                    # Fallback: keep original output if Rich processing fails
+                    
                 if self.logger:
                     self.logger.debug(
                         f"Stripped ANSI codes from output for LLM consumption"

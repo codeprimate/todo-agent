@@ -252,9 +252,10 @@ class LLMClient(ABC):
                 return False
 
             arguments = function.get("arguments", "{}")
-            if arguments and not isinstance(arguments, str):
+            # Accept both string (JSON) and dict formats for arguments
+            if arguments and not isinstance(arguments, (str, dict)):
                 self.logger.warning(
-                    f"Tool call {index + 1} arguments not a string: {arguments}"
+                    f"Tool call {index + 1} arguments not a string or dict: {arguments}"
                 )
                 return False
 
