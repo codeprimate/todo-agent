@@ -455,17 +455,13 @@ class CLI:
                 # Create progress callback for tool call tracking
                 progress_callback = self._create_cli_progress_callback(live)
 
-                # First pass: Process request through inference engine with progress tracking
-                response, thinking_time1 = self.inference.process_request(
-                    user_input, progress_callback, system_request
-                )
+                # First pass: Process user request
+                response, thinking_time = self.inference.process_request(user_input, progress_callback, system_request)
 
-                # Second pass: provide the best possible response as if this is the first answer
-                review_prompt = self._load_review_prompt()
-                response, thinking_time2 = self.inference.process_request(review_prompt, progress_callback, system_request=True)
-                
-                # Total thinking time
-                thinking_time = thinking_time1 + thinking_time2
+                # # Second pass: Refine the response
+                # review_prompt = self._load_review_prompt()
+                # response, thinking_time2 = self.inference.process_request(review_prompt, progress_callback, system_request=True)
+                # thinking_time = thinking_time + thinking_time2
 
                 # Update spinner with completion message and thinking time
                 live.update(
