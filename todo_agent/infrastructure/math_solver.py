@@ -9,11 +9,12 @@ import re
 from typing import Optional
 
 try:
-    import sympy as sp
-    from sympy import symbols, simplify, solve, integrate, diff, limit, Matrix
-    from sympy.stats import Normal, P, E as Expected
-    from sympy.physics.units import convert_to, km, mile, meter, second, joule, kg
     import math
+
+    import sympy as sp
+    from sympy import Matrix, diff, integrate, limit, simplify, solve, symbols
+    from sympy.physics.units import convert_to, joule, kg, km, meter, mile, second
+    from sympy.stats import E as Expected, Normal, P
 except ImportError:
     # SymPy not available - will be handled in the solver
     pass
@@ -48,8 +49,6 @@ class MathSolver:
             The result of the mathematical operation as a string
         """
         try:
-            import sympy as sp
-            from sympy import symbols, simplify, solve, integrate, diff, limit, latex, Matrix
 
             # Clean and normalize the expression
             expr_str = expression.strip()
@@ -63,48 +62,48 @@ class MathSolver:
             return self._handle_operation(expr_str, operation)
 
         except Exception as e:
-            return f"Mathematical error: {str(e)}"
+            return f"Mathematical error: {e!s}"
 
     def _normalize_expression(self, expr_str: str) -> str:
         """Normalize mathematical notation in the expression."""
         # Handle common mathematical notation conversions
-        expr_str = expr_str.replace('^', '**')  # Convert ^ to ** for exponentiation
-        expr_str = expr_str.replace('×', '*')   # Convert × to *
-        expr_str = expr_str.replace('÷', '/')   # Convert ÷ to /
+        expr_str = expr_str.replace("^", "**")  # Convert ^ to ** for exponentiation
+        expr_str = expr_str.replace("×", "*")   # Convert × to *
+        expr_str = expr_str.replace("÷", "/")   # Convert ÷ to /
         return expr_str
 
     def _detect_operation(self, expr_str: str) -> str:
         """Auto-detect the type of mathematical operation needed."""
         # Check for JavaScript Date functions first
-        if any(func in expr_str for func in ['Date.UTC', 'Date.parse', 'Date.now', 'new Date']):
-            return 'date_error'
-        elif '=' in expr_str and ('x' in expr_str or 'y' in expr_str or 'z' in expr_str):
-            return 'solve'
-        elif any(word in expr_str.lower() for word in ['derivative', 'differentiate', 'd/dx']):
-            return 'differentiate'
-        elif any(word in expr_str.lower() for word in ['integral', 'integrate', '∫']):
-            return 'integrate'
-        elif any(word in expr_str.lower() for word in ['limit', 'lim']):
-            return 'limit'
-        elif '[' in expr_str and ']' in expr_str:
-            return 'matrix'
-        elif any(word in expr_str.lower() for word in ['mean', 'average', 'std', 'variance', 'normal', 'distribution']):
-            return 'stats'
+        if any(func in expr_str for func in ["Date.UTC", "Date.parse", "Date.now", "new Date"]):
+            return "date_error"
+        elif "=" in expr_str and ("x" in expr_str or "y" in expr_str or "z" in expr_str):
+            return "solve"
+        elif any(word in expr_str.lower() for word in ["derivative", "differentiate", "d/dx"]):
+            return "differentiate"
+        elif any(word in expr_str.lower() for word in ["integral", "integrate", "∫"]):
+            return "integrate"
+        elif any(word in expr_str.lower() for word in ["limit", "lim"]):
+            return "limit"
+        elif "[" in expr_str and "]" in expr_str:
+            return "matrix"
+        elif any(word in expr_str.lower() for word in ["mean", "average", "std", "variance", "normal", "distribution"]):
+            return "stats"
         else:
-            return 'evaluate'
+            return "evaluate"
 
     def _handle_operation(self, expr_str: str, operation: str) -> str:
         """Route the expression to the appropriate operation handler."""
         handlers = {
-            'date_error': self._handle_date_error,
-            'solve': self._handle_solve,
-            'differentiate': self._handle_differentiate,
-            'integrate': self._handle_integrate,
-            'limit': self._handle_limit,
-            'matrix': self._handle_matrix,
-            'stats': self._handle_stats,
-            'simplify': self._handle_simplify,
-            'evaluate': self._handle_evaluate,
+            "date_error": self._handle_date_error,
+            "solve": self._handle_solve,
+            "differentiate": self._handle_differentiate,
+            "integrate": self._handle_integrate,
+            "limit": self._handle_limit,
+            "matrix": self._handle_matrix,
+            "stats": self._handle_stats,
+            "simplify": self._handle_simplify,
+            "evaluate": self._handle_evaluate,
         }
 
         handler = handlers.get(operation, self._handle_evaluate)
@@ -118,8 +117,8 @@ class MathSolver:
         from sympy import solve
 
         # Extract equation parts
-        if '=' in expr_str:
-            left, right = expr_str.split('=', 1)
+        if "=" in expr_str:
+            left, right = expr_str.split("=", 1)
             left = left.strip()
             right = right.strip()
             # Create equation: left - right = 0
@@ -154,10 +153,10 @@ class MathSolver:
         from sympy import diff
 
         # Extract variable and expression
-        if 'derivative of' in expr_str.lower():
-            expr_part = expr_str.lower().replace('derivative of', '').strip()
-        elif 'd/dx' in expr_str.lower():
-            expr_part = expr_str.lower().replace('d/dx', '').strip()
+        if "derivative of" in expr_str.lower():
+            expr_part = expr_str.lower().replace("derivative of", "").strip()
+        elif "d/dx" in expr_str.lower():
+            expr_part = expr_str.lower().replace("d/dx", "").strip()
         else:
             expr_part = expr_str
 
@@ -177,8 +176,8 @@ class MathSolver:
         from sympy import integrate
 
         # Extract expression and limits
-        if 'integral of' in expr_str.lower():
-            expr_part = expr_str.lower().replace('integral of', '').strip()
+        if "integral of" in expr_str.lower():
+            expr_part = expr_str.lower().replace("integral of", "").strip()
         else:
             expr_part = expr_str
 
@@ -194,24 +193,24 @@ class MathSolver:
     def _handle_limit(self, expr_str: str) -> str:
         """Handle limit calculations."""
         import sympy as sp
-        from sympy import symbols, limit
+        from sympy import limit, symbols
 
         # Parse limit expression
-        if 'limit of' in expr_str.lower():
-            expr_part = expr_str.lower().replace('limit of', '').strip()
+        if "limit of" in expr_str.lower():
+            expr_part = expr_str.lower().replace("limit of", "").strip()
         else:
             expr_part = expr_str
 
         # Look for "as x approaches" pattern
-        match = re.search(r'as\s+(\w+)\s+approaches\s+([^,]+)', expr_part)
+        match = re.search(r"as\s+(\w+)\s+approaches\s+([^,]+)", expr_part)
         if match:
             var_name = match.group(1)
             limit_point = match.group(2).strip()
             expr_part = expr_part[:match.start()].strip()
         else:
             # Default to x approaching 0
-            var_name = 'x'
-            limit_point = '0'
+            var_name = "x"
+            limit_point = "0"
 
         expr = sp.sympify(expr_part)
         var = symbols(var_name)
@@ -224,22 +223,22 @@ class MathSolver:
         from sympy import Matrix
 
         # Handle matrix operations
-        if 'inverse of' in expr_str.lower():
-            matrix_str = expr_str.lower().replace('inverse of', '').strip()
+        if "inverse of" in expr_str.lower():
+            matrix_str = expr_str.lower().replace("inverse of", "").strip()
         else:
             matrix_str = expr_str
 
         # Parse matrix from string like "[[1,2],[3,4]]"
         matrix_str = matrix_str.strip()
-        if matrix_str.startswith('[[') and matrix_str.endswith(']]'):
+        if matrix_str.startswith("[[") and matrix_str.endswith("]]"):
             matrix_str = matrix_str[2:-2]  # Remove outer [[ and ]]
-        elif matrix_str.startswith('[') and matrix_str.endswith(']'):
+        elif matrix_str.startswith("[") and matrix_str.endswith("]"):
             matrix_str = matrix_str[1:-1]  # Remove outer [ and ]
         else:
             return "Invalid matrix format. Use format like [[1,2],[3,4]]"
 
         # Split by ],[ to get individual rows
-        rows = matrix_str.split('],[')
+        rows = matrix_str.split("],[")
 
         if not rows:
             return "Invalid matrix format. Use format like [[1,2],[3,4]]"
@@ -247,7 +246,7 @@ class MathSolver:
         matrix_data = []
         for row in rows:
             # Split by comma and convert to numbers
-            elements = [sp.sympify(x.strip()) for x in row.split(',')]
+            elements = [sp.sympify(x.strip()) for x in row.split(",")]
             matrix_data.append(elements)
 
         M = Matrix(matrix_data)
@@ -255,24 +254,24 @@ class MathSolver:
             inverse = M.inv()
             return f"Inverse of {M} = {inverse}"
         except Exception as e:
-            return f"Matrix is not invertible: {str(e)}"
+            return f"Matrix is not invertible: {e!s}"
 
     def _handle_stats(self, expr_str: str) -> str:
         """Handle statistical operations."""
-        if 'mean of' in expr_str.lower():
-            data_str = expr_str.lower().replace('mean of', '').strip()
+        if "mean of" in expr_str.lower():
+            data_str = expr_str.lower().replace("mean of", "").strip()
             # Parse list like [1,2,3,4,5]
-            data_str = data_str.replace('[', '').replace(']', '')
-            data = [float(x.strip()) for x in data_str.split(',')]
+            data_str = data_str.replace("[", "").replace("]", "")
+            data = [float(x.strip()) for x in data_str.split(",")]
             mean_val = sum(data) / len(data)
             return f"Mean of {data} = {mean_val}"
-        elif 'normal distribution' in expr_str.lower():
+        elif "normal distribution" in expr_str.lower():
             # Handle normal distribution queries
             return "Normal distribution: Use P(X > value) for probability calculations"
-        elif expr_str.startswith('[') and expr_str.endswith(']'):
+        elif expr_str.startswith("[") and expr_str.endswith("]"):
             # Auto-detect mean calculation for list format
-            data_str = expr_str.replace('[', '').replace(']', '')
-            data = [float(x.strip()) for x in data_str.split(',')]
+            data_str = expr_str.replace("[", "").replace("]", "")
+            data = [float(x.strip()) for x in data_str.split(",")]
             mean_val = sum(data) / len(data)
             return f"Mean of {data} = {mean_val}"
         else:

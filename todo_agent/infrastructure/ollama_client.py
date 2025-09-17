@@ -39,7 +39,7 @@ class OllamaClient(LLMClient):
         
         # Add reasoning_effort parameter if configured
         # Note: Not all Ollama models support this parameter
-        if hasattr(self.config, 'reasoning_effort') and self.config.reasoning_effort:
+        if hasattr(self.config, "reasoning_effort") and self.config.reasoning_effort:
             payload["reasoning_effort"] = self.config.reasoning_effort
             
         return payload

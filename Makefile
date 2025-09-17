@@ -4,11 +4,11 @@
 # Build and Publishing
 # ==============================================================================
 
-install: build
+install: build uninstall
 	@echo "📦 Installing built package locally..."
 	pip install dist/*.whl
 
-install-dev:
+install-dev: uninstall
 	@echo "🔧 Installing package in development mode with dev dependencies..."
 	pip install -e ".[dev]"
 
@@ -27,6 +27,10 @@ check:
 publish: clean build check
 	@echo "🚀 Publishing to PyPI..."
 	twine upload dist/* 
+
+uninstall:
+	@echo "🧹 Uninstalling package..."
+	pip uninstall -y todo-agent
 
 # ==============================================================================
 # Linting and Code Quality
