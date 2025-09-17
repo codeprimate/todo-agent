@@ -977,13 +977,18 @@ class ToolCallHandler:
 
         # Filter arguments to only include those accepted by the method
         import inspect
+
         try:
             sig = inspect.signature(method)
             valid_params = set(sig.parameters.keys())
-            filtered_arguments = {k: v for k, v in arguments.items() if k in valid_params}
-            
+            filtered_arguments = {
+                k: v for k, v in arguments.items() if k in valid_params
+            }
+
             if self.logger and filtered_arguments != arguments:
-                self.logger.debug(f"Filtered arguments from {arguments} to {filtered_arguments}")
+                self.logger.debug(
+                    f"Filtered arguments from {arguments} to {filtered_arguments}"
+                )
         except Exception as e:
             if self.logger:
                 self.logger.warning(f"Failed to filter arguments for {tool_name}: {e}")

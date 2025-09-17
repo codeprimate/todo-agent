@@ -66,6 +66,7 @@ class TestOllamaClient:
             "messages": messages,
             "tools": tools,
             "stream": False,
+            "reasoning_effort": "low",
         }
         assert payload == expected
 

@@ -8,16 +8,7 @@ algebraic operations, calculus, statistics, matrix operations, and more.
 import re
 from typing import Optional
 
-try:
-    import math
-
-    import sympy as sp
-    from sympy import Matrix, diff, integrate, limit, simplify, solve, symbols
-    from sympy.physics.units import convert_to, joule, kg, km, meter, mile, second
-    from sympy.stats import E as Expected, Normal, P
-except ImportError:
-    # SymPy not available - will be handled in the solver
-    pass
+# SymPy will be imported locally in methods that need it
 
 
 class MathSolver:
@@ -49,7 +40,6 @@ class MathSolver:
             The result of the mathematical operation as a string
         """
         try:
-
             # Clean and normalize the expression
             expr_str = expression.strip()
             expr_str = self._normalize_expression(expr_str)
@@ -68,18 +58,25 @@ class MathSolver:
         """Normalize mathematical notation in the expression."""
         # Handle common mathematical notation conversions
         expr_str = expr_str.replace("^", "**")  # Convert ^ to ** for exponentiation
-        expr_str = expr_str.replace("×", "*")   # Convert × to *
-        expr_str = expr_str.replace("÷", "/")   # Convert ÷ to /
+        expr_str = expr_str.replace("x", "*")  # Convert x to *
+        expr_str = expr_str.replace("÷", "/")  # Convert ÷ to /
         return expr_str
 
     def _detect_operation(self, expr_str: str) -> str:
         """Auto-detect the type of mathematical operation needed."""
         # Check for JavaScript Date functions first
-        if any(func in expr_str for func in ["Date.UTC", "Date.parse", "Date.now", "new Date"]):
+        if any(
+            func in expr_str
+            for func in ["Date.UTC", "Date.parse", "Date.now", "new Date"]
+        ):
             return "date_error"
-        elif "=" in expr_str and ("x" in expr_str or "y" in expr_str or "z" in expr_str):
+        elif "=" in expr_str and (
+            "x" in expr_str or "y" in expr_str or "z" in expr_str
+        ):
             return "solve"
-        elif any(word in expr_str.lower() for word in ["derivative", "differentiate", "d/dx"]):
+        elif any(
+            word in expr_str.lower() for word in ["derivative", "differentiate", "d/dx"]
+        ):
             return "differentiate"
         elif any(word in expr_str.lower() for word in ["integral", "integrate", "∫"]):
             return "integrate"
@@ -87,7 +84,10 @@ class MathSolver:
             return "limit"
         elif "[" in expr_str and "]" in expr_str:
             return "matrix"
-        elif any(word in expr_str.lower() for word in ["mean", "average", "std", "variance", "normal", "distribution"]):
+        elif any(
+            word in expr_str.lower()
+            for word in ["mean", "average", "std", "variance", "normal", "distribution"]
+        ):
             return "stats"
         else:
             return "evaluate"
@@ -142,7 +142,7 @@ class MathSolver:
             else:
                 result = f"Solutions for {variables[0]}:\n"
                 for i, sol in enumerate(solutions):
-                    result += f"  {i+1}. {variables[0]} = {sol}\n"
+                    result += f"  {i + 1}. {variables[0]} = {sol}\n"
                 return result.strip()
         else:
             return f"Solution: {variables[0]} = {solutions}"
@@ -206,7 +206,7 @@ class MathSolver:
         if match:
             var_name = match.group(1)
             limit_point = match.group(2).strip()
-            expr_part = expr_part[:match.start()].strip()
+            expr_part = expr_part[: match.start()].strip()
         else:
             # Default to x approaching 0
             var_name = "x"

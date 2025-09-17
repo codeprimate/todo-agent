@@ -179,7 +179,7 @@ class TestCLI:
         assert result == expected_response
 
         # Verify handle_request was called with correct input
-        self.cli.handle_request.assert_called_once_with(user_input)
+        self.cli.handle_request.assert_called_once_with(user_input, False)
 
     def test_clear_command_functionality(self):
         """Test that the clear command properly clears conversation history."""

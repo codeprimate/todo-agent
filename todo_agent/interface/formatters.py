@@ -251,7 +251,7 @@ class ResponseFormatter:
         Returns:
             Formatted response string
         """
-        
+
         return response
 
     @staticmethod
@@ -310,9 +310,6 @@ class StatsFormatter:
             return "\n".join(formatted_lines)
 
         return overview
-
-
-
 
 
 class PanelFormatter:
@@ -417,7 +414,7 @@ class PanelFormatter:
         help_content = Text()
         help_content.append("Available Commands\n", style="bold blue")
         help_content.append("\n")
-        
+
         # Add commands in a formatted list
         commands = [
             ("help", "Show this help message"),
@@ -427,15 +424,17 @@ class PanelFormatter:
             ("clear", "Clear conversation history"),
             ("/[cmd] [args]", "Direct todo.sh access: /add 'task'"),
             ("todo-help", "Show todo.sh help"),
-            ("about", "Show application information")
+            ("about", "Show application information"),
         ]
-        
+
         for cmd, desc in commands:
             help_content.append(f"{cmd:<12} ", style="cyan")
             help_content.append(f"{desc}\n", style="white")
-        
+
         help_content.append("\n")
-        help_content.append("Or just type your request naturally!", style="italic green")
+        help_content.append(
+            "Or just type your request naturally!", style="italic green"
+        )
 
         return Panel(
             Align.center(help_content),

@@ -38,11 +38,11 @@ class OpenRouterClient(LLMClient):
             "tools": tools,
             "tool_choice": "auto",
         }
-        
+
         # Add reasoning_effort parameter if configured
         if hasattr(self.config, "reasoning_effort") and self.config.reasoning_effort:
             payload["reasoning_effort"] = self.config.reasoning_effort
-            
+
         return payload
 
     def _get_api_endpoint(self) -> str:

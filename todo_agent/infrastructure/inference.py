@@ -119,7 +119,9 @@ class Inference:
         current_tasks = self.current_tasks()
 
         # Load system prompt from file
-        prompt_filename = "system_prompt_small.txt" if self.use_mini_prompt else "system_prompt.txt"
+        prompt_filename = (
+            "system_prompt_small.txt" if self.use_mini_prompt else "system_prompt.txt"
+        )
         prompt_file_path = os.path.join(
             os.path.dirname(__file__), "prompts", prompt_filename
         )
@@ -143,7 +145,10 @@ class Inference:
             raise
 
     def process_request(
-        self, user_input: str, progress_callback: Optional[ToolCallProgress] = None, system_request: bool = False
+        self,
+        user_input: str,
+        progress_callback: Optional[ToolCallProgress] = None,
+        system_request: bool = False,
     ) -> tuple[str, float]:
         """
         Process a user request through the LLM with tool orchestration.

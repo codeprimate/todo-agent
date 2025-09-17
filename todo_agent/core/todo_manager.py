@@ -169,17 +169,21 @@ class TodoManager:
         """Find task number by description in the current task list."""
         # Defensive check: ensure description is a string
         if not isinstance(description, str):
-            raise ValueError(f"Description must be a string, got {type(description)}: {description}")
-        
+            raise ValueError(
+                f"Description must be a string, got {type(description)}: {description}"
+            )
+
         if not description.strip():
             raise ValueError("Description cannot be empty or whitespace-only")
-        
+
         tasks = self.todo_shell.list_tasks()
-        
+
         # Defensive check: ensure tasks is a string
         if not isinstance(tasks, str):
-            raise RuntimeError(f"Expected string from list_tasks(), got {type(tasks)}: {tasks}")
-        
+            raise RuntimeError(
+                f"Expected string from list_tasks(), got {type(tasks)}: {tasks}"
+            )
+
         task_lines = [line.strip() for line in tasks.split("\n") if line.strip()]
 
         if not task_lines:
@@ -188,9 +192,6 @@ class TodoManager:
         import re
 
         for line in reversed(task_lines):
-            # Defensive check: ensure line is a string before using it in string operations
-            if not isinstance(line, str):
-                continue
             if description in line:
                 match = re.match(r"^(\d+)", line)
                 if match:
@@ -218,10 +219,12 @@ class TodoManager:
         """Add new task with explicit project/context parameters."""
         # Validate description early - it's required and must be a non-empty string
         if not isinstance(description, str):
-            raise ValueError(f"Description must be a string, got {type(description)}: {description}")
+            raise ValueError(
+                f"Description must be a string, got {type(description)}: {description}"
+            )
         if not description.strip():
             raise ValueError("Description cannot be empty or whitespace-only")
-        
+
         # Normalize empty strings to None for optional parameters
         priority = self._normalize_empty_to_none(priority)
         project = self._normalize_empty_to_none(project)

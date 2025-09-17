@@ -48,10 +48,6 @@ class TokenCounter:
         if not text:
             return 0
 
-        # Defensive check: ensure text is a string
-        if not isinstance(text, str):
-            text = str(text)
-
         if self._encoder is None:
             raise RuntimeError("Encoder not initialized")
         return len(self._encoder.encode(text))

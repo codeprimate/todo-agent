@@ -82,7 +82,11 @@ class CLI:
     def _load_review_prompt(self) -> str:
         """Load the review prompt from file."""
         prompt_file_path = os.path.join(
-            os.path.dirname(__file__), "..", "infrastructure", "prompts", "review_prompt.txt"
+            os.path.dirname(__file__),
+            "..",
+            "infrastructure",
+            "prompts",
+            "review_prompt.txt",
         )
 
         try:
@@ -295,9 +299,7 @@ class CLI:
 
         # Prime conversation with today's date
         today = datetime.now()
-        self.inference.add_user_message(
-            f"Today is {today.strftime('%A, %Y-%m-%d')}."
-        )
+        self.inference.add_user_message(f"Today is {today.strftime('%A, %Y-%m-%d')}.")
 
         while True:
             try:
@@ -460,7 +462,9 @@ class CLI:
                 progress_callback = self._create_cli_progress_callback(live)
 
                 # First pass: Process user request
-                response, thinking_time = self.inference.process_request(user_input, progress_callback, system_request)
+                response, thinking_time = self.inference.process_request(
+                    user_input, progress_callback, system_request
+                )
 
                 # # Second pass: Refine the response
                 # review_prompt = self._load_review_prompt()
@@ -483,7 +487,9 @@ class CLI:
                 # Return error message
                 return ResponseFormatter.format_error(str(e))
 
-    def run_single_request(self, input_prompt: str, system_request: bool = False) -> str:
+    def run_single_request(
+        self, input_prompt: str, system_request: bool = False
+    ) -> str:
         """
         Run a single request without entering the interactive loop.
 
