@@ -423,7 +423,8 @@ class CLI:
                 formatted_response = ResponseFormatter.format_response(response)
 
                 # Get memory usage
-                memory_usage = self._get_memory_usage()
+                # memory_usage = self._get_memory_usage()
+                memory_usage = None
 
                 # Create response panel with memory usage
                 response_panel = PanelFormatter.create_response_panel(
