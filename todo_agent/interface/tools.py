@@ -141,7 +141,7 @@ class ToolCallHandler:
                         "Add a NEW task to todo.txt with intelligent automatic inference capabilities. "
                         "USE CASE: Call this when user wants to create a NEW task, not when they want to complete, modify, or work with existing tasks. "
                         "CRITICAL: Before adding ANY task, you MUST use list_tasks() and list_completed_tasks() to check for potential duplicates. "
-                        "Look for tasks with similar descriptions, keywords, or intent. If you find similar tasks, "
+                        "Look for tasks with similar descriptions, keywords, or intent. If you find tasks that seem to be DUPLICATIVE, "
                         "ask the user if they want to add a new task or modify an existing one. "
                         "INTELLIGENT INFERENCE ENGINE: This tool automatically infers missing elements to create complete, actionable tasks: "
                         "PROJECT INFERENCE: Automatically detect and add appropriate +project tags based on task keywords, semantic patterns, and existing project usage. "
