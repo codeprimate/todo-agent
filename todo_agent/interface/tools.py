@@ -150,7 +150,6 @@ class ToolCallHandler:
                         "Apply strategic timing based on task type, work patterns, personal schedules, and existing due date patterns. "
                         "DURATION INFERENCE: Automatically estimate appropriate duration: tags based on task complexity, context, and historical patterns. "
                         "PRIORITY INFERENCE: Suggest appropriate priority levels (A-Z) based on urgency, importance, and existing priority patterns. "
-                        "Only ask for clarification when genuinely ambiguous. Always provide a complete, natural response to the user. "
                         "STRATEGIC CONTEXT: This is a CREATION tool - call this LAST after using "
                         "discovery tools (list_tasks, list_projects, list_contexts, list_completed_tasks) "
                         "to gather all necessary context and verify no duplicates exist."
