@@ -46,6 +46,25 @@ todo.sh init
 export TODO_DIR="$HOME/todo"
 ```
 
+#### Create your todo.sh configuration
+
+```bash
+# Copy the example configuration to your todo directory
+# If you cloned the repository:
+cp todo-agent/config.example $TODO_DIR/config
+# Or if you installed via pip, the config.example is in the package directory
+
+# Edit the configuration file to customize your setup
+# The config.example includes enhanced colors, priorities, and workflow settings
+nano $TODO_DIR/config  # or use your preferred editor
+```
+
+**Configuration highlights:**
+- Enhanced priority system with emojis and clear meanings
+- Color-coded output for better visual organization  
+- Automatic archiving of old completed tasks
+- Customizable sorting and filtering options
+
 #### Install todo-agent
 
 ```bash

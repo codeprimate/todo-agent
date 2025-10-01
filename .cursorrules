@@ -1,0 +1,48 @@
+# Cursor Rules for Todo Agent Project
+
+## General Rules:
+- KISS principles always apply
+- Keep testability and future maintenance in mind at all times
+- Minimize magic strings and numbers
+- Before implementing, analyze potential ripple effects and ask clarifying questions about edge cases
+- When multiple valid approaches exist, present options with trade-offs for user decision
+- Before implementation, stop and ask for clarification when encountering ambiguous requirements that could lead to rework
+
+## Python Development Rules:
+- Use "ruff" for linting and formatting (configured in pyproject.toml)
+- Use "mypy" for type checking with strict settings
+- Use "pytest" for testing with coverage reporting
+- Use "bandit" for security vulnerability scanning
+- Use "make" commands for common development tasks (format, lint, test, build)
+- Follow the project's ruff configuration: line-length=88, target-version=py38
+- Use setuptools_scm for version management (version in _version.py)
+- Install dev dependencies with "pip install -e .[dev]" or "make install-dev"
+
+## Testing Rules:
+- Run tests with "pytest" or "make test" for full coverage reporting
+- Test structure follows: test_core/, test_infrastructure/, test_interface/
+- Use pytest markers for integration tests and linting checks
+- Coverage reports are generated in htmlcov/ directory
+- Test files should be named test_*.py and contain test_* functions
+
+## Todo.sh Testing Rules:
+When testing todo.sh commands:
+- Identify the full path for the test_data/todo folder in this project: `test_data/todo`
+- Use a TODO_DIR environment variable that specifies this full test_data/todo path
+- Use a TODOTXT_CFG_FILE environment variable that specifies the config file located within the test_data/todo directory: `test_data/todo/config`
+- Example usage: `TODO_DIR=$(pwd)/test_data/todo TODOTXT_CFG_FILE=$(pwd)/test_data/todo/config todo.sh [command]`
+
+## Project Structure Rules:
+- Follow the established architecture: core/, infrastructure/, interface/
+- Core contains business logic (conversation_manager, todo_manager, exceptions)
+- Infrastructure contains external integrations (LLM clients, config, logging, etc.)
+- Interface contains user-facing components (CLI, formatters, tools)
+- Version is managed automatically by setuptools_scm in _version.py
+- Package entry point is "todo-agent" -> todo_agent.main:main
+
+## Critical Analysis Protocol:
+- Before major changes: present implementation plan, identify assumptions, and ask for validation
+- When encountering deprecated patterns: ask whether to modernize or maintain consistency
+- For complex features: break down into phases and confirm approach before proceeding
+- If tests fail unexpectedly: investigate root cause and ask about acceptable risk levels
+- When uncertain about business logic: ask specific questions rather than making assumptions

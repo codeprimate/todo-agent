@@ -250,6 +250,7 @@ config.ini
 *.temp
 *.bak
 *.backup
+tmp/*
 
 # Database files
 *.db
@@ -287,3 +288,7 @@ todo_agent.egg-info/
 # Cache directories
 .mypy_cache/
 .pytest_cache/
+
+# Test data - ignore all files in test_data/todo except config
+test_data/todo/*
+!test_data/todo/config

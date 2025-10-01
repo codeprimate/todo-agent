@@ -1,0 +1,106 @@
+# Enhanced Todo.txt Configuration
+# =================================
+
+# Core file locations
+export TODO_FILE="$TODO_DIR/todo.txt"
+export DONE_FILE="$TODO_DIR/done.txt"
+export REPORT_FILE="$TODO_DIR/report.txt"
+export TMP_FILE="$TODO_DIR/todo.tmp"
+export TODOTXT_CFG_FILE="$TODO_DIR/config"
+
+# Command settings
+export TODOTXT_CMD="todo.sh"
+export TODOTXT_DEFAULT_ACTION="list"
+
+# Enhanced sorting: by priority (A-Z), then by creation date (newest first)
+export TODOTXT_SORT_COMMAND="env LC_COLLATE=C sort -k2,2nr -k1,1nr"
+
+# Enable automatic date stamping when adding tasks
+# export TODOTXT_DATE_ON_ADD=1
+
+# Auto-archive completed tasks older than 30 days
+export TODOTXT_AUTO_ARCHIVE=1
+
+# Enable verbose output for better feedback
+export TODOTXT_VERBOSE=1
+
+# Preserve line numbers for easier reference
+export TODOTXT_PRESERVE_LINE_NUMBERS=1
+
+# Default priority for new tasks (can be overridden)
+export TODOTXT_DEFAULT_PRIORITY="C"
+
+# Priority meanings (customize these to your workflow)
+export TODOTXT_PRIORITY_A="🔥 URGENT - Do today"
+export TODOTXT_PRIORITY_B="⚡ HIGH - This week" 
+export TODOTXT_PRIORITY_C="📋 MEDIUM - This month"
+export TODOTXT_PRIORITY_D="⏸️  LOW - On hold"
+export TODOTXT_PRIORITY_E="💡 IDEA - Someday maybe"
+
+# Enhanced filtering and display
+export TODOTXT_FINAL_FILTER="cat"
+export TODOTXT_DISABLE_FILTER=0
+
+# Additional filters for common use cases
+export TODOTXT_ADDITIONAL_FILTERS=""
+
+# Force mode (skip confirmation prompts)
+export TODOTXT_FORCE=0
+
+# Enable colors (0 = colors on, 1 = plain mode)
+export TODOTXT_PLAIN=0
+
+# ===========================================
+# COLOR DEFINITIONS
+# ===========================================
+
+# Base color definitions
+export NONE=''
+export BLACK='\033[0;30m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export BROWN='\033[0;33m'
+export BLUE='\033[0;34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHT_GREY='\033[0;37m'
+export DARK_GREY='\033[1;30m'
+export LIGHT_RED='\033[1;31m'
+export LIGHT_GREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHT_BLUE='\033[1;34m'
+export LIGHT_PURPLE='\033[1;35m'
+export LIGHT_CYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+export DEFAULT='\033[0m'
+
+# Priority colors (A=urgent, B=high, C=medium, D=low, E=idea)
+export PRI_A=$LIGHT_RED        # 🔥 URGENT - Do today (bright red)
+export PRI_B=$YELLOW           # ⚡ HIGH - This week (yellow)
+export PRI_C=$LIGHT_BLUE       # 📋 MEDIUM - This month (light blue)
+export PRI_D=$LIGHT_GREY       # ⏸️  LOW - On hold (light grey)
+export PRI_E=$PURPLE           # 💡 IDEA - Someday maybe (purple)
+export PRI_X=$WHITE            # Default priority color
+
+# Task element colors
+export COLOR_PROJECT=$CYAN     # +project tags (cyan)
+export COLOR_CONTEXT=$GREEN    # @context tags (green)
+export COLOR_DATE=$BROWN       # dates (brown)
+export COLOR_NUMBER=$LIGHT_BLUE # task numbers (light blue)
+export COLOR_META=$DARK_GREY   # metadata like due: dates (dark grey)
+
+# Special status colors
+export COLOR_DONE=$LIGHT_GREY  # completed tasks (light grey)
+
+# Example workflow priorities:
+# A = Must do today (urgent)
+# B = Should do this week (high)  
+# C = Could do this month (medium)
+# D = On hold/waiting (low)
+# E = Ideas/someday (very low)
+
+# Example contexts (use @context):
+# @home, @work, @phone, @computer, @errands, @waiting
+
+# Example projects (use +project):
+# +work, +personal, +health, +finance, +learning, +maintenance
