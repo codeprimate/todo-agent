@@ -173,9 +173,9 @@ class LLMClient(ABC):
         start_time = time.time()
         self._log_request_details(payload, start_time)
 
-        # Use short timeout polling strategy for responsiveness
-        overall_timeout = 2  # 2 seconds overall timeout
-        individual_timeout = 1  # 1 second per individual request
+        # Use reasonable timeout values for LLM requests
+        overall_timeout = 120  # 2 minutes overall timeout
+        individual_timeout = 30  # 30 seconds per individual request
 
         while time.time() - start_time < overall_timeout:
             # Check cancellation flag during polling
