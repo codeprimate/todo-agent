@@ -428,8 +428,17 @@ class PanelFormatter:
         ]
 
         for cmd, desc in commands:
-            help_content.append(f"{cmd:<12} ", style="cyan")
-            help_content.append(f"{desc}\n", style="white")
+            if cmd == "/[cmd] [args]":
+                # Special styling for the /[cmd] [args] command
+                help_content.append("/[cmd] ", style="cyan")
+                help_content.append("[args]", style="dim")
+                help_content.append("  ", style="cyan")  # 2 characters of padding
+                help_content.append("Direct todo.sh access: ", style="white")
+                help_content.append("/add 'task'", style="dim")
+                help_content.append("\n")
+            else:
+                help_content.append(f"{cmd:<12}   ", style="cyan")
+                help_content.append(f"{desc}\n", style="white")
 
         help_content.append("\n")
         help_content.append(
