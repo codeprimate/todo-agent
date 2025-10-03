@@ -3,6 +3,7 @@ LLM inference engine for todo.sh agent.
 """
 
 import os
+import signal
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -59,11 +60,12 @@ class Inference:
         self.logger = logger or Logger("inference")
         self.use_mini_prompt = config.use_mini_prompt
 
-        # Initialize LLM client using factory
         self.llm_client = LLMClientFactory.create_client(config, self.logger)
-
-        # Initialize conversation manager
         self.conversation_manager = ConversationManager()
+        self._cancelled = False
+
+        # Set up signal handler for user interruption (Ctrl+C)
+        signal.signal(signal.SIGINT, self._handle_interrupt)
 
         # Set up system prompt
         self._setup_system_prompt()
@@ -71,6 +73,44 @@ class Inference:
         self.logger.info(
             f"Inference engine initialized with {config.provider} provider using model: {self.llm_client.get_model_name()}"
         )
+
+    def _handle_interrupt(self, signum: int, frame: Any) -> None:
+        """
+        Handle user interruption signal (Ctrl+C).
+
+        Args:
+            signum: Signal number (should be SIGINT)
+            frame: Current stack frame
+        """
+        self._cancelled = True
+        self.logger.info("User interruption signal received (Ctrl+C)")
+        # Don't exit immediately - let current operation finish gracefully
+
+    def _handle_cancellation(self, start_time: float) -> tuple[str, float]:
+        """
+        Handle cancellation by adding "I stopped." message to conversation.
+
+        Args:
+            start_time: Request start time for calculating thinking time
+
+        Returns:
+            Tuple of (cancellation message, actual thinking time)
+        """
+        # Calculate actual thinking time
+        end_time = time.time()
+        thinking_time = end_time - start_time
+
+        self.conversation_manager.add_message(MessageRole.ASSISTANT, "I stopped.")
+        self._cancelled = False
+        return "I stopped.", thinking_time
+
+    def reset_cancellation_flag(self) -> None:
+        """
+        Reset the cancellation flag. Call this before starting a new request
+        to ensure any previous cancellation state is cleared.
+        """
+        self._cancelled = False
+        self.logger.debug("Cancellation flag reset")
 
     def _setup_system_prompt(self) -> None:
         """Set up the system prompt for the LLM."""
@@ -187,11 +227,23 @@ class Inference:
                 f"Retrieved {len(messages)} messages from conversation history"
             )
 
+            # Check for cancellation before LLM API call
+            if self._cancelled:
+                self.logger.info("Request cancelled before LLM API call")
+                return self._handle_cancellation(start_time)
+
             # Send to LLM with function calling enabled
             self.logger.debug("Sending request to LLM with tools")
             response = self.llm_client.chat_with_tools(
-                messages=messages, tools=self.tool_handler.tools
+                messages=messages,
+                tools=self.tool_handler.tools,
+                cancelled=self._cancelled,
             )
+
+            # Check for cancellation after LLM response received
+            if self._cancelled:
+                self.logger.info("Request cancelled after LLM response received")  # type: ignore
+                return self._handle_cancellation(start_time)
 
             # Check for provider errors
             if response.get("error", False):
@@ -247,6 +299,13 @@ class Inference:
                 # Execute all tool calls and collect results
                 tool_results = []
                 for i, tool_call in enumerate(tool_calls):
+                    # Check for cancellation before each tool execution
+                    if self._cancelled:
+                        self.logger.info(  # type: ignore
+                            f"Request cancelled before tool execution #{i + 1}"
+                        )
+                        return self._handle_cancellation(start_time)
+
                     tool_name = tool_call.get("function", {}).get("name", "unknown")
                     tool_call_id = tool_call.get("id", "unknown")
                     self.logger.debug(
@@ -282,6 +341,20 @@ class Inference:
                     self.logger.debug(f"Tool result: {result}")
                     tool_results.append(result)
 
+                    # Check for cancellation after each tool execution completes
+                    if self._cancelled:
+                        self.logger.info(  # type: ignore
+                            f"Request cancelled after tool execution #{i + 1}"
+                        )
+                        return self._handle_cancellation(start_time)
+
+                # Check for cancellation before adding tool results to conversation
+                if self._cancelled:
+                    self.logger.info(  # type: ignore
+                        "Request cancelled before adding tool results to conversation"
+                    )
+                    return self._handle_cancellation(start_time)
+
                 # Add tool call sequence to conversation
                 self.conversation_manager.add_tool_call_sequence(
                     tool_calls, tool_results
@@ -291,13 +364,23 @@ class Inference:
                 # Continue conversation with tool results
                 messages = self.conversation_manager.get_messages()
                 response = self.llm_client.chat_with_tools(
-                    messages=messages, tools=self.tool_handler.tools
+                    messages=messages,
+                    tools=self.tool_handler.tools,
+                    cancelled=self._cancelled,
                 )
 
                 # Check for provider errors in continuation
                 if response.get("error", False):
                     error_type = response.get("error_type", "general_error")
                     provider = response.get("provider", "unknown")
+
+                    # Handle cancellation specially
+                    if error_type == "cancelled":
+                        self.logger.info(
+                            f"Request cancelled in continuation from {provider}"
+                        )
+                        return self._handle_cancellation(start_time)
+
                     self.logger.error(
                         f"Provider error in continuation from {provider}: {error_type}"
                     )

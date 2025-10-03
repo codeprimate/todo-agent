@@ -102,7 +102,7 @@ class TestOpenRouterClient:
         result = self.client.chat_with_tools(messages, tools)
 
         assert result == expected_response
-        mock_make_request.assert_called_once_with(messages, tools)
+        mock_make_request.assert_called_once_with(messages, tools, False)
 
     @patch(
         "todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request"
@@ -123,6 +123,41 @@ class TestOpenRouterClient:
 
         result = self.client.chat_with_tools(messages, tools)
         assert result == error_response
+        mock_make_request.assert_called_once_with(messages, tools, False)
+
+    @patch(
+        "todo_agent.infrastructure.openrouter_client.OpenRouterClient._make_http_request"
+    )
+    def test_chat_with_tools_cancellation(self, mock_make_request):
+        """Test chat with tools cancellation."""
+        messages = [{"role": "user", "content": "Hello"}]
+        tools = []
+
+        cancelled_response = {
+            "error": True,
+            "error_type": "cancelled",
+            "provider": "openrouter",
+            "status_code": 0,
+            "raw_error": "Request cancelled by user",
+        }
+        mock_make_request.return_value = cancelled_response
+
+        result = self.client.chat_with_tools(messages, tools, cancelled=True)
+        assert result == cancelled_response
+        mock_make_request.assert_called_once_with(messages, tools, True)
+
+    def test_create_cancelled_response(self):
+        """Test creating cancelled response."""
+        cancelled_response = self.client._create_cancelled_response()
+
+        expected = {
+            "error": True,
+            "error_type": "cancelled",
+            "provider": "openrouter",
+            "status_code": 0,
+            "raw_error": "Request cancelled by user",
+        }
+        assert cancelled_response == expected
 
     def test_extract_tool_calls_with_tool_calls(self):
         """Test extracting tool calls from response with tool calls."""

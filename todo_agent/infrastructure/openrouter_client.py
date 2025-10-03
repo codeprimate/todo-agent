@@ -99,7 +99,10 @@ class OpenRouterClient(LLMClient):
         self.logger.debug(f"Raw response: {response_data}")
 
     def chat_with_tools(
-        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        cancelled: bool = False,
     ) -> Dict[str, Any]:
         """
         Send chat message with function calling enabled.
@@ -107,11 +110,12 @@ class OpenRouterClient(LLMClient):
         Args:
             messages: List of message dictionaries
             tools: List of tool definitions
+            cancelled: Cancellation flag for user interruption
 
         Returns:
             API response dictionary
         """
-        return self._make_http_request(messages, tools)
+        return self._make_http_request(messages, tools, cancelled)
 
     def continue_with_tool_result(self, tool_result: Dict[str, Any]) -> Dict[str, Any]:
         """

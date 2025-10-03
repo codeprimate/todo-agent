@@ -77,7 +77,7 @@ class TestTodoShell:
 
         with patch("subprocess.run", side_effect=error):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: Command not found"
+                TodoShellError, match=r"Todo.sh command failed: Command not found"
             ):
                 self.todo_shell.execute(["todo.sh", "invalid"])
 
@@ -554,7 +554,7 @@ class TestTodoShell:
         )
         with patch("subprocess.run", side_effect=error):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: Command failed"
+                TodoShellError, match=r"Todo.sh command failed: Command failed"
             ):
                 self.todo_shell.execute(["todo.sh", "invalid"])
 
@@ -564,7 +564,7 @@ class TestTodoShell:
             "subprocess.run", side_effect=FileNotFoundError("todo.sh not found")
         ):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: todo.sh not found"
+                TodoShellError, match=r"Todo.sh command failed: todo.sh not found"
             ):
                 self.todo_shell.execute(["todo.sh", "add", "test"])
 
@@ -572,7 +572,7 @@ class TestTodoShell:
         """Test that PermissionError is properly handled."""
         with patch("subprocess.run", side_effect=PermissionError("Permission denied")):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: Permission denied"
+                TodoShellError, match=r"Todo.sh command failed: Permission denied"
             ):
                 self.todo_shell.execute(["todo.sh", "add", "test"])
 
@@ -580,7 +580,7 @@ class TestTodoShell:
         """Test that TimeoutError is properly handled."""
         with patch("subprocess.run", side_effect=TimeoutError("Command timed out")):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: Command timed out"
+                TodoShellError, match=r"Todo.sh command failed: Command timed out"
             ):
                 self.todo_shell.execute(["todo.sh", "add", "test"])
 
@@ -588,7 +588,7 @@ class TestTodoShell:
         """Test that generic exceptions are properly handled."""
         with patch("subprocess.run", side_effect=Exception("Unknown error")):
             with pytest.raises(
-                TodoShellError, match="Todo.sh command failed: Unknown error"
+                TodoShellError, match=r"Todo.sh command failed: Unknown error"
             ):
                 self.todo_shell.execute(["todo.sh", "add", "test"])
 

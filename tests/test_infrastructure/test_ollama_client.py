@@ -90,7 +90,7 @@ class TestOllamaClient:
         response = self.client.chat_with_tools(messages, tools)
 
         assert response == expected_response
-        mock_make_request.assert_called_once_with(messages, tools)
+        mock_make_request.assert_called_once_with(messages, tools, False)
 
     @patch("todo_agent.infrastructure.ollama_client.OllamaClient._make_http_request")
     def test_chat_with_tools_api_error(self, mock_make_request):
@@ -110,6 +110,7 @@ class TestOllamaClient:
 
         response = self.client.chat_with_tools(messages, tools)
         assert response == error_response
+        mock_make_request.assert_called_once_with(messages, tools, False)
 
     def test_extract_tool_calls_with_tools(self):
         """Test extracting tool calls from response with tools."""

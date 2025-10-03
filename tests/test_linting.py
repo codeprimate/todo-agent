@@ -119,7 +119,7 @@ class TestSecurity:
     def test_bandit_security(self):
         """Test that code passes Bandit security checks."""
         cmd = [sys.executable, "-m", "bandit", "-r", "todo_agent/"]
-        returncode, stdout, stderr = run_command(cmd)
+        _returncode, stdout, _stderr = run_command(cmd)
 
         # Bandit returns non-zero for any issues, but we want to see the output
         if stdout:

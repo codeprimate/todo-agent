@@ -306,7 +306,16 @@ class CLI:
                 # Print prompt character on separate line to prevent deletion
                 self.console.print("\n[bold cyan]▶[/bold cyan]", end=" ")
                 user_input = self.console.input().strip()
+            except KeyboardInterrupt:
+                self.logger.info("User interrupted with Ctrl+C at prompt")
+                self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
+                break
+            except EOFError:
+                self.logger.info("Input stream ended (EOF)")
+                self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
+                break
 
+            try:
                 if user_input.lower() in ["quit", "exit", "q"]:
                     self.logger.info("User requested exit")
                     self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
@@ -433,15 +442,13 @@ class CLI:
                 self.console.print(response_panel)
 
             except KeyboardInterrupt:
-                self.logger.info("User interrupted with Ctrl+C")
-                self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
-                break
-            except EOFError:
-                self.logger.info("Input stream ended (EOF)")
+                self.logger.info(
+                    "User interrupted with Ctrl+C during request processing"
+                )
                 self.console.print("\n[bold green]Goodbye! 👋[/bold green]")
                 break
             except Exception as e:
-                self.logger.error(f"Error in CLI loop: {e!s}")
+                self.logger.error(f"Error processing request: {e!s}")
                 error_msg = ResponseFormatter.format_error(str(e))
                 self.console.print(error_msg)
 
@@ -456,6 +463,9 @@ class CLI:
         Returns:
             Formatted response for user
         """
+        # Reset cancellation flag before processing request
+        self.inference.reset_cancellation_flag()
+
         # Show thinking spinner during LLM processing
         with self._get_thinking_live() as live:
             try:

@@ -31,7 +31,10 @@ class LLMClient(ABC):
 
     @abstractmethod
     def chat_with_tools(
-        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        cancelled: bool = False,
     ) -> Dict[str, Any]:
         """
         Send chat message with function calling enabled.
@@ -39,6 +42,7 @@ class LLMClient(ABC):
         Args:
             messages: List of message dictionaries
             tools: List of tool definitions
+            cancelled: Cancellation flag for user interruption
 
         Returns:
             API response dictionary
@@ -139,18 +143,29 @@ class LLMClient(ABC):
         self.logger.info(f"Request sent - Token count: {total_tokens}")
 
     def _make_http_request(
-        self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        cancelled: bool = False,
     ) -> Dict[str, Any]:
         """
-        Make HTTP request to the LLM API with common error handling.
+        Make HTTP request to the LLM API with common error handling and cancellation support.
 
         Args:
             messages: List of message dictionaries
             tools: List of tool definitions
+            cancelled: Cancellation flag for user interruption
 
         Returns:
             API response dictionary
         """
+        # Check for cancellation before making request
+        if cancelled:
+            self.logger.info(
+                f"{self.get_provider_name()} request cancelled before HTTP call"
+            )
+            return self._create_cancelled_response()
+
         headers = self._get_request_headers()
         payload = self._get_request_payload(messages, tools)
         endpoint = self._get_api_endpoint()
@@ -158,44 +173,87 @@ class LLMClient(ABC):
         start_time = time.time()
         self._log_request_details(payload, start_time)
 
-        try:
-            response = requests.post(  # nosec B113
-                endpoint,
-                headers=headers,
-                json=payload,
-                timeout=self.get_request_timeout(),
-            )
-        except requests.exceptions.Timeout:
-            self.logger.error(f"{self.get_provider_name()} API request timed out")
-            return self._create_error_response("timeout", "Request timed out")
-        except requests.exceptions.ConnectionError as e:
-            self.logger.error(f"{self.get_provider_name()} API connection error: {e}")
-            return self._create_error_response("timeout", f"Connection error: {e}")
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"{self.get_provider_name()} API request error: {e}")
-            return self._create_error_response("general_error", f"Request error: {e}")
+        # Use short timeout polling strategy for responsiveness
+        overall_timeout = 2  # 2 seconds overall timeout
+        individual_timeout = 1  # 1 second per individual request
 
-        if response.status_code != 200:
-            self.logger.error(f"{self.get_provider_name()} API error: {response.text}")
-            error_type = self.classify_error(
-                Exception(response.text), self.get_provider_name()
-            )
-            return self._create_error_response(
-                error_type, response.text, response.status_code
-            )
+        while time.time() - start_time < overall_timeout:
+            # Check cancellation flag during polling
+            if cancelled:
+                self.logger.info(  # type: ignore
+                    f"{self.get_provider_name()} request cancelled during HTTP polling"
+                )
+                return self._create_cancelled_response()
 
-        try:
-            response_data: Dict[str, Any] = response.json()
-        except Exception as e:
-            self.logger.error(
-                f"Failed to parse {self.get_provider_name()} response JSON: {e}"
-            )
-            return self._create_error_response(
-                "malformed_response", f"JSON parsing failed: {e}", response.status_code
-            )
+            try:
+                response = requests.post(  # nosec B113
+                    endpoint,
+                    headers=headers,
+                    json=payload,
+                    timeout=individual_timeout,
+                )
 
-        self._process_response(response_data, start_time)
-        return response_data
+                # If we get a response, process it
+                if response.status_code == 200:
+                    try:
+                        response_data: Dict[str, Any] = response.json()
+                        self._process_response(response_data, start_time)
+                        return response_data
+                    except Exception as e:
+                        self.logger.error(
+                            f"Failed to parse {self.get_provider_name()} response JSON: {e}"
+                        )
+                        return self._create_error_response(
+                            "malformed_response",
+                            f"JSON parsing failed: {e}",
+                            response.status_code,
+                        )
+                else:
+                    # Non-200 status code - return error
+                    self.logger.error(
+                        f"{self.get_provider_name()} API error: {response.text}"
+                    )
+                    error_type = self.classify_error(
+                        Exception(response.text), self.get_provider_name()
+                    )
+                    return self._create_error_response(
+                        error_type, response.text, response.status_code
+                    )
+
+            except requests.exceptions.Timeout:
+                # Individual request timeout - continue polling
+                continue
+            except requests.exceptions.ConnectionError as e:
+                self.logger.error(
+                    f"{self.get_provider_name()} API connection error: {e}"
+                )
+                return self._create_error_response("timeout", f"Connection error: {e}")
+            except requests.exceptions.RequestException as e:
+                self.logger.error(f"{self.get_provider_name()} API request error: {e}")
+                return self._create_error_response(
+                    "general_error", f"Request error: {e}"
+                )
+
+        # If we get here, we've hit the overall timeout
+        self.logger.error(
+            f"{self.get_provider_name()} API request timed out after {overall_timeout}s"
+        )
+        return self._create_error_response("timeout", "Request timed out")
+
+    def _create_cancelled_response(self) -> Dict[str, Any]:
+        """
+        Create standardized cancelled response.
+
+        Returns:
+            Standardized cancelled response dictionary
+        """
+        return {
+            "error": True,
+            "error_type": "cancelled",
+            "provider": self.get_provider_name(),
+            "status_code": 0,
+            "raw_error": "Request cancelled by user",
+        }
 
     def _create_error_response(
         self, error_type: str, raw_error: str, status_code: int = 0

@@ -2,6 +2,7 @@
 Tests for CLI class.
 """
 
+import contextlib
 import sys
 from io import StringIO
 from unittest.mock import MagicMock, Mock, patch
@@ -451,3 +452,16 @@ class TestCLI:
         # Verify live display was created
         assert live_display is not None
         assert hasattr(live_display, "console")
+
+    @patch("todo_agent.interface.cli.CLI._print_header")
+    def test_keyboard_interrupt_at_prompt(self, mock_print_header):
+        """Test that KeyboardInterrupt at prompt is handled gracefully."""
+        # Mock console.input to raise KeyboardInterrupt
+        with patch.object(self.cli.console, "input", side_effect=KeyboardInterrupt):
+            with patch.object(self.cli.console, "print") as mock_print:
+                # This should not raise an exception and should exit cleanly
+                with contextlib.suppress(SystemExit):
+                    self.cli.run()
+
+                # Verify that the goodbye message was printed
+                mock_print.assert_any_call("\n[bold green]Goodbye! 👋[/bold green]")
