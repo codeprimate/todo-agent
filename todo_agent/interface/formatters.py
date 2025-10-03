@@ -324,7 +324,7 @@ class PanelFormatter:
             title="🤖",
             border_style="dim",
             box=ROUNDED,
-            width=PANEL_WIDTH + 2,
+            width=PANEL_WIDTH,
         )
 
     @staticmethod
@@ -405,7 +405,7 @@ class PanelFormatter:
             title="i  About",
             border_style="dim",
             box=ROUNDED,
-            width=PANEL_WIDTH + 2,
+            width=PANEL_WIDTH,
         )
 
     @staticmethod
@@ -450,7 +450,7 @@ class PanelFormatter:
             title="?  Help",
             border_style="dim",
             box=ROUNDED,
-            width=PANEL_WIDTH + 2,
+            width=PANEL_WIDTH,
         )
 
     @staticmethod

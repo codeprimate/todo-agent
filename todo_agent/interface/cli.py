@@ -295,7 +295,7 @@ class CLI:
         self._print_header()
 
         # Print separator
-        self.console.print("─" * CLI_WIDTH, style="dim")
+        self.console.print("─" * (CLI_WIDTH - 2), style="dim")
 
         # Prime conversation with today's date
         today = datetime.now()
